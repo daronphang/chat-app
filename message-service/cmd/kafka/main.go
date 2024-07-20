@@ -6,12 +6,13 @@ import (
 	"message-service/internal"
 	"message-service/internal/config"
 	"message-service/internal/delivery/kafka"
+	rmq "message-service/internal/delivery/rabbitmq"
+	"message-service/internal/domain"
 	"message-service/internal/usecase"
 	"os"
 	"os/signal"
 	"time"
 
-	kg "github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 )
 
@@ -29,32 +30,41 @@ func main() {
 	// Create logger.
 	logger, err = internal.WireLogger()
 	if err != nil {
-		panic(fmt.Sprintf("error setting up logger: %v", err))
+		logger.Fatal("error setting up logger", zap.String("trace", err.Error()))
     }
 
-	// Create usecase and dependencies.
-	uc := usecase.NewUseCaseService()
+	// Create Kafka topics.
+	if err := kafka.CreateKafkaTopics(cfg); err != nil {
+		logger.Fatal("error creating kafka topics", zap.String("trace", err.Error()))
+	}
 
-	// Important to close readers when a process exits.
-	readers := make([]*kg.Reader, 0, 10)
+	// Create hub for rabbitmq.
+	hub := rmq.NewHub(logger)
 
 	// Spin up goroutines equivalent to the number of partitions per topic.
 	// One consumer per goroutine.
-	topic := kafka.Messages.String()
-	consumerGroupID := cfg.Kafka.MessageConsumerGroupID
-	for range 10 {
+	fmt.Println("running goroutines for reading Kafka topics...")
+	for range domain.MessageTopicConfig.Partitions {
 		go func(){
-			k := kafka.New(cfg, consumerGroupID, topic)
-			readers = append(readers, k.Reader)
+			k := kafka.New(cfg, domain.MessageTopicConfig.ConsumerGroupID, domain.MessageTopicConfig.Topic)
+
+			// Create usecase and dependencies.
+			mb := rmq.NewClient(logger)
+			hub.AddClient(mb)
+			uc := usecase.NewUseCaseService(mb)
+
 			for {
-				if ok := k.ConsumeMsg(ctx, uc); !ok {
+				if ok := k.ConsumeMsgFromMessageTopic(ctx, uc); !ok {
 					break
 				}
 			}
 		}()
 	}
 
-	fmt.Println("running goroutines for Kafka readers...")
+	// Create a single TCP rabbitmq connection for all goroutines to use.
+	go hub.Run(cfg)
+
+	// Create ctx for listening to SIGINT and SIGTERM
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
@@ -62,17 +72,12 @@ func main() {
 	<-ctx.Done()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	fmt.Println("shutting down gracefully...")
-	gracefulShutdown(readers)
+	gracefulShutdown(hub)
 }
 
-func gracefulShutdown(readers []*kg.Reader) {
-	for _, r := range readers {
-		if err := r.Close(); err != nil {
-			logger.Error(
-				"unable to close Kafka reader",
-				zap.String("trace", err.Error()),
-			)
-		}
-	}
+func gracefulShutdown(hub *rmq.RabbitMQHub) {
+	fmt.Println("performing graceful shutdown...")
+
+	// close RabbitMQ.
+	hub.Close()
 }

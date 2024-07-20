@@ -1,6 +1,6 @@
 # Chat Application
 
-## Requirements
+## Design scope
 
 ### Functional
 
@@ -10,7 +10,7 @@
 - Online indicator
 - Persistent storage of messages
 - Push notification
-- Multiple device support
+- Multiple device support (assume user will be in the same geographical location)
 - Chats are sorted by the latest timestamp of last message
 - Support for media upload
 - Support for unread messages
@@ -154,11 +154,27 @@ A heartbeat mechanism can be implemented to determine if the client is still con
 
 ## Message synchronization across multiple devices
 
-Each message is appended with prevMsgId; if there is a mismatch, the device will fetch the latest batch of messages.
+We make the assumption that the user will be in the same location and hence, all devices are connected to the same chat server. When a message is sent or received by any device, it will be broadcasted to all other devices.
 
-## Small group chats
+## Message out-of-order or failed delivery
 
-When a message is sent in a group, it will be broadcasted to all users in the group.
+To handle messages that are received out-of-order or failed delivery due to network issues, we append a previousMessageId to each message and will be maintained in the chat-server session. If the client receives a message with a mismatch, it will fetch the latest messages from the message server.
+
+## Group chats
+
+There are a few ways of handing group messages:
+
+1. Broadcast group messages (push) to all users in the group (write amplification)
+2. Client requests/pulls for the latest messages periodically (read amplification)
+3. Creating a queue for each user (write diffusion)
+4. Create a topic for groups greater than a certain size
+5. Hybrid method where each user has a message queue for small groups, and a separate queue for each large group (recommended)
+
+For write amplification, if the group is very large, pushing each group message will take up a tremendous amount of bandwidth.
+
+Creating queues for each user may pose scalability problems for the message broker. However, it decouples the server from knowing which chat server the user is connected to, and simplifies message distribution. Moreover, it reduces client read from database if latest message stored on the client session is less than the duration of queue message retention period.
+
+The main reason for handling large rooms differently is the fact that many users won't be online at any given time, hence pushing messages to their streams is a bit too much work. Instead, having a stream for each large group allows clients to pull messages. However, group sizes can change. Also, the chat server needs to subscribe to multiple topics which can be resource consuming.
 
 ## Online presence
 

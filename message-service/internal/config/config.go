@@ -32,18 +32,23 @@ func (e Environment) String() string {
 
 type KafkaConfig struct {
 	BrokerAddresses string `yaml:"brokerAddresses"` // localhost:9092,localhost:9093
-	MessageConsumerGroupID string `yaml:"messageConsumerGroupId"`
+}
+
+type RabbitMQConfig struct {
+	HostAddress string `yaml:"hostAddress"` // localhost:5672
 }
 
 type CassandraConfig struct {
+	HostAddresses string `yaml:"hostAddresses"` // localhost:9042,localhost:9043
 }
 
 type Config struct {
-	Environment string `yaml:"environment"`
-	Port int `yaml:"port"`
-	LogDir string `yaml:"logDir"`
-	Kafka KafkaConfig `yaml:"kafka"`
-	Cassandra CassandraConfig `yaml:"cassandra"`
+	Environment string 			`yaml:"environment"`
+	Port 		int 			`yaml:"port"`
+	LogDir 		string 			`yaml:"logDir"`
+	Kafka 		KafkaConfig 	`yaml:"kafka"`
+	Cassandra 	CassandraConfig `yaml:"cassandra"`
+	RabbitMQ 	RabbitMQConfig 	`yaml:"rabbitmq"`
 }
 
 var syncOnceConfig sync.Once

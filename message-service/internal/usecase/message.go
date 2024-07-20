@@ -3,9 +3,11 @@ package usecase
 import (
 	"context"
 	"message-service/internal/domain"
+
+	"github.com/google/uuid"
 )
 
-func (uc *UseCaseService) GetMessagesForChannel(ctx context.Context, channelID string) error {
+func (uc *UseCaseService) GetMessages(ctx context.Context, channelID string) error {
 	return nil
 }
 
@@ -18,3 +20,20 @@ func (uc *UseCaseService) SaveMessageAndRoute(ctx context.Context, arg domain.Me
 	// If user is offine, to send push notification via queue.
 	return nil
 }
+
+func (uc *UseCaseService) AddUsersToChat(ctx context.Context, channelID string, users []string) {
+	if channelID == "" {
+		channelID = uuid.NewString()
+
+		if len(users) == 2 {
+			// Check if a channel has already been created by the other user.
+			
+		}
+	}
+}
+
+func (uc *UseCaseService) JoinGroup(ctx context.Context) {}
+
+func (uc *UseCaseService) LeaveGroup(ctx context.Context) {}
+
+func (uc *UseCaseService) DeleteUserChat(ctx context.Context, client string, channelID string) {}

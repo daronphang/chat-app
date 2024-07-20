@@ -3,6 +3,7 @@ package kafka
 import (
 	"message-service/internal"
 	"message-service/internal/config"
+	"message-service/internal/domain"
 	"net"
 	"strconv"
 	"strings"
@@ -10,23 +11,21 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-var logger, _ = internal.WireLogger()
-
-type Topic int32
-
-const (
-	Messages Topic = iota
+var (
+	logger, _ = internal.WireLogger()
 )
 
-func (t Topic) String() string {
-	switch t {
-	case Messages:
-		return "messages"
-	}
-	return "unknown"
+type KafkaClient struct {
+	Reader *kafka.Reader
+	Writer *kafka.Writer
 }
 
-func (k Kafka) CreateKafkaTopics(cfg *config.Config) error {
+func New(r *kafka.Reader, w *kafka.Writer) *KafkaClient {
+	return &KafkaClient{Reader: r, Writer: w}
+}
+
+func CreateKafkaTopics(cfg *config.Config) error {
+	// Connect to cluster.
 	conn, err := kafka.Dial("tcp", strings.Split(cfg.Kafka.BrokerAddresses, ",")[0])
 	if err != nil {
 		return err
@@ -38,6 +37,7 @@ func (k Kafka) CreateKafkaTopics(cfg *config.Config) error {
 		return err
 	}
 
+	// Get leader controller.
 	var controllerConn *kafka.Conn
 	controllerConn, err = kafka.Dial("tcp", net.JoinHostPort(controller.Host, strconv.Itoa(controller.Port)))
 	if err != nil {
@@ -45,24 +45,17 @@ func (k Kafka) CreateKafkaTopics(cfg *config.Config) error {
 	}
 	defer controllerConn.Close()
 
-	/* 
-	Config for each topic must be explicitly set for the following reasons:
-	- You cannot decrease the number of partitions 
-	- Increasing the partitions will force a rebalance
-	- ReplicationFactor cannot be greater than the number of brokers available
-	*/
+	// Create topics.
 	topicConfigs := []kafka.TopicConfig{
 		{
-			Topic:  Messages.String(),
-			NumPartitions: 10,
-			ReplicationFactor: 1,
+			Topic: domain.MessageTopicConfig.Topic,
+			NumPartitions: domain.MessageTopicConfig.Partitions,
+			ReplicationFactor: domain.MessageTopicConfig.ReplicationFactor,
 		},
 	}
-
 	if err := controllerConn.CreateTopics(topicConfigs...); err != nil {
 		return err
 	}
 
 	return nil
 }
-

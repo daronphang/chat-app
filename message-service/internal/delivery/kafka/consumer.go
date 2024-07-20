@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"context"
-	"io"
 	"strings"
 	"time"
 
@@ -15,14 +14,10 @@ import (
 	"go.uber.org/zap"
 )
 
-type Kafka struct {
-	Reader *kafka.Reader
-}
-
 // Important to call Close() on a Reader when a process exits
 // as Kafka server needs a graceful disconnect to stop it from
 // continuing to attempt to send messages on connected clients.
-func New(cfg *config.Config, consumerGroupID string, topic string) Kafka {
+func NewReader(cfg *config.Config, consumerGroupID string, topic string) *kafka.Reader {
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: strings.Split(cfg.Kafka.BrokerAddresses, ","),
 		// Consumers in the same consumer group will always read a unique partition.
@@ -31,21 +26,20 @@ func New(cfg *config.Config, consumerGroupID string, topic string) Kafka {
 		Topic: topic,
 		MaxWait: 1 * time.Second,
 	})
-	return Kafka{Reader: r}
+	return r
 }
 
 // To execute the consumer function as a goroutine.
 // One consumer per thread/goroutine is the rule.
 // Creating more consumers than the number of partitions will result in unused consumers.
-func (k Kafka) ConsumeMsg(ctx context.Context, uc *usecase.UseCaseService) bool {
+func (k *KafkaClient) ConsumeMsgFromMessageTopic(ctx context.Context, uc *usecase.UseCaseService) bool {
 	m, err := k.Reader.ReadMessage(ctx)
 	if err != nil {
-		if err != io.EOF {
-			logger.Error(
-				"error reading message from messages topic",
-				zap.String("trace", err.Error()),
-			)
-		}
+		logger.Error(
+			"error reading message from messages topic",
+			zap.String("trace", err.Error()),
+		)
+		k.Reader.Close()
 		return false
 	}
 
@@ -61,7 +55,7 @@ func (k Kafka) ConsumeMsg(ctx context.Context, uc *usecase.UseCaseService) bool 
 
 	if err := uc.SaveMessageAndRoute(ctx, *msg); err != nil {
 		logger.Error(
-			"error saving message and routing",
+			"error saving and routing message",
 			zap.String("payload", string(m.Value)),
 			zap.String("trace", err.Error()),
 		)
