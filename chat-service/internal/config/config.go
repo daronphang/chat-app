@@ -35,10 +35,10 @@ type KafkaConfig struct {
 }
 
 type Config struct {
-	Environment string `yaml:"environment"`
-	Port int `yaml:"port"`
-	LogDir string `yaml:"logDir"`
-	Kafka KafkaConfig `yaml:"kafka"`
+	Environment string 		`yaml:"environment"`
+	Port 		int 		`yaml:"port"`
+	LogDir 		string 		`yaml:"logDir"`
+	Kafka 		KafkaConfig `yaml:"kafka"`
 }
 
 var syncOnceConfig sync.Once

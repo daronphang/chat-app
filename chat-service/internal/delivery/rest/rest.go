@@ -4,8 +4,7 @@ import (
 	api "chat-service/internal/delivery/rest/api/v1"
 	rh "chat-service/internal/delivery/rest/handler"
 	cm "chat-service/internal/delivery/rest/middleware"
-	ws "chat-service/internal/delivery/websocket"
-	"context"
+	"net/http"
 
 	uc "chat-service/internal/usecase"
 	cv "chat-service/internal/validator"
@@ -15,11 +14,11 @@ import (
 	"go.uber.org/zap"
 )
 
-type Server struct {
+type RestServer struct {
 	Echo *echo.Echo
 }
 
-func New(ctx context.Context, logger *zap.Logger, uc *uc.UseCaseService, hub *ws.Hub) *Server {
+func New(logger *zap.Logger, uc *uc.UseCaseService, wsHandler func(w http.ResponseWriter, r *http.Request)) *RestServer {
 	// Create server.
 	e := echo.New()
 
@@ -44,11 +43,11 @@ func New(ctx context.Context, logger *zap.Logger, uc *uc.UseCaseService, hub *ws
 
 	// Register websocket.
 	baseGroup.GET("/ws", func(c echo.Context) error {
-		ws.ServeWs(hub, c.Response().Writer, c.Request())
+		wsHandler(c.Response().Writer, c.Request())
 		return nil
 	})
 
-	return &Server{
+	return &RestServer{
 		Echo: e,
 	}
 }

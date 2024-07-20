@@ -1,7 +1,9 @@
 package kafka
 
 import (
+	"chat-service/internal"
 	"chat-service/internal/config"
+	"chat-service/internal/domain"
 	"net"
 	"strconv"
 	"strings"
@@ -9,21 +11,20 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type Topic int32
-
-const (
-	Messages Topic = iota
+var (
+	logger, _ = internal.WireLogger()
 )
 
-func (t Topic) String() string {
-	switch t {
-	case Messages:
-		return "messages"
-	}
-	return "unknown"
+type KafkaClient struct {
+	Writer *kafka.Writer
 }
 
-func (k Kafka) CreateKafkaTopics(cfg *config.Config) error {
+func New(cfg *config.Config) *KafkaClient {
+	return &KafkaClient{Writer: NewWriter(cfg)}
+}
+
+func CreateKafkaTopics(cfg *config.Config, topicCfgs ...domain.TopicConfig) error {
+	// Connect to cluster.
 	conn, err := kafka.Dial("tcp", strings.Split(cfg.Kafka.BrokerAddresses, ",")[0])
 	if err != nil {
 		return err
@@ -35,6 +36,7 @@ func (k Kafka) CreateKafkaTopics(cfg *config.Config) error {
 		return err
 	}
 
+	// Get leader controller.
 	var controllerConn *kafka.Conn
 	controllerConn, err = kafka.Dial("tcp", net.JoinHostPort(controller.Host, strconv.Itoa(controller.Port)))
 	if err != nil {
@@ -42,24 +44,19 @@ func (k Kafka) CreateKafkaTopics(cfg *config.Config) error {
 	}
 	defer controllerConn.Close()
 
-	/* 
-	Config for each topic must be explicitly set for the following reasons:
-	- You cannot decrease the number of partitions 
-	- Increasing the partitions will force a rebalance
-	- ReplicationFactor cannot be greater than the number of brokers available
-	*/
-	topicConfigs := []kafka.TopicConfig{
-		{
-			Topic:  Messages.String(),
-			NumPartitions: 10,
-			ReplicationFactor: 1,
-		},
-	}
-
-	if err := controllerConn.CreateTopics(topicConfigs...); err != nil {
+	// Create topics.
+	var tcfgs []kafka.TopicConfig
+	for _, c := range topicCfgs {
+		temp := kafka.TopicConfig{
+			Topic: c.Topic,
+			NumPartitions: c.Partitions,
+			ReplicationFactor: c.ReplicationFactor,
+		}
+		tcfgs = append(tcfgs, temp)
+	} 
+	if err := controllerConn.CreateTopics(tcfgs...); err != nil {
 		return err
 	}
 
 	return nil
 }
-

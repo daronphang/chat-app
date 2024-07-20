@@ -58,4 +58,3 @@ func byteCountIEC(b int) string {
 	return fmt.Sprintf("%.1f %ciB",
 		float64(b)/float64(div), "KMGTPE"[exp])
 }
-

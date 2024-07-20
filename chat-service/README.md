@@ -5,6 +5,7 @@ Responsibilities of chat service are as follows:
 - Maintains websocket connection with client
 - Handles sender message by pushing to Kafka queue and message acknowledgement
 - Handles messages from other chat servers by forwarding them to appropriate client
+- For multiple devices support, assume that user will be in the same location and all devices are connected to the same server; maintain a session of max_message_id for user
 
 ## Development
 
@@ -28,7 +29,7 @@ $ go generate ./internal # once wire_gen.go is created, can regenerate using thi
 
 ```sh
 $ cd path/to/root/directory
-$ go run cmd/rest/main.go
+$ go run cmd/http/main.go
 ```
 
 ## Testing

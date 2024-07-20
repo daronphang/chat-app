@@ -7,11 +7,7 @@ import (
 	"fmt"
 )
 
-
-
-type WebSocketer struct {
-	Hub *Hub
-}
+type WebSocketer struct {}
 
 type MissingClientError struct {
 	Message string
@@ -22,30 +18,30 @@ func (e MissingClientError) Error() string {
 }
 
 func New() WebSocketer {
-	return WebSocketer{Hub: NewHub()}
+	return WebSocketer{}
 }
 
-
-func (ws WebSocketer) SendMsgToClient(ctx context.Context, arg domain.ReceiverMessage) error {
-	// Chat servers communicate with each other via HTTP calls.
-	// For sender, closing of channel is not needed once it is done.
-	// When websocket connection is closed, the client will be removed.
+func (ws WebSocketer) SendMsgToClientDevices(ctx context.Context, clientId string, arg domain.Message) error {
+	// For sending or receiving message, to broadcast message to all client devices.
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
-	client, ok := ws.Hub.clients[arg.ReceiverID]
+
+	client, ok := hub.clients[clientId]
 	if !ok {
 		return MissingClientError{
-			Message: fmt.Sprintf("client %v is not connected to chat service: %v", arg.ReceiverID, arg.Message.MessageID),
+			Message: fmt.Sprintf("client %v is not connected to chat service: %v", clientId, arg.MessageID),
 		}
 	}
 
-	data, err := json.Marshal(arg.Message)
+	data, err := json.Marshal(arg)
 	if err != nil {
 		return err
 	}
 
-	client.send <- data
+	for _, device := range client.devices {
+		device.send <- data
+	}
+
 	return nil
 }
-

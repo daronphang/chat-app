@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/denisbrodbeck/machineid"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 )
@@ -50,22 +51,23 @@ func (e WebSocketError) Error() string {
 // The application runs readPump in a per-connection goroutine. The application
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
-func (c *Client) readPump() {
+func (d *Device) readPump() {
 	defer func() {
-		c.conn.Close()
+		d.conn.Close()
+		hub.unregisterDevice <- d
 	}()
 
-	c.conn.SetReadLimit(maxMessageSize)
-	c.conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	d.conn.SetReadLimit(maxMessageSize)
+	d.conn.SetReadDeadline(time.Now().Add(pongWait))
+	d.conn.SetPongHandler(func(string) error { d.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	
 	for {
-		_, msg, err := c.conn.ReadMessage()
+		_, msg, err := d.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure){
 				logger.Error("unexpected websocket close error", zap.String("trace", err.Error()))
 			}
-			break
+			return
 		} 
 		
 		// Trim and compact JSON.
@@ -81,34 +83,34 @@ func (c *Client) readPump() {
 		msg = buffer.Bytes()
 
 		// Send message to hub.
-		c.hub.sendMsg <- msg
+		d.hub.sendMsg <- msg
 	}
 }
 
-func (c *Client) writePump() {
+func (d *Device) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 
 	defer func() {
 		ticker.Stop()
-		c.conn.Close()
+		d.conn.Close()
 	}()
 
 	for {
 		select {
-		case data, ok := <- c.send:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+		case data, ok := <- d.send:
+			d.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// Channel is closed.
 				return 
 			}
-			if err := c.conn.WriteMessage(websocket.TextMessage, data); err != nil {
+			if err := d.conn.WriteMessage(websocket.TextMessage, data); err != nil {
 				return
 			}
 		case <- ticker.C:
 			// To keep connection alive by sending ping to client,
 			// and preventing readTimeout.
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+			d.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := d.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				// Connection is closed.
 				return
 			}
@@ -116,7 +118,7 @@ func (c *Client) writePump() {
 	}
 }
 
-func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func ServeWs(w http.ResponseWriter, r *http.Request) {
     conn, err := upgrader.Upgrade(w, r, nil)
     if err != nil {
         logger.Error(
@@ -127,23 +129,33 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
     }
 
 	params := r.URL.Query()
-	receiverID := params.Get("client")
-	if receiverID == "" {
+	clientID := params.Get("client")
+	if clientID == "" {
 		logger.Error("missing client in websocket url")
 		conn.Close()
 		return 
 	}
 
-	client := &Client{
+	deviceID, err := machineid.ID()
+	if err != nil {
+		logger.Error(
+			"unable to generate device id",
+			zap.String("trace", err.Error()),
+		)
+		return
+	}
+
+	device := &Device{
 		hub: hub,
-		clientID: receiverID,
+		clientID: clientID,
+		deviceID: deviceID,
 		conn: conn, 
 		send: make(chan []byte),
 	}
-	hub.register <- client
+	hub.registerDevice <- device
 
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.
-	go client.readPump()
-	go client.writePump()
+	go device.readPump()
+	go device.writePump()
 }

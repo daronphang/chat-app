@@ -7,7 +7,7 @@ import (
 
 type RequestValidationError struct {
 	Message string `json:"message" default:"validation error"`
-	Error string `json:"error"`
+	Error 	string `json:"error"`
 }
 
 func newRequestValidationError(c echo.Context, code int, err error) error {

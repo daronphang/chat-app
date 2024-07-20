@@ -6,16 +6,16 @@ import (
 )
 
 type EventBroker interface {
-	PublishMessage(ctx context.Context, arg domain.Message) error
+	PublishMessage(ctx context.Context, partitionKey string, topic string, arg interface{}) error
 }
 
 type ServerClienter interface {
-	SendMsgToClient(ctx context.Context, arg domain.ReceiverMessage) error
+	SendMsgToClientDevices(ctx context.Context, clientId string, arg domain.Message) error
 }
 
 type UseCaseService struct {
-	EventBroker EventBroker
-	ServerClienter ServerClienter
+	EventBroker 	EventBroker
+	ServerClienter 	ServerClienter
 }
 
 func NewUseCaseService( eb EventBroker, sc ServerClienter) *UseCaseService {
