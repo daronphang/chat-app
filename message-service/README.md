@@ -12,7 +12,6 @@ Other design considerations to take note of:
 - A group chat can be duplicated i.e. multiple groups having the same users inside
 - 1-on-1 chats musts have a single channelId; for new chats, need to perform additional logic to check if the other user has already created
 - For new chats created, need to broadcast to user's devices
-- If two message sent in sequence to a user, and the second message arrives first, there is a mismatch in ordering; this can be resolved with prevMsgId where if an inconsistency is found, a history catch-up can be requested
 
 ## Development
 

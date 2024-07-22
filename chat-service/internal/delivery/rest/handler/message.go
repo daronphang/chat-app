@@ -20,3 +20,7 @@ func (h *RestHandler) SendMsgToClient(c echo.Context) error {
 	}
 	return c.String(http.StatusOK, "message received")
 }
+
+func (h *RestHandler) UploadMedia(c echo.Context) error {
+	return c.String(http.StatusOK, "media received")
+}

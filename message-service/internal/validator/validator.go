@@ -36,6 +36,21 @@ func UnmarshalAndValidate(p []byte, v interface{}) error {
 	return nil
 }
 
+func ValidateStruct(i interface{}) error {
+	if err := cv.Validator.Struct(i); err != nil {
+		// Returns an array of type FieldError
+		var ve validator.ValidationErrors
+		var errorMsg string
+		if !errors.As(err, &ve) {
+			errorMsg = err.Error()
+		} else {
+			errorMsg = flattenAndTranslateErrors(&ve)
+		}
+	  return errors.New(errorMsg)
+	}
+	return nil
+}
+
 func (cv *CustomValidator) Validate(i interface{}) error {
 	if err := cv.Validator.Struct(i); err != nil {
 		// Returns an array of type FieldError
@@ -49,7 +64,7 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 	  return errors.New(errorMsg)
 	}
 	return nil
-  }
+}
 
 // Substitutes tag specified in struct for error message if thrown
 func msgForTag(fe validator.FieldError) string {

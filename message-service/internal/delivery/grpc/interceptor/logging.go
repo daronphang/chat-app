@@ -64,7 +64,7 @@ func LogAdditionalFields(ctx context.Context, c interceptors.CallMeta) logging.F
 		if err != nil {
 			return fields
 		}
-		fields = logging.Fields.AppendUnique(fields, logging.Fields{"payload", string(b)})
+		fields = logging.Fields.AppendUnique(fields, logging.Fields{"payload", p})
 		fields = logging.Fields.AppendUnique(fields, logging.Fields{"bodySize", byteCountIEC(len(b))})
 	}
 

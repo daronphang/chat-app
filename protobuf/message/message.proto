@@ -9,11 +9,12 @@ import "common/common.proto";
 service Message {
     rpc heartbeat(google.protobuf.Empty) returns (common.HeartBeat) {}
     rpc getLatestMessages(MessageQuery) returns (Messages) {}
+    rpc AddUsersToChannel(UserChannelRequest) returns (common.MessageResponse) {}
 }
 
 message MessageQuery {
     string channelId = 1;
-    uint64 fromMessageId = 2;
+    uint64 lastMessageId = 3;
 } 
 
 message Messages {
@@ -21,11 +22,15 @@ message Messages {
 
     message Message {
         uint64 messageId = 1;
-        uint64 previousMessageId = 2;
         string channelId = 3;
         string senderId = 4;
-        string type = 5;
+        string messageType = 5;
         string content = 6;
         string createdAt = 7;
     }
+}
+
+message UserChannelRequest {
+    string channelId = 1;
+    repeated string userIds = 2;
 }

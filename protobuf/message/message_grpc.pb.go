@@ -26,6 +26,7 @@ const _ = grpc.SupportPackageIsVersion7
 type MessageClient interface {
 	Heartbeat(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*common.HeartBeat, error)
 	GetLatestMessages(ctx context.Context, in *MessageQuery, opts ...grpc.CallOption) (*Messages, error)
+	AddUsersToChannel(ctx context.Context, in *UserChannelRequest, opts ...grpc.CallOption) (*common.MessageResponse, error)
 }
 
 type messageClient struct {
@@ -54,12 +55,22 @@ func (c *messageClient) GetLatestMessages(ctx context.Context, in *MessageQuery,
 	return out, nil
 }
 
+func (c *messageClient) AddUsersToChannel(ctx context.Context, in *UserChannelRequest, opts ...grpc.CallOption) (*common.MessageResponse, error) {
+	out := new(common.MessageResponse)
+	err := c.cc.Invoke(ctx, "/message.Message/AddUsersToChannel", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MessageServer is the server API for Message service.
 // All implementations must embed UnimplementedMessageServer
 // for forward compatibility
 type MessageServer interface {
 	Heartbeat(context.Context, *emptypb.Empty) (*common.HeartBeat, error)
 	GetLatestMessages(context.Context, *MessageQuery) (*Messages, error)
+	AddUsersToChannel(context.Context, *UserChannelRequest) (*common.MessageResponse, error)
 	mustEmbedUnimplementedMessageServer()
 }
 
@@ -72,6 +83,9 @@ func (UnimplementedMessageServer) Heartbeat(context.Context, *emptypb.Empty) (*c
 }
 func (UnimplementedMessageServer) GetLatestMessages(context.Context, *MessageQuery) (*Messages, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLatestMessages not implemented")
+}
+func (UnimplementedMessageServer) AddUsersToChannel(context.Context, *UserChannelRequest) (*common.MessageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddUsersToChannel not implemented")
 }
 func (UnimplementedMessageServer) mustEmbedUnimplementedMessageServer() {}
 
@@ -122,6 +136,24 @@ func _Message_GetLatestMessages_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Message_AddUsersToChannel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserChannelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MessageServer).AddUsersToChannel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/message.Message/AddUsersToChannel",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MessageServer).AddUsersToChannel(ctx, req.(*UserChannelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Message_ServiceDesc is the grpc.ServiceDesc for Message service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -136,6 +168,10 @@ var Message_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "getLatestMessages",
 			Handler:    _Message_GetLatestMessages_Handler,
+		},
+		{
+			MethodName: "AddUsersToChannel",
+			Handler:    _Message_AddUsersToChannel_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

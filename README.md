@@ -152,9 +152,13 @@ A heartbeat mechanism can be implemented to determine if the client is still con
 6. If user B is online, Chat server 2 pulls message from queue and sends message to user B via websocket connection
 7. If user B is offline, a push notification is sent to user B
 
+## Message acknowledgement
+
+When the message is successfully pushed to the broker queue, a message acknowledgement back to the client will be sent. If the acknowledgement message does not include a messageId, the message failed to deliver.
+
 ## Message synchronization across multiple devices
 
-We make the assumption that the user will be in the same location and hence, all devices are connected to the same chat server. When a message is sent or received by any device, it will be broadcasted to all other devices.
+Each user will have a dedicated queue of inbound messages which will act as the single source of truth for new messages. If a user has sent a message from one device, once the message has been delivered to the recipients, it will be pushed to the user's queue for confirmation.
 
 ## Message out-of-order or failed delivery
 

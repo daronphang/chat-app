@@ -1,13 +1,13 @@
 package domain
 
 var (
-	MessageTopicConfig = TopicConfig{
+	MessageTopicConfig = BrokerTopicConfig{
 		Topic: 				"message",
 		Partitions: 		10,
 		ReplicationFactor: 	1,
 		ConsumerGroupID: 	"message1",
 	}
-	UserTopicConfig = TopicConfig{
+	UserTopicConfig = BrokerTopicConfig{
 		Topic: 				"", // UserId.
 		Partitions: 		1,
 		ReplicationFactor: 	1,
@@ -26,7 +26,7 @@ Topics are explicitly configured for the following reasons:
 
 - Having different consumer groups will read from the same partition and result in duplication
 */
-type TopicConfig struct {
+type BrokerTopicConfig struct {
 	Topic 				string
 	Partitions 			int
 	ReplicationFactor 	int
@@ -34,12 +34,12 @@ type TopicConfig struct {
 }
 type Message struct {
 	MessageID 			uint64 `json:"messageId"`
-	PreviousMessageID 	uint64 `json:"previousMessageId" validate:"required"`
 	ChannelID 			string `json:"channelId" validate:"required"` 
 	SenderID 			string `json:"senderId" validate:"required"`
-	Type 				string `json:"type" validate:"required"`
+	MessageType 		string `json:"messageType" validate:"required"`
 	Content 			string `json:"content" validate:"required"`
-	CreatedAt 			string `json:"createdAt" validate:"required"`
+	CreatedAt 			string `json:"createdAt"`
+	TempID				int64  `json:"tempId,omitempty"` // For client (sender) to be aware of msg ack.
 }
 
 type ReceiverMessage struct {

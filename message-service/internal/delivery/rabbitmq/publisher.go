@@ -9,6 +9,13 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+type PublishError struct {
+	message string
+}
+func (e PublishError) Error() string {
+	return e.message
+}
+
 // UnsafePush will push to the queue without checking for
 // confirmation. It returns an error if it fails to connect.
 // No guarantees are provided for whether the server will
@@ -67,7 +74,7 @@ func (client *RabbitMQClient) PublishMessage(ctx context.Context, queue string, 
 			case <- client.done:
 				return PublishError{message: fmt.Sprintf("failed to push as server is shutting down: %v", err)}
 			case <- time.After(delay):
-				delay *= exponentialBackoff
+				delay *= time.Duration(exponentialBackoff)
 				errCount += 1
 			}
 			continue

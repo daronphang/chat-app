@@ -3,7 +3,6 @@ module chat-service
 go 1.22.2
 
 require (
-	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/godruoyi/go-snowflake v0.0.2
 	github.com/google/wire v0.6.0

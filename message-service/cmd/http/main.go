@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"message-service/internal"
 	"message-service/internal/config"
-	db "message-service/internal/database"
 	g "message-service/internal/delivery/grpc"
+	"message-service/internal/delivery/kafka"
 	rmq "message-service/internal/delivery/rabbitmq"
+	"message-service/internal/repository"
 	"message-service/internal/usecase"
 	"net"
 	"os"
@@ -35,28 +36,11 @@ func main() {
 		logger.Fatal("error setting up logger", zap.String("trace", err.Error()))
     }
 
-	// Connect to Cassandra.
-	cluster := db.ProvideCluster(cfg)
-
-	// Create keyspace if required.
-	if err := db.CreateKeyspace(ctx, cluster); err != nil {
-		logger.Fatal("error creating keyspace", zap.String("trace", err.Error()))
-	}
-
-	// Migrate db.
-	if err := db.MigrateDB(cfg, logger); err != nil {
-		logger.Fatal("error migrating DB", zap.String("trace", err.Error()))
-	}
-
-	// Create session.
-	_, err = db.ProvideDBSession(cfg, cluster)
-	if err != nil {
-		logger.Fatal("error creating DB session", zap.String("trace", err.Error()))
-	}
-
 	// Create usecase with dependencies.
+	db := repository.New(ctx, cfg, logger)
 	mb := &rmq.RabbitMQClient{} // Dummy as it is not needed in server.
-	uc := usecase.NewUseCaseService(mb)
+	eb := &kafka.KafkaClient{}	// Dummy as it is not needed in server.
+	uc := usecase.NewUseCaseService(mb, eb, db)
 
 	// Listen to protocol and port.
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", cfg.Port))
@@ -83,11 +67,13 @@ func main() {
 	<-ctx.Done()
 	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	gracefulShutdown(s)
+	gracefulShutdown(s, db)
 }
 
-func gracefulShutdown(s *grpc.Server) {
+func gracefulShutdown(s *grpc.Server, db *repository.Querier) {
 	fmt.Println("performing graceful shutdown...")
 
 	s.GracefulStop()
+
+	db.Close()
 }

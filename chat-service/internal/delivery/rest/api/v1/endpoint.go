@@ -12,4 +12,5 @@ func RegisterBaseRoutes(g *echo.Group, h *handler.RestHandler) {
 
 func RegisterMessageRoutes(g *echo.Group, h *handler.RestHandler) {
 	g.POST("", h.SendMsgToClient)
+	g.POST("/media", h.UploadMedia)
 }

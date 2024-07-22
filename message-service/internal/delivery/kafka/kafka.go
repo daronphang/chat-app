@@ -24,7 +24,7 @@ func New(r *kafka.Reader, w *kafka.Writer) *KafkaClient {
 	return &KafkaClient{Reader: r, Writer: w}
 }
 
-func CreateKafkaTopics(cfg *config.Config) error {
+func CreateKafkaTopic(cfg *config.Config, topicCfg domain.BrokerTopicConfig) error {
 	// Connect to cluster.
 	conn, err := kafka.Dial("tcp", strings.Split(cfg.Kafka.BrokerAddresses, ",")[0])
 	if err != nil {
@@ -45,17 +45,16 @@ func CreateKafkaTopics(cfg *config.Config) error {
 	}
 	defer controllerConn.Close()
 
-	// Create topics.
-	topicConfigs := []kafka.TopicConfig{
-		{
-			Topic: domain.MessageTopicConfig.Topic,
-			NumPartitions: domain.MessageTopicConfig.Partitions,
-			ReplicationFactor: domain.MessageTopicConfig.ReplicationFactor,
+	// Create topic.
+	if err := controllerConn.CreateTopics(
+		kafka.TopicConfig{
+			Topic: topicCfg.Topic,
+			NumPartitions: topicCfg.Partitions,
+			ReplicationFactor: topicCfg.ReplicationFactor,
 		},
-	}
-	if err := controllerConn.CreateTopics(topicConfigs...); err != nil {
+	); err != nil {
 		return err
 	}
-
+	
 	return nil
 }

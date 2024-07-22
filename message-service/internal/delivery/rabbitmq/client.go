@@ -2,7 +2,6 @@ package rmq
 
 import (
 	"fmt"
-	"message-service/internal/config"
 	"message-service/internal/domain"
 	"sync"
 	"time"
@@ -17,114 +16,6 @@ const (
 	resendDelay = 2 * time.Second
 	exponentialBackoff = 2
 )
-
-type PublishError struct {
-	message string
-}
-func (e PublishError) Error() string {
-	return e.message
-}
-
-type RabbitMQHub struct {
-	clients			[]*RabbitMQClient
-	connection		*amqp.Connection
-	done			chan bool
-	notifyConnClose chan *amqp.Error
-	logger 			*zap.Logger
-}
-
-func NewHub(logger *zap.Logger) *RabbitMQHub {
-	hub := &RabbitMQHub{
-		logger: logger,
-		done: make(chan bool),
-	}
-	return hub
-}
-
-func (hub *RabbitMQHub) AddClient(client *RabbitMQClient) {
-	hub.clients = append(hub.clients, client)
-}
-
-// Goroutines will maintain a separate channel, but share the same TCP connection.
-func (hub *RabbitMQHub) connect(addr string) (*amqp.Connection, error) {
-	// amqp://guest:guest@localhost:5672/
-	conn, err := amqp.Dial(addr)
-
-	if err != nil {
-		return nil, err
-	}
-	return conn, nil
-}
-
-func (hub *RabbitMQHub) updateConnection(conn *amqp.Connection) {
-	hub.connection = conn
-	hub.notifyConnClose = make(chan *amqp.Error, 1)
-	hub.connection.NotifyClose(hub.notifyConnClose)
-}
-
-// To be executed in a goroutine.
-// Handles reconnection with exponential backoff.
-// Notifies all clients of new connection if required.
-func (hub *RabbitMQHub) Run(cfg *config.Config) {
-	addr := fmt.Sprintf("amqp://%s", cfg.RabbitMQ.HostAddress)
-	delay := reconnectDelay
-	for {
-		conn, err := hub.connect(addr)
-		if err != nil {
-			hub.logger.Warn(
-				fmt.Sprintf("rabbitmq connection failed, retrying after %v...", delay),
-				zap.String("trace", err.Error()),
-			)
-			select {
-			case <-hub.done:
-				return
-			case <-time.After(delay):
-				delay *= exponentialBackoff
-			}
-			continue
-		}
-		// Reset delay after connection succeeded.
-		delay = reconnectDelay
-
-		hub.updateConnection(conn)
-		
-		// Notify clients of new connection.
-		for _, client := range hub.clients {
-			client.updateConnection(conn)
-		}
-		
-		select {
-		case <-hub.done:
-			return
-		case <- hub.notifyConnClose:
-			for _, client := range hub.clients {
-				client.notifyConnClose <- true
-			}
-		}
-	}
-}
-
-func (hub *RabbitMQHub) Close() {
-	for _, client := range hub.clients {
-		if !client.isReady {
-			return
-		}
-		close(client.done)
-		if err := client.channel.Close(); err != nil {
-			client.logger.Error(
-				"unable to close rabbitmq channel",
-				zap.String("trace", err.Error()),
-			)
-		}
-	}
-
-	if err := hub.connection.Close(); err != nil {
-		hub.logger.Error(
-			"unable to close rabbitmq connection",
-			zap.String("trace", err.Error()),
-		)
-	}
-}
 
 type RabbitMQClient struct {
 	m               *sync.Mutex
@@ -213,7 +104,7 @@ func (client *RabbitMQClient) updateChannel(ch *amqp.Channel) {
 }
 
 func (client *RabbitMQClient) handleReInitChannel() bool {
-	<- client.notifyConnOpen 
+	<-client.notifyConnOpen 
 	delay := reInitDelay
 	for {
 		client.m.Lock()
@@ -232,7 +123,7 @@ func (client *RabbitMQClient) handleReInitChannel() bool {
 			case <-client.notifyConnClose:
 				return false
 			case <-time.After(delay):
-				delay *= exponentialBackoff
+				delay *= time.Duration(exponentialBackoff)
 			}
 			continue
 		}
@@ -244,14 +135,14 @@ func (client *RabbitMQClient) handleReInitChannel() bool {
 		client.m.Unlock()
 
 		select {
-		case <- client.done:
+		case <-client.done:
 			return true
 		case <-client.notifyConnClose:
 			client.m.Lock()
 			client.isReady = false
 			client.m.Unlock()
 			return false
-		case <- client.notifyChanClose:
+		case <-client.notifyChanClose:
 		}
 	}
 }
@@ -261,6 +152,8 @@ func NewClient(logger *zap.Logger) *RabbitMQClient {
 		m: &sync.Mutex{},
 		logger: logger,
 		done: make(chan bool),
+		notifyConnOpen: make(chan bool),
+		notifyConnClose: make(chan bool),
 	}
 
 	go func() {

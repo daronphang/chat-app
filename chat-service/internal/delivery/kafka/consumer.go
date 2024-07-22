@@ -45,7 +45,7 @@ func (c *KafkaConsumer) ConsumeMsgFromUserTopic(ctx context.Context, uc *usecase
 		m, err := c.reader.ReadMessage(ctx)
 		if err != nil {
 			logger.Error(
-				"error reading message from messages topic",
+				"error reading from messages topic",
 				zap.String("trace", err.Error()),
 			)
 			if err := c.reader.Close(); err != nil {
@@ -60,16 +60,16 @@ func (c *KafkaConsumer) ConsumeMsgFromUserTopic(ctx context.Context, uc *usecase
 		msg := new(domain.Message)
 		if err := cv.UnmarshalAndValidate(m.Value, msg); err != nil {
 			logger.Error(
-				"error unmarshaling Kafka message into JSON",
+				"error unmarshaling message from topic into JSON",
 				zap.String("payload", string(m.Value)),
 				zap.String("trace", err.Error()),
 			)
 			continue
 		}
 	
-		if err := uc.SendMsgToClientDevices(ctx, c.client, *msg); err != nil {
+		if err := uc.ForwardMsgToClient(ctx, c.client, *msg); err != nil {
 			logger.Error(
-				"error sending message to client devices",
+				"error forwarding message to client",
 				zap.String("payload", string(m.Value)),
 				zap.String("trace", err.Error()),
 			)

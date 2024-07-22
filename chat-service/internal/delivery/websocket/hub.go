@@ -32,7 +32,7 @@ type Client struct {
 
 type Hub struct {
 	clients 			map[string]*Client
-	sendMsg 			chan []byte	// Inbound messages from the clients.
+	receive 			chan []byte	// Buffered channel of inbound messages.
 	registerDevice 		chan *Device
 	unregisterDevice 	chan *Device
 	uc 					*usecase.UseCaseService
@@ -40,7 +40,7 @@ type Hub struct {
 
 func NewHub(uc *usecase.UseCaseService) *Hub {
 	hub = &Hub{
-		sendMsg:  			make(chan []byte),
+		receive:  			make(chan []byte),
 		registerDevice:   	make(chan *Device),
 		unregisterDevice: 	make(chan *Device),
 		clients:    		make(map[string]*Client),
@@ -49,40 +49,37 @@ func NewHub(uc *usecase.UseCaseService) *Hub {
 	return hub
 }
 
-func (h *Hub) handleSenderMsg(ctx context.Context, msg []byte) {
-	// Validate sender message, push to queue and send ack.
-	// If msg failed to deliver, message returned to the sender
-	// will not include a msgID.
+func (h *Hub) handleInboundMsg(ctx context.Context, msg []byte) {
+	// Validate inbound message, push to queue and send ack.
 	v := new(domain.Message)
 	if err := cv.UnmarshalAndValidate(msg, v); err != nil {
 		logger.Error(
-			fmt.Sprintf("validation failed for sender message: %v", string(msg)),
+			fmt.Sprintf("validation failed for inbound message: %v", string(msg)),
 		)
 		return
 	}
 
-	rv, err := h.uc.AckSenderMsg(ctx, *v)
+	rv, err := h.uc.SendMessage(ctx, *v)
 	if err != nil {
 		logger.Error(
-			"failed to ack sender message", 
+			"failed to send inbound message", 
 			zap.String("payload", string(msg)),
 			zap.String("trace", err.Error()),
 		)
+		return
 	}
 	
-	if err := h.uc.SendMsgToClientDevices(ctx, rv.SenderID, rv); err != nil {
+	if err := h.uc.ForwardMsgToClient(ctx, rv.SenderID, rv); err != nil {
 		logger.Error(
-			"failed to send ack to sender",
+			"failed to ack inbound message to sender",
 			zap.String("payload", string(msg)),
 			zap.String("trace", err.Error()),
 		)
 	}
 }
 
-func (h *Hub) createNewClient(ctx context.Context, cfg *config.Config, device *Device) error {
-	// For each new client, to consume messages from client topic.
-	// One reader opened for all devices.
-	// Create topic first.
+func (h *Hub) createNewClient(cfg *config.Config, device *Device) error {
+	// Ensure topic is created first before reading.
 	tcfg := domain.UserTopicConfig
 	tcfg.Topic = device.clientID
 	tcfg.ConsumerGroupID = device.deviceID
@@ -98,9 +95,6 @@ func (h *Hub) createNewClient(ctx context.Context, cfg *config.Config, device *D
 	h.clients[client.clientID] = client	
 	client.devices[device.deviceID] = device
 
-	// Consume from user topic.
-	consumer := kafka.NewConsumer(cfg, device.deviceID, device.clientID)
-	go consumer.ConsumeMsgFromUserTopic(ctx, h.uc)
 	return nil
 }
 
@@ -110,20 +104,23 @@ func (h *Hub) Run(ctx context.Context, cfg *config.Config) {
 		case <- ctx.Done():
 			return
 		case device := <-h.registerDevice:
+			// TODO: Take note of Kafka dependency in this layer.
 			client, ok := h.clients[device.clientID]
 			if !ok {
-				if err := h.createNewClient(ctx, cfg, device); err != nil {
+				if err := h.createNewClient(cfg, device); err != nil {
 					logger.Error(
 						fmt.Sprintf("unable to create client for %v", device.clientID),
 						zap.String("trace", err.Error()),
 					)
-
-					// Close websocket connection.
 					device.conn.Close()
 				}
 			} else {
 				client.devices[device.deviceID] = device
 			}
+			// Each device will consume from the user topic at different 
+			// offset values. Hence, a new reader is required.
+			consumer := kafka.NewConsumer(cfg, device.deviceID, device.clientID)
+			go consumer.ConsumeMsgFromUserTopic(ctx, h.uc)
 		case device := <-h.unregisterDevice:
 			client, ok := h.clients[device.clientID]
 			if !ok {
@@ -138,15 +135,15 @@ func (h *Hub) Run(ctx context.Context, cfg *config.Config) {
 				// Remove device as client still has other devices connected.
 				delete(client.devices, device.deviceID)
 			}
-		case msg := <-h.sendMsg:
+		case msg := <-h.receive:
+			// Hub handles all inbound messages for all websocket connections.
 			maxGoroutines := 10
 			guard := make(chan bool, maxGoroutines)
 			guard <- true
 			go func() {
-				h.handleSenderMsg(ctx, msg)
+				h.handleInboundMsg(ctx, msg)
 				<- guard
 			}()
-
 		}
 	}
 }

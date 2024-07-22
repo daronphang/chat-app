@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/denisbrodbeck/machineid"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 )
@@ -70,20 +69,18 @@ func (d *Device) readPump() {
 			return
 		} 
 		
-		// Trim and compact JSON.
 		msg = bytes.TrimSpace(bytes.Replace(msg, newline, space, -1))
 		buffer := new(bytes.Buffer)
 		if err := json.Compact(buffer, msg); err != nil {
 			logger.Error(
-				"unable to compact sender message in JSON",
+				"unable to compact inbound message in JSON",
 				zap.String("payload", string(msg)),
 			)
 			continue
 		}
 		msg = buffer.Bytes()
 
-		// Send message to hub.
-		d.hub.sendMsg <- msg
+		d.hub.receive <- msg
 	}
 }
 
@@ -98,11 +95,11 @@ func (d *Device) writePump() {
 	for {
 		select {
 		case data, ok := <- d.send:
-			d.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// Channel is closed.
 				return 
 			}
+			d.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := d.conn.WriteMessage(websocket.TextMessage, data); err != nil {
 				return
 			}
@@ -111,7 +108,6 @@ func (d *Device) writePump() {
 			// and preventing readTimeout.
 			d.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := d.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				// Connection is closed.
 				return
 			}
 		}
@@ -131,17 +127,15 @@ func ServeWs(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	clientID := params.Get("client")
 	if clientID == "" {
-		logger.Error("missing client in websocket url")
+		logger.Error("missing client in query params of websocket url")
 		conn.Close()
 		return 
 	}
 
-	deviceID, err := machineid.ID()
-	if err != nil {
-		logger.Error(
-			"unable to generate device id",
-			zap.String("trace", err.Error()),
-		)
+	deviceID := params.Get("device")
+	if deviceID == "" {
+		logger.Error("missing device in query params of websocket url")
+		conn.Close()
 		return
 	}
 

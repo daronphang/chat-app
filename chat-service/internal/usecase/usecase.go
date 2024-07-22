@@ -10,7 +10,7 @@ type EventBroker interface {
 }
 
 type ServerClienter interface {
-	SendMsgToClientDevices(ctx context.Context, clientId string, arg domain.Message) error
+	DeliverOutboundMsg(ctx context.Context, clientId string, arg domain.Message) error
 }
 
 type UseCaseService struct {

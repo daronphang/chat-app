@@ -11,6 +11,11 @@ var (
 		Queue: 			"notificationExchange",
 		RoutingKeys: 	[]string{"email"},
 	}
+	UserTopicConfig = BrokerTopicConfig{
+		Topic: 				"", // UserId.
+		Partitions: 		1,
+		ReplicationFactor: 	1,
+	}
 )
 
 /*
@@ -38,15 +43,19 @@ type BrokerQueueConfig struct {
 
 type Message struct {
 	MessageID 			uint64 `json:"messageId"`
-	PreviousMessageID 	uint64 `json:"previousMessageId" validate:"required"`
 	ChannelID 			string `json:"channelId" validate:"required"` 
 	SenderID 			string `json:"senderId" validate:"required"`
-	Type 				string `json:"type" validate:"required"`
+	MessageType 		string `json:"messageType" validate:"required"`
 	Content 			string `json:"content" validate:"required"`
-	CreatedAt 			string `json:"createdAt" validate:"required"`
+	CreatedAt 			string `json:"createdAt"`
 }
 
-type ReceiverMessage struct {
-	ReceiverID 	string 	`json:"receiverId" validate:"required"`
-	Message 	Message `json:"message" validate:"required"`
+type UserChannelRequest struct {
+	ChannelID 	string 		`validate:"required"`
+	UserIDs		[]string 	`validate:"required"`
+}
+
+type LatestMessagesRequest struct {
+	ChannelID		string	`validate:"required"`
+	LastMessageID 	uint64 	`validate:"required"`
 }

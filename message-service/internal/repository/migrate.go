@@ -1,4 +1,4 @@
-package db
+package repository
 
 import (
 	"fmt"
@@ -52,7 +52,7 @@ func provideMigrateInstance(d database.Driver) (*migrate.Migrate, error) {
 	return m, nil
 }
 
-func MigrateDB(cfg *config.Config, logger *zap.Logger) error {
+func migrateDB(cfg *config.Config, logger *zap.Logger) error {
 	// Create driver.
 	d, err := provideDriver(cfg)
 	if err != nil {

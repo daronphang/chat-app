@@ -23,7 +23,7 @@ func New(cfg *config.Config) *KafkaClient {
 	return &KafkaClient{Writer: NewWriter(cfg)}
 }
 
-func CreateKafkaTopics(cfg *config.Config, topicCfgs ...domain.TopicConfig) error {
+func CreateKafkaTopics(cfg *config.Config, topicCfgs ...domain.BrokerTopicConfig) error {
 	// Connect to cluster.
 	conn, err := kafka.Dial("tcp", strings.Split(cfg.Kafka.BrokerAddresses, ",")[0])
 	if err != nil {

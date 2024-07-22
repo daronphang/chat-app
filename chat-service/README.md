@@ -3,9 +3,13 @@
 Responsibilities of chat service are as follows:
 
 - Maintains websocket connection with client
-- Handles sender message by pushing to Kafka queue and message acknowledgement
-- Handles messages from other chat servers by forwarding them to appropriate client
-- For multiple devices support, assume that user will be in the same location and all devices are connected to the same server; maintain a session of max_message_id for user
+- Handles outbound messages and acknowledgement
+- Handles inbound messages delivered by other chat servers
+
+Other design considerations to take note of:
+
+- Users can have multiple devices, and may be connected to the same chat server
+- If the same outbound message is received once by the sender, message is successfully sent; if received twice, message is successfully delivered to recipients
 
 ## Development
 

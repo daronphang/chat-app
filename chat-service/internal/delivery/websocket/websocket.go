@@ -21,8 +21,7 @@ func New() WebSocketer {
 	return WebSocketer{}
 }
 
-func (ws WebSocketer) SendMsgToClientDevices(ctx context.Context, clientId string, arg domain.Message) error {
-	// For sending or receiving message, to broadcast message to all client devices.
+func (ws WebSocketer) DeliverOutboundMsg(ctx context.Context, clientId string, arg domain.Message) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -30,7 +29,7 @@ func (ws WebSocketer) SendMsgToClientDevices(ctx context.Context, clientId strin
 	client, ok := hub.clients[clientId]
 	if !ok {
 		return MissingClientError{
-			Message: fmt.Sprintf("client %v is not connected to chat service: %v", clientId, arg.MessageID),
+			Message: fmt.Sprintf("client %v is not connected to chat server: unable to deliver message %v", clientId, arg.MessageID),
 		}
 	}
 
@@ -39,6 +38,7 @@ func (ws WebSocketer) SendMsgToClientDevices(ctx context.Context, clientId strin
 		return err
 	}
 
+	// Each client can have multiple devices connected to the same chat server.
 	for _, device := range client.devices {
 		device.send <- data
 	}

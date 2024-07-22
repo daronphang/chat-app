@@ -2,24 +2,55 @@ package repository
 
 import (
 	"context"
-	"message-service/internal/domain"
+	"fmt"
+	"message-service/internal/config"
+	"strings"
+	"sync"
 
 	"github.com/gocql/gocql"
 )
 
-type Repository interface {
-	GetMessages(ctx context.Context, channelID string) ([]domain.Message, error)
-	CreateMessage(ctx context.Context, arg domain.Message) error
-	AddUsersToChannel(ctx context.Context, channelID string, users []string) error
-	GetUsersByChannel(ctx context.Context, channelID string) ([]string, error)
-	GetChannelsByUser(ctx context.Context, userId string) ([]string, error)
-	GetChannelOfPairUsers(ctx context.Context, userId string, user2Id string) (string, error)
+var (
+	syncOnce sync.Once
+	cluster *gocql.ClusterConfig
+)
+
+const (
+	keyspaceMessage = "message"
+)
+
+func provideCluster(cfg *config.Config) *gocql.ClusterConfig {
+	syncOnce.Do(func() {
+		cluster = gocql.NewCluster(strings.Split(cfg.Cassandra.HostAddresses, ",")...)
+		cluster.ProtoVersion = 4
+		cluster.Consistency = gocql.Quorum
+	})
+	return cluster
 }
 
-type Querier struct {
-	session *gocql.Session
+func createKeyspace(ctx context.Context, cluster *gocql.ClusterConfig) error {
+	session, err := cluster.CreateSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+	if err := session.Query(
+		fmt.Sprintf("CREATE KEYSPACE IF NOT EXISTS %s WITH replication = {'class': 'NetworkTopologyStrategy', 'replication_factor': 1}", keyspaceMessage),
+	).WithContext(ctx).Exec(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func New() *Querier {
-	return &Querier{}
+func provideSession(cluster *gocql.ClusterConfig) (*gocql.Session, error) {
+	// Should not be parameterized but explicitly defined.
+	cluster.Keyspace = keyspaceMessage
+
+	// Session is safe to use from multiple goroutines.
+	session, err := cluster.CreateSession()
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
 }
