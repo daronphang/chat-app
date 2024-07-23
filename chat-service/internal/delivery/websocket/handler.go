@@ -103,6 +103,14 @@ func (d *Device) writePump() {
 			if err := d.conn.WriteMessage(websocket.TextMessage, data); err != nil {
 				return
 			}
+		case data, ok := <- d.presence:
+			if !ok {
+				return 
+			}
+			d.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := d.conn.WriteMessage(websocket.TextMessage, data); err != nil {
+				return
+			}
 		case <- ticker.C:
 			// To keep connection alive by sending ping to client,
 			// and preventing readTimeout.
@@ -145,6 +153,7 @@ func ServeWs(w http.ResponseWriter, r *http.Request) {
 		deviceID: deviceID,
 		conn: conn, 
 		send: make(chan []byte),
+		presence: make(chan []byte),
 	}
 	hub.registerDevice <- device
 

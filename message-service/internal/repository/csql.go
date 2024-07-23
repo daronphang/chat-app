@@ -9,7 +9,11 @@ import (
 )
 
 func (q *Querier) GetLatestMessages(ctx context.Context, channelID string, lastMessageID uint64) ([]domain.Message, error) {
-	stmt := `SELECT messageId, channelId, senderId, messageType, content, createdAt FROM message WHERE channelId = ? and messageId > ?`
+	stmt := `
+	SELECT messageId, channelId, senderId, messageType, content, createdAt 
+	FROM message WHERE channelId = ? and messageId > ?
+	ORDER BY messageId ASC
+	`
 	scanner := q.session.Query(
 		stmt,
 		channelID,
@@ -41,7 +45,29 @@ func (q *Querier) GetLatestMessages(ctx context.Context, channelID string, lastM
 	return items, nil
 }
 
-func (q *Querier) GetUserIdsAssociatedToChannel(ctx context.Context, channelID string) ([]string, error) {
+func (q *Querier) GetUserRelations(ctx context.Context, userID string) ([]string, error) {
+	stmt := `SELECT relationId FROM user_relation WHERE userId = ?`
+	scanner := q.session.Query(
+		stmt,
+		userID,
+ 	).WithContext(ctx).Iter().Scanner()
+
+	 var items []string
+	 for scanner.Next() {
+		 var relationID string
+		 if err := scanner.Scan(&relationID); err != nil {
+			 return nil, err
+		 }
+		 items = append(items, relationID)
+	 }
+	 // scanner.Err() closes the iterator, so scanner nor iter should be used afterwards.
+	 if err := scanner.Err(); err != nil {
+		 return nil, err
+	 }
+	 return items, nil
+}
+
+func (q *Querier) GetUserIdsAssociatedToChannels(ctx context.Context, channelID string) ([]string, error) {
 	stmt := `SELECT userId FROM channel WHERE channelId = ?`
 	scanner := q.session.Query(
 		stmt,
@@ -127,6 +153,12 @@ func (q *Querier) AddUserIDsToChannel(ctx context.Context, channelID string, use
 	VALUES 
 	(?, ?, toTimestamp(now()))
 	`
+	stmt3 := `
+	INSERT INTO user_relation(userId, relationId, createdAt) 
+	VALUES 
+	(?, ?, toTimestamp(now()))
+	`
+
 
 	b := q.session.NewBatch(gocql.LoggedBatch).WithContext(ctx)
 
@@ -144,6 +176,20 @@ func (q *Querier) AddUserIDsToChannel(ctx context.Context, channelID string, use
 			Args:       []interface{}{userID, channelID},
 			Idempotent: true,
 		})
+	}
+
+	if len(userIDs) == 2 {
+		b.Entries = append(b.Entries, gocql.BatchEntry{
+			Stmt:       stmt3,
+			Args:       []interface{}{userIDs[0], userIDs[1]},
+			Idempotent: true,
+		})
+		b.Entries = append(b.Entries, gocql.BatchEntry{
+			Stmt:       stmt3,
+			Args:       []interface{}{userIDs[1], userIDs[0]},
+			Idempotent: true,
+		})
+
 	}
 
 	if err := q.session.ExecuteBatch(b); err != nil {

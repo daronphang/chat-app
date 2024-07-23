@@ -23,6 +23,7 @@ type Device struct {
 	hub 		*Hub
 	conn 		*websocket.Conn
 	send 		chan []byte // Buffered channel of outbound messages.
+	presence	chan []byte
 }
 
 type Client struct {
@@ -46,6 +47,10 @@ func NewHub(uc *usecase.UseCaseService) *Hub {
 		clients:    		make(map[string]*Client),
 		uc: 				uc,
 	}
+	return hub
+}
+
+func ProvideHub() *Hub {
 	return hub
 }
 

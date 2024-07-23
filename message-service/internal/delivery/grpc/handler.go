@@ -17,8 +17,8 @@ var (
 	logger, _ = internal.WireLogger()
 )
 
-func (s *GRPCServer) Heartbeat(_ context.Context, _ *emptypb.Empty) (*common.HeartBeat, error) {
-	return &common.HeartBeat{Message: "message-service is alive"}, nil
+func (s *GRPCServer) Heartbeat(_ context.Context, _ *emptypb.Empty) (*common.MessageResponse, error) {
+	return &common.MessageResponse{Message: "message-service is alive"}, nil
 }
 
 func (s *GRPCServer) GetLatestMessages(ctx context.Context, arg *pb.MessageQuery) (*pb.Messages, error) {
@@ -68,10 +68,17 @@ func (s *GRPCServer) AddUsersToChannel(ctx context.Context, arg *pb.UserChannelR
 	return &common.MessageResponse{Message: "success"}, nil
 }
 
-func (s *GRPCServer) CreateGroupChat() {}
+func (s *GRPCServer) GetUserRelations(ctx context.Context, arg *pb.User) (*pb.Users, error) {
+	rv, err := s.uc.GetUserRelations(ctx, arg.UserId)
+	if err != nil {
+		logger.Error("failed to get user relations", zap.String("trace", err.Error()))
+		return nil, status.Error(2, err.Error())
+	}
+	return &pb.Users{UserIds: rv}, nil
+}
 
 func (s *GRPCServer) JoinGroup() {}
 
 func (s *GRPCServer) LeaveGroup() {}
 
-func (s *GRPCServer) DeleteChat() {}
+func (s *GRPCServer) DeleteChannel() {}

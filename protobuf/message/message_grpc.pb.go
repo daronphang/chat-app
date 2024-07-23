@@ -24,9 +24,10 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MessageClient interface {
-	Heartbeat(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*common.HeartBeat, error)
+	Heartbeat(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*common.MessageResponse, error)
 	GetLatestMessages(ctx context.Context, in *MessageQuery, opts ...grpc.CallOption) (*Messages, error)
 	AddUsersToChannel(ctx context.Context, in *UserChannelRequest, opts ...grpc.CallOption) (*common.MessageResponse, error)
+	GetUserRelations(ctx context.Context, in *User, opts ...grpc.CallOption) (*Users, error)
 }
 
 type messageClient struct {
@@ -37,8 +38,8 @@ func NewMessageClient(cc grpc.ClientConnInterface) MessageClient {
 	return &messageClient{cc}
 }
 
-func (c *messageClient) Heartbeat(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*common.HeartBeat, error) {
-	out := new(common.HeartBeat)
+func (c *messageClient) Heartbeat(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*common.MessageResponse, error) {
+	out := new(common.MessageResponse)
 	err := c.cc.Invoke(ctx, "/message.Message/heartbeat", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -64,13 +65,23 @@ func (c *messageClient) AddUsersToChannel(ctx context.Context, in *UserChannelRe
 	return out, nil
 }
 
+func (c *messageClient) GetUserRelations(ctx context.Context, in *User, opts ...grpc.CallOption) (*Users, error) {
+	out := new(Users)
+	err := c.cc.Invoke(ctx, "/message.Message/GetUserRelations", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MessageServer is the server API for Message service.
 // All implementations must embed UnimplementedMessageServer
 // for forward compatibility
 type MessageServer interface {
-	Heartbeat(context.Context, *emptypb.Empty) (*common.HeartBeat, error)
+	Heartbeat(context.Context, *emptypb.Empty) (*common.MessageResponse, error)
 	GetLatestMessages(context.Context, *MessageQuery) (*Messages, error)
 	AddUsersToChannel(context.Context, *UserChannelRequest) (*common.MessageResponse, error)
+	GetUserRelations(context.Context, *User) (*Users, error)
 	mustEmbedUnimplementedMessageServer()
 }
 
@@ -78,7 +89,7 @@ type MessageServer interface {
 type UnimplementedMessageServer struct {
 }
 
-func (UnimplementedMessageServer) Heartbeat(context.Context, *emptypb.Empty) (*common.HeartBeat, error) {
+func (UnimplementedMessageServer) Heartbeat(context.Context, *emptypb.Empty) (*common.MessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Heartbeat not implemented")
 }
 func (UnimplementedMessageServer) GetLatestMessages(context.Context, *MessageQuery) (*Messages, error) {
@@ -86,6 +97,9 @@ func (UnimplementedMessageServer) GetLatestMessages(context.Context, *MessageQue
 }
 func (UnimplementedMessageServer) AddUsersToChannel(context.Context, *UserChannelRequest) (*common.MessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddUsersToChannel not implemented")
+}
+func (UnimplementedMessageServer) GetUserRelations(context.Context, *User) (*Users, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserRelations not implemented")
 }
 func (UnimplementedMessageServer) mustEmbedUnimplementedMessageServer() {}
 
@@ -154,6 +168,24 @@ func _Message_AddUsersToChannel_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Message_GetUserRelations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(User)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MessageServer).GetUserRelations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/message.Message/GetUserRelations",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MessageServer).GetUserRelations(ctx, req.(*User))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Message_ServiceDesc is the grpc.ServiceDesc for Message service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -172,6 +204,10 @@ var Message_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddUsersToChannel",
 			Handler:    _Message_AddUsersToChannel_Handler,
+		},
+		{
+			MethodName: "GetUserRelations",
+			Handler:    _Message_GetUserRelations_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

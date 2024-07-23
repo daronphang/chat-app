@@ -33,7 +33,7 @@ func (uc *UseCaseService) SaveMessageAndDeliverToRecipients(ctx context.Context,
 	}
 
 	// Get userIds associated to channel.
-	userIDs, err := uc.Repository.GetUserIdsAssociatedToChannel(ctx, arg.ChannelID)
+	userIDs, err := uc.Repository.GetUserIdsAssociatedToChannels(ctx, arg.ChannelID)
 	if err != nil {
 		return err
 	}
@@ -98,6 +98,14 @@ func (uc *UseCaseService) AddUsersToChannel(ctx context.Context, channelID strin
 		return err
 	}
 	return nil
+}
+
+func (uc *UseCaseService) GetUserRelations(ctx context.Context, userID string) ([]string, error) {
+	relations, err := uc.Repository.GetUserRelations(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return relations, nil
 }
 
 func (uc *UseCaseService) JoinGroup(ctx context.Context) {}

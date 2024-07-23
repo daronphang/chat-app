@@ -7,9 +7,10 @@ import "google/protobuf/empty.proto";
 import "common/common.proto";
 
 service Message {
-    rpc heartbeat(google.protobuf.Empty) returns (common.HeartBeat) {}
+    rpc heartbeat(google.protobuf.Empty) returns (common.MessageResponse) {}
     rpc getLatestMessages(MessageQuery) returns (Messages) {}
     rpc AddUsersToChannel(UserChannelRequest) returns (common.MessageResponse) {}
+    rpc GetUserRelations(User) returns (Users) {}
 }
 
 message MessageQuery {
@@ -32,5 +33,13 @@ message Messages {
 
 message UserChannelRequest {
     string channelId = 1;
+    repeated string userIds = 2;
+}
+
+message User {
+    string userId = 1;
+}
+
+message Users {
     repeated string userIds = 2;
 }

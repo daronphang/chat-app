@@ -14,3 +14,7 @@ func RegisterMessageRoutes(g *echo.Group, h *handler.RestHandler) {
 	g.POST("", h.SendMsgToClient)
 	g.POST("/media", h.UploadMedia)
 }
+
+func RegisterPresenceRoutes(g *echo.Group, h *handler.RestHandler) {
+	g.GET("", h.BroadcastUserStatus)
+}

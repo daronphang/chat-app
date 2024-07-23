@@ -21,15 +21,15 @@ func New() WebSocketer {
 	return WebSocketer{}
 }
 
-func (ws WebSocketer) DeliverOutboundMsg(ctx context.Context, clientId string, arg domain.Message) error {
+func (ws WebSocketer) DeliverOutboundMsg(ctx context.Context, clientID string, arg domain.Message) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
 
-	client, ok := hub.clients[clientId]
+	client, ok := hub.clients[clientID]
 	if !ok {
 		return MissingClientError{
-			Message: fmt.Sprintf("client %v is not connected to chat server: unable to deliver message %v", clientId, arg.MessageID),
+			Message: fmt.Sprintf("client %v is not connected to chat server: unable to deliver message %v", clientID, arg.MessageID),
 		}
 	}
 
@@ -43,5 +43,25 @@ func (ws WebSocketer) DeliverOutboundMsg(ctx context.Context, clientId string, a
 		device.send <- data
 	}
 
+	return nil
+}
+
+func (ws WebSocketer) BroadcastPresenceStatus(ctx context.Context, arg domain.PresenceStatus) error {
+	client, ok := hub.clients[arg.TargetID]
+	if !ok {
+		return MissingClientError{
+			Message: fmt.Sprintf("client %v is not connected to chat server: unable to broadcast status %v", arg.TargetID, arg.Status),
+		}
+	}
+	
+	data, err := json.Marshal(arg)
+	if err != nil {
+		return err
+	}
+
+	for _, device := range client.devices {
+		device.presence <- data
+	}
+	
 	return nil
 }
