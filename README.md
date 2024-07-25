@@ -1,18 +1,31 @@
 # Chat Application
 
-## Requirements
+## Design scope
+
+### Functional
 
 - Support for 1-on-1 and group chats
 - Real-time chat communication
 - Support for large scale daily active users (DAU)
 - Online indicator
-- E2E encryption
 - Persistent storage of messages
 - Push notification
-- Multiple device support
+- Multiple device support (assume user will be in the same geographical location)
 - Chats are sorted by the latest timestamp of last message
 - Support for media upload
-- Mark unread messages
+- Support for unread messages
+
+### Non-functional
+
+- Low latency
+- Consistency
+- High availability
+- Secure with end-to-end encryption (only communicating parties have access to messages)
+- Scalability
+
+## Additional features
+
+- Caching
 
 # Architecture design
 
@@ -66,7 +79,7 @@ In Cassandra, records are sharded by the partition keys. On each node, records w
 
 When a message is received, it will be pushed to a queue. Kafka is chosen as it provides the following guarantees:
 
-- Message order
+- Exactly once delivery and message ordering
 - Scalability
 
 Key features of a message:
@@ -89,7 +102,8 @@ For generating IDs, there are three approaches:
   "prevMsgId": 12315141,
   "channelId": "p6o5n4m3l2-k1j0-i9h8-g7f6-e5d4c3b2a1",
   "senderId": "5e4d3c2b-1a0p-9o8n-7m6l-5k4j3i2h1g0f9e8d7",
-  "message": "Hello, how are you?",
+  "type": "message",
+  "content": "Hello, how are you?",
   "createdAt": "2023-09-17T10:30:00.000"
 }
 ```
@@ -126,7 +140,9 @@ A heartbeat mechanism can be implemented to determine if the client is still con
 }
 ```
 
-## Message flow
+## 1-on-1 chat
+
+### Message flow
 
 1. User A sends a chat message to Chat server 1
 2. Chat server 1 receives message and generates a message ID from ID generator
@@ -136,9 +152,33 @@ A heartbeat mechanism can be implemented to determine if the client is still con
 6. If user B is online, Chat server 2 pulls message from queue and sends message to user B via websocket connection
 7. If user B is offline, a push notification is sent to user B
 
+## Message acknowledgement
+
+When the message is successfully pushed to the broker queue, a message acknowledgement back to the client will be sent. If the acknowledgement message does not include a messageId, the message failed to deliver.
+
 ## Message synchronization across multiple devices
 
-## Small group chats
+Each user will have a dedicated queue of inbound messages which will act as the single source of truth for new messages. If a user has sent a message from one device, once the message has been delivered to the recipients, it will be pushed to the user's queue for confirmation.
+
+## Message out-of-order or failed delivery
+
+To handle messages that are received out-of-order or failed delivery due to network issues, we append a previousMessageId to each message and will be maintained in the chat-server session. If the client receives a message with a mismatch, it will fetch the latest messages from the message server.
+
+## Group chats
+
+There are a few ways of handing group messages:
+
+1. Broadcast group messages (push) to all users in the group (write amplification)
+2. Client requests/pulls for the latest messages periodically (read amplification)
+3. Creating a queue for each user (write diffusion)
+4. Create a topic for groups greater than a certain size
+5. Hybrid method where each user has a message queue for small groups, and a separate queue for each large group (recommended)
+
+For write amplification, if the group is very large, pushing each group message will take up a tremendous amount of bandwidth.
+
+Creating queues for each user may pose scalability problems for the message broker. However, it decouples the server from knowing which chat server the user is connected to, and simplifies message distribution. Moreover, it reduces client read from database if latest message stored on the client session is less than the duration of queue message retention period.
+
+The main reason for handling large rooms differently is the fact that many users won't be online at any given time, hence pushing messages to their streams is a bit too much work. Instead, having a stream for each large group allows clients to pull messages. However, group sizes can change. Also, the chat server needs to subscribe to multiple topics which can be resource consuming.
 
 ## Online presence
 
@@ -167,29 +207,42 @@ Instead, we introduce a **heartbeat mechanism** to solve this problem. Periodica
 
 ## Services
 
-### API service
+### API gateway
 
-- Handles HTTP requests including authentication, signup, user profile change, etc.
-- Data is stored in relational store
+- Handles multiple protocols including HTTP, websocket, TCP/IP
+- Includes features such as authentication, authorization, rate limiting, throttling, and API versioning
+
+### User service
+
+- Responsible for storing user data in relational store
+- Utilizes etcd as service discovery
+- Provides API for adding chat server to service registry
 
 ### Chat service
 
 - Maintains websocket connection with client
 - Real-time notifications are pushed and forwarded to websocket
 
-### Service discovery service
+### Message service
 
-- Utilizes etcd as service discovery
-- Provides API for adding chat server to service registry
-- Maintains
+- Stores messages in NoSQL
+- Maintains channel-client and client-channel relationships
 
 ### Notification service
 
 - Provides best-effort delivery
-- AWS SNS is used as third-party service
+- Message queue to store messages to be delivered as notifications
+- Messages are pulled by AWS SNS which are forwarded to users
 
 ### Presence service
 
 - Maintains all users' online status and last active timestamp in a relational data store
 - Broadcasts online status to friends
 - Redis as KV data store
+
+### Asset service
+
+- Responsible for sending and receiving media files
+- The compressed and encrypted file is sent to the asset service to store the file on blob storage
+- Maintains a hash for each file to avoid duplication of content on the blob storage
+- Third-party AWS S3 is used
