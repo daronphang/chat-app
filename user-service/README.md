@@ -1,22 +1,28 @@
-# Chat service
+# Presence service
 
 Responsibilities of chat service are as follows:
 
-- Maintains websocket connection with client
-- Handles outbound messages and acknowledgement
-- Handles inbound messages delivered by other chat servers
-
-Other design considerations to take note of:
-
-- Users can have multiple devices, and may be connected to the same chat server
-- If the same outbound message is received once by the sender, message is successfully sent; if received twice, message is successfully delivered to recipients
+- Fanout online and offline status to friends of user
+- Maintain heartbeat session with user for online confirmation
 
 ## Development
 
 ### etcd
 
+1. Spin up Docker instance. Host IP is the IP of docker container
+
 ```sh
-$ go get go.etcd.io/etcd/etcdctl/v3
+$ docker run -d -p 4001:4001 -p 2380:2380 -p 2379:2379 \
+ --name etcd quay.io/coreos/etcd:v3.5.15 \
+  /usr/local/bin/etcd \
+ --name etcd0 \
+ --advertise-client-urls http://172.17.0.8:2379,http://172.17.0.8:4001 \
+ --listen-client-urls http://0.0.0.0:2379,http://0.0.0.0:4001 \
+ --initial-advertise-peer-urls http://172.17.0.8:2380 \
+ --listen-peer-urls http://0.0.0.0:2380 \
+ --initial-cluster-token etcd-cluster-1 \
+ --initial-cluster etcd0=http://172.17.0.8:2380 \
+ --initial-cluster-state new
 ```
 
 ### Wire (DI)
@@ -39,7 +45,7 @@ $ go generate ./internal # once wire_gen.go is created, can regenerate using thi
 
 ```sh
 $ cd path/to/root/directory
-$ go run cmd/http/main.go
+$ go run cmd/rest/main.go
 ```
 
 ## Testing

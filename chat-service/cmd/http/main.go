@@ -5,6 +5,7 @@ import (
 	"chat-service/internal/config"
 	"chat-service/internal/delivery/kafka"
 	"chat-service/internal/delivery/rest"
+	svcdis "chat-service/internal/delivery/service-discovery"
 	ws "chat-service/internal/delivery/websocket"
 	"chat-service/internal/domain"
 	uc "chat-service/internal/usecase"
@@ -39,6 +40,13 @@ func main() {
 		logger.Fatal("error creating kafka topics", zap.String("trace", err.Error()))
 	}
 
+	// Create service discovery client.
+	sd, err := svcdis.New(cfg)
+	if err != nil {
+		logger.Fatal("error creating etcd client", zap.String("trace", err.Error()))
+	}
+	defer sd.Close()
+
 	// Create UseCase with dependencies.
 	eb := kafka.New(cfg)
 	sc := ws.New()
@@ -59,6 +67,9 @@ func main() {
 			logger.Fatal("failed to start REST server", zap.String("trace", err.Error()))
 		}
 	}()
+
+	// Send server metadata to service discovery.
+	go sd.ServiceDiscoveryHeartbeat(ctx)
 
 	// Create ctx for listening to SIGINT and SIGTERM
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)

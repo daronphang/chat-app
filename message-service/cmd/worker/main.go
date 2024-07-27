@@ -47,8 +47,16 @@ func main() {
 	// Create hub for rabbitmq.
 	hub := rmq.NewHub(logger)
 
-	// Create db.
-	db := repository.New(ctx, cfg, logger)
+	// Setup DB.
+	if err := repository.SetupDB(ctx, cfg); err != nil {
+		logger.Fatal("error setting up DB", zap.String("trace", err.Error()))
+	}
+
+	// Create db instance.
+	db, err := repository.New(cfg)
+	if err != nil {
+		logger.Fatal("error setting up DB instance", zap.String("trace", err.Error()))
+	}
 
 	// Spin up goroutines equivalent to the number of partitions per topic.
 	// One consumer per goroutine.

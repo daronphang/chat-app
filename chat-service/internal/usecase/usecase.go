@@ -15,8 +15,8 @@ type ServerClienter interface {
 }
 
 type UseCaseService struct {
-	EventBroker 	EventBroker
-	ServerClienter 	ServerClienter
+	EventBroker 		EventBroker
+	ServerClienter 		ServerClienter
 }
 
 func NewUseCaseService( eb EventBroker, sc ServerClienter) *UseCaseService {

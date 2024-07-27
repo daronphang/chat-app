@@ -3,17 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"message-service/internal"
-	"message-service/internal/config"
-	g "message-service/internal/delivery/grpc"
-	"message-service/internal/delivery/kafka"
-	rmq "message-service/internal/delivery/rabbitmq"
-	"message-service/internal/repository"
-	"message-service/internal/usecase"
 	"net"
 	"os"
 	"os/signal"
 	"time"
+	"user-service/internal"
+	"user-service/internal/config"
+	g "user-service/internal/delivery/grpc"
+	svcdis "user-service/internal/delivery/service-discovery"
+	"user-service/internal/repository"
+	"user-service/internal/usecase"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -23,7 +22,6 @@ var logger *zap.Logger
 
 func main() {
 	ctx := context.Background()
-
 	// Create config.
 	cfg, err := config.ProvideConfig()
 	if err != nil {
@@ -36,19 +34,17 @@ func main() {
 		logger.Fatal("error setting up logger", zap.String("trace", err.Error()))
     }
 
-	// Setup DB.
-	if err := repository.SetupDB(ctx, cfg); err != nil {
-		logger.Fatal("error setting up DB", zap.String("trace", err.Error()))
+	// Create usecase with dependencies.
+	db, err := repository.New(ctx, cfg)
+	if err != nil {
+		logger.Fatal("error creating db", zap.String("trace", err.Error()))
+	}
+	sd, err := svcdis.New(cfg)
+	if err != nil {
+		logger.Fatal("error connecting to etcd", zap.String("trace", err.Error()))
 	}
 
-	// Create usecase with dependencies.
-	db, err := repository.New(cfg)
-	if err != nil {
-		logger.Fatal("error setting up DB instance", zap.String("trace", err.Error()))
-	}
-	mb := &rmq.RabbitMQClient{} // Dummy as it is not needed in server.
-	eb := &kafka.KafkaClient{}	// Dummy as it is not needed in server.
-	uc := usecase.NewUseCaseService(mb, eb, db)
+	uc := usecase.NewUseCaseService(db, sd)
 
 	// Listen to protocol and port.
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", cfg.Port))
@@ -57,7 +53,7 @@ func main() {
 	}
 
 	// Create server.
-	s := g.New(logger, uc)
+	s := g.NewServer(logger, uc)
 
 	// Start server.
 	go func() {
@@ -75,13 +71,15 @@ func main() {
 	<-ctx.Done()
 	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	gracefulShutdown(s, db)
+	gracefulShutdown(s, db, sd)
 }
 
-func gracefulShutdown(s *grpc.Server, db *repository.Querier) {
+func gracefulShutdown(s *grpc.Server, db *repository.Querier, sd *svcdis.ServiceDiscoveryClient) {
 	fmt.Println("performing graceful shutdown...")
 
 	s.GracefulStop()
 
 	db.Close()
+
+	sd.Close()
 }
