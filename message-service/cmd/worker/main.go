@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"message-service/internal"
 	"message-service/internal/config"
+	g "message-service/internal/delivery/grpc"
 	k "message-service/internal/delivery/kafka"
 	rmq "message-service/internal/delivery/rabbitmq"
 	"message-service/internal/domain"
@@ -34,6 +35,12 @@ func main() {
 	if err != nil {
 		logger.Fatal("error setting up logger", zap.String("trace", err.Error()))
     }
+
+	// Create gRPC client.
+	client, err := g.NewClient(cfg)
+	if err != nil {
+		logger.Fatal("error setting up grpc user client", zap.String("trace", err.Error()))
+	}
 
 	// Create Kafka topic.
 	if err := k.CreateKafkaTopic(cfg, domain.MessageTopicConfig); err != nil {
@@ -68,7 +75,7 @@ func main() {
 
 		mb := rmq.NewClient(logger)
 		hub.AddClient(mb)
-		uc := usecase.NewUseCaseService(mb, k, db)
+		uc := usecase.NewUseCaseService(mb, k, db, client)
 
 		go k.ConsumeMsgFromMessageTopic(ctx, uc)
 	}

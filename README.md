@@ -25,7 +25,7 @@
 
 ## Additional features
 
-- Caching
+- Caching at client browser using IndexedDB
 
 # Architecture design
 

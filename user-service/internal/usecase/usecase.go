@@ -6,7 +6,7 @@ import (
 )
 
 type UseCaseService struct {
-	Repository 			domain.Repository
+	Repository 			domain.ExtRepo
 	ServiceDiscovery	ServiceDiscovery
 }
 
@@ -14,6 +14,6 @@ type ServiceDiscovery interface {
 	GetServersMetdata(ctx context.Context) ([]domain.ServerMetadata, error)
 }
 
-func NewUseCaseService(repo domain.Repository, sc ServiceDiscovery) *UseCaseService {
+func NewUseCaseService(repo domain.ExtRepo, sc ServiceDiscovery) *UseCaseService {
 	return &UseCaseService{Repository: repo, ServiceDiscovery: sc}
 }

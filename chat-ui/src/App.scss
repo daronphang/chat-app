@@ -1,0 +1,20 @@
+@use './variables.scss';
+
+// Global classes.
+.flex-spacer {
+  flex: 1 0 auto;
+}
+
+.btn-icon {
+  all: unset;
+  cursor: pointer;
+  box-sizing: border-box;
+  color: variables.$secondary;
+  text-align: center;
+}
+
+.truncated {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

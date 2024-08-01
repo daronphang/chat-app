@@ -3,6 +3,8 @@ package usecase
 import (
 	"context"
 	"message-service/internal/domain"
+
+	pb "protobuf/user"
 )
 
 type EventBroker interface {
@@ -17,8 +19,9 @@ type UseCaseService struct {
 	Repository 		domain.Repository
 	MessageBroker 	MessageBroker
 	EventBroker		EventBroker
+	UserClient   	pb.UserClient
 }
 
-func NewUseCaseService(mb MessageBroker, eb EventBroker, repo domain.Repository) *UseCaseService {
-	return &UseCaseService{MessageBroker: mb, EventBroker: eb, Repository: repo}
+func NewUseCaseService(mb MessageBroker, eb EventBroker, repo domain.Repository, uc pb.UserClient) *UseCaseService {
+	return &UseCaseService{MessageBroker: mb, EventBroker: eb, Repository: repo, UserClient: uc}
 }

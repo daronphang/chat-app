@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"time"
 	"user-service/internal"
@@ -9,7 +10,9 @@ import (
 
 	"database/sql"
 
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 var (
@@ -29,6 +32,9 @@ func providePGConnPool(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, 
 
 	// Create config.
 	dbConfig, err := pgxpool.ParseConfig(addr.String())
+	if err != nil {
+		return nil, err
+	}
 	dbConfig.MaxConns = int32(4)
 	dbConfig.MinConns = int32(0)
 	dbConfig.MaxConnLifetime = time.Hour
@@ -73,8 +79,9 @@ func SetupDB(ctx context.Context, cfg *config.Config) error {
 	// Create database.
 	rv := conn.QueryRow("SELECT 1 FROM pg_database WHERE datname = $1", cfg.Postgres.DBName)
 	if err := rv.Scan(); err == sql.ErrNoRows {
-		_, err = conn.Exec("CREATE DATABASE " + cfg.Postgres.DBName)
+		_, err = conn.Exec(fmt.Sprintf("CREATE DATABASE %v", cfg.Postgres.DBName))
 		if err != nil {
+			fmt.Println(err)
 			return err
 		}
 	}

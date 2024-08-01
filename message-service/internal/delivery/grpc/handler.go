@@ -50,35 +50,3 @@ func (s *GRPCServer) GetLatestMessages(ctx context.Context, arg *pb.MessageQuery
 
 	return rv, nil
 }
-
-func (s *GRPCServer) AddUsersToChannel(ctx context.Context, arg *pb.UserChannelRequest) (*common.MessageResponse, error) {
-	p := domain.UserChannelRequest{
-		ChannelID: arg.ChannelId,
-		UserIDs: arg.UserIds,
-	}
-	if err := cv.ValidateStruct(p); err != nil {
-		logger.Error("validation error", zap.String("trace", err.Error()))
-		return nil, status.Errorf(9, "validation error: %v", err)
-	}
-	
-	if err := s.uc.AddUsersToChannel(ctx, arg.ChannelId, arg.UserIds); err != nil {
-		logger.Error("failed to add users to channel", zap.String("trace", err.Error()))
-		return nil, status.Error(2, err.Error())
-	}
-	return &common.MessageResponse{Message: "success"}, nil
-}
-
-func (s *GRPCServer) GetUserRelations(ctx context.Context, arg *pb.User) (*pb.Users, error) {
-	rv, err := s.uc.GetUserRelations(ctx, arg.UserId)
-	if err != nil {
-		logger.Error("failed to get user relations", zap.String("trace", err.Error()))
-		return nil, status.Error(2, err.Error())
-	}
-	return &pb.Users{UserIds: rv}, nil
-}
-
-func (s *GRPCServer) JoinGroup() {}
-
-func (s *GRPCServer) LeaveGroup() {}
-
-func (s *GRPCServer) DeleteChannel() {}

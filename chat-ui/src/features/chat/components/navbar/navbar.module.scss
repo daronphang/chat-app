@@ -1,0 +1,16 @@
+@use 'src/variables.scss';
+
+.navbar {
+  background-color: variables.$bg-1;
+  height: 100%;
+  width: 4rem;
+  display: flex;
+  flex-direction: column;
+  border-right: 0.1rem solid variables.$navbar-border;
+  box-sizing: border-box;
+}
+
+.badgeWrapper {
+  margin-left: auto;
+  margin-right: auto;
+}

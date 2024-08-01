@@ -1,0 +1,29 @@
+@use './assets/fonts/manrope/manrope';
+@use './assets/fonts/roboto/roboto';
+@use './variables.scss';
+
+body {
+  margin: 0;
+  font-family:
+    'Roboto',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    'Roboto',
+    'Oxygen',
+    'Ubuntu',
+    'Cantarell',
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: variables.$primary;
+  font-size: variables.$font-reg;
+  background-color: variables.$bg-1;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}

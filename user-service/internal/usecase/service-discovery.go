@@ -30,5 +30,5 @@ func (uc *UseCaseService) GetBestServer(ctx context.Context) (string, error) {
 		return "", errNoServerMatch
 	}
 
-	return "", nil
+	return server, nil
 }

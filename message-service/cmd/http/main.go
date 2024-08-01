@@ -41,6 +41,12 @@ func main() {
 		logger.Fatal("error setting up DB", zap.String("trace", err.Error()))
 	}
 
+	// Create gRPC client.
+	client, err := g.NewClient(cfg)
+	if err != nil {
+		logger.Fatal("error setting up grpc user client", zap.String("trace", err.Error()))
+	}
+
 	// Create usecase with dependencies.
 	db, err := repository.New(cfg)
 	if err != nil {
@@ -48,7 +54,7 @@ func main() {
 	}
 	mb := &rmq.RabbitMQClient{} // Dummy as it is not needed in server.
 	eb := &kafka.KafkaClient{}	// Dummy as it is not needed in server.
-	uc := usecase.NewUseCaseService(mb, eb, db)
+	uc := usecase.NewUseCaseService(mb, eb, db, client)
 
 	// Listen to protocol and port.
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", cfg.Port))

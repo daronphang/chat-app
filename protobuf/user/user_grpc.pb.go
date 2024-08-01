@@ -12,6 +12,7 @@ import (
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	common "protobuf/common"
 )
 
@@ -26,10 +27,15 @@ const _ = grpc.SupportPackageIsVersion7
 type UserClient interface {
 	Heartbeat(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*common.MessageResponse, error)
 	GetBestServer(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*common.MessageResponse, error)
-	CreateUser(ctx context.Context, in *NewUser, opts ...grpc.CallOption) (*UserMetadata, error)
-	UpdateUser(ctx context.Context, in *UserMetadata, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	Login(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserMetadata, error)
-	Logout(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*common.MessageResponse, error)
+	Signup(ctx context.Context, in *NewUser, opts ...grpc.CallOption) (*UserMetadata, error)
+	UpdateUser(ctx context.Context, in *UserMetadata, opts ...grpc.CallOption) (*common.MessageResponse, error)
+	Login(ctx context.Context, in *Login, opts ...grpc.CallOption) (*UserMetadata, error)
+	Logout(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*common.MessageResponse, error)
+	CreateContact(ctx context.Context, in *NewContact, opts ...grpc.CallOption) (*Contact, error)
+	GetContacts(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Contacts, error)
+	CreateChannel(ctx context.Context, in *NewChannel, opts ...grpc.CallOption) (*Channel, error)
+	GetUsersAssociatedToChannel(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Users, error)
+	GetChannelsAssociatedToUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Channels, error)
 }
 
 type userClient struct {
@@ -58,17 +64,17 @@ func (c *userClient) GetBestServer(ctx context.Context, in *emptypb.Empty, opts 
 	return out, nil
 }
 
-func (c *userClient) CreateUser(ctx context.Context, in *NewUser, opts ...grpc.CallOption) (*UserMetadata, error) {
+func (c *userClient) Signup(ctx context.Context, in *NewUser, opts ...grpc.CallOption) (*UserMetadata, error) {
 	out := new(UserMetadata)
-	err := c.cc.Invoke(ctx, "/user.User/createUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/user.User/signup", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *userClient) UpdateUser(ctx context.Context, in *UserMetadata, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
+func (c *userClient) UpdateUser(ctx context.Context, in *UserMetadata, opts ...grpc.CallOption) (*common.MessageResponse, error) {
+	out := new(common.MessageResponse)
 	err := c.cc.Invoke(ctx, "/user.User/updateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -76,7 +82,7 @@ func (c *userClient) UpdateUser(ctx context.Context, in *UserMetadata, opts ...g
 	return out, nil
 }
 
-func (c *userClient) Login(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserMetadata, error) {
+func (c *userClient) Login(ctx context.Context, in *Login, opts ...grpc.CallOption) (*UserMetadata, error) {
 	out := new(UserMetadata)
 	err := c.cc.Invoke(ctx, "/user.User/login", in, out, opts...)
 	if err != nil {
@@ -85,9 +91,54 @@ func (c *userClient) Login(ctx context.Context, in *emptypb.Empty, opts ...grpc.
 	return out, nil
 }
 
-func (c *userClient) Logout(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*common.MessageResponse, error) {
+func (c *userClient) Logout(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*common.MessageResponse, error) {
 	out := new(common.MessageResponse)
 	err := c.cc.Invoke(ctx, "/user.User/logout", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) CreateContact(ctx context.Context, in *NewContact, opts ...grpc.CallOption) (*Contact, error) {
+	out := new(Contact)
+	err := c.cc.Invoke(ctx, "/user.User/createContact", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) GetContacts(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Contacts, error) {
+	out := new(Contacts)
+	err := c.cc.Invoke(ctx, "/user.User/getContacts", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) CreateChannel(ctx context.Context, in *NewChannel, opts ...grpc.CallOption) (*Channel, error) {
+	out := new(Channel)
+	err := c.cc.Invoke(ctx, "/user.User/createChannel", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) GetUsersAssociatedToChannel(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Users, error) {
+	out := new(Users)
+	err := c.cc.Invoke(ctx, "/user.User/getUsersAssociatedToChannel", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) GetChannelsAssociatedToUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Channels, error) {
+	out := new(Channels)
+	err := c.cc.Invoke(ctx, "/user.User/getChannelsAssociatedToUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -100,10 +151,15 @@ func (c *userClient) Logout(ctx context.Context, in *emptypb.Empty, opts ...grpc
 type UserServer interface {
 	Heartbeat(context.Context, *emptypb.Empty) (*common.MessageResponse, error)
 	GetBestServer(context.Context, *emptypb.Empty) (*common.MessageResponse, error)
-	CreateUser(context.Context, *NewUser) (*UserMetadata, error)
-	UpdateUser(context.Context, *UserMetadata) (*emptypb.Empty, error)
-	Login(context.Context, *emptypb.Empty) (*UserMetadata, error)
-	Logout(context.Context, *emptypb.Empty) (*common.MessageResponse, error)
+	Signup(context.Context, *NewUser) (*UserMetadata, error)
+	UpdateUser(context.Context, *UserMetadata) (*common.MessageResponse, error)
+	Login(context.Context, *Login) (*UserMetadata, error)
+	Logout(context.Context, *wrapperspb.StringValue) (*common.MessageResponse, error)
+	CreateContact(context.Context, *NewContact) (*Contact, error)
+	GetContacts(context.Context, *wrapperspb.StringValue) (*Contacts, error)
+	CreateChannel(context.Context, *NewChannel) (*Channel, error)
+	GetUsersAssociatedToChannel(context.Context, *wrapperspb.StringValue) (*Users, error)
+	GetChannelsAssociatedToUser(context.Context, *wrapperspb.StringValue) (*Channels, error)
 	mustEmbedUnimplementedUserServer()
 }
 
@@ -117,17 +173,32 @@ func (UnimplementedUserServer) Heartbeat(context.Context, *emptypb.Empty) (*comm
 func (UnimplementedUserServer) GetBestServer(context.Context, *emptypb.Empty) (*common.MessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBestServer not implemented")
 }
-func (UnimplementedUserServer) CreateUser(context.Context, *NewUser) (*UserMetadata, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
+func (UnimplementedUserServer) Signup(context.Context, *NewUser) (*UserMetadata, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Signup not implemented")
 }
-func (UnimplementedUserServer) UpdateUser(context.Context, *UserMetadata) (*emptypb.Empty, error) {
+func (UnimplementedUserServer) UpdateUser(context.Context, *UserMetadata) (*common.MessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
 }
-func (UnimplementedUserServer) Login(context.Context, *emptypb.Empty) (*UserMetadata, error) {
+func (UnimplementedUserServer) Login(context.Context, *Login) (*UserMetadata, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
-func (UnimplementedUserServer) Logout(context.Context, *emptypb.Empty) (*common.MessageResponse, error) {
+func (UnimplementedUserServer) Logout(context.Context, *wrapperspb.StringValue) (*common.MessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Logout not implemented")
+}
+func (UnimplementedUserServer) CreateContact(context.Context, *NewContact) (*Contact, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateContact not implemented")
+}
+func (UnimplementedUserServer) GetContacts(context.Context, *wrapperspb.StringValue) (*Contacts, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetContacts not implemented")
+}
+func (UnimplementedUserServer) CreateChannel(context.Context, *NewChannel) (*Channel, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateChannel not implemented")
+}
+func (UnimplementedUserServer) GetUsersAssociatedToChannel(context.Context, *wrapperspb.StringValue) (*Users, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsersAssociatedToChannel not implemented")
+}
+func (UnimplementedUserServer) GetChannelsAssociatedToUser(context.Context, *wrapperspb.StringValue) (*Channels, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetChannelsAssociatedToUser not implemented")
 }
 func (UnimplementedUserServer) mustEmbedUnimplementedUserServer() {}
 
@@ -178,20 +249,20 @@ func _User_GetBestServer_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-func _User_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _User_Signup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(NewUser)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServer).CreateUser(ctx, in)
+		return srv.(UserServer).Signup(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/user.User/createUser",
+		FullMethod: "/user.User/signup",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServer).CreateUser(ctx, req.(*NewUser))
+		return srv.(UserServer).Signup(ctx, req.(*NewUser))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -215,7 +286,7 @@ func _User_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(int
 }
 
 func _User_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+	in := new(Login)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -227,13 +298,13 @@ func _User_Login_Handler(srv interface{}, ctx context.Context, dec func(interfac
 		FullMethod: "/user.User/login",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServer).Login(ctx, req.(*emptypb.Empty))
+		return srv.(UserServer).Login(ctx, req.(*Login))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _User_Logout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+	in := new(wrapperspb.StringValue)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -245,7 +316,97 @@ func _User_Logout_Handler(srv interface{}, ctx context.Context, dec func(interfa
 		FullMethod: "/user.User/logout",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServer).Logout(ctx, req.(*emptypb.Empty))
+		return srv.(UserServer).Logout(ctx, req.(*wrapperspb.StringValue))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_CreateContact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NewContact)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).CreateContact(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.User/createContact",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).CreateContact(ctx, req.(*NewContact))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_GetContacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(wrapperspb.StringValue)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).GetContacts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.User/getContacts",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).GetContacts(ctx, req.(*wrapperspb.StringValue))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_CreateChannel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NewChannel)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).CreateChannel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.User/createChannel",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).CreateChannel(ctx, req.(*NewChannel))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_GetUsersAssociatedToChannel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(wrapperspb.StringValue)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).GetUsersAssociatedToChannel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.User/getUsersAssociatedToChannel",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).GetUsersAssociatedToChannel(ctx, req.(*wrapperspb.StringValue))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_GetChannelsAssociatedToUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(wrapperspb.StringValue)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).GetChannelsAssociatedToUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.User/getChannelsAssociatedToUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).GetChannelsAssociatedToUser(ctx, req.(*wrapperspb.StringValue))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -266,8 +427,8 @@ var User_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _User_GetBestServer_Handler,
 		},
 		{
-			MethodName: "createUser",
-			Handler:    _User_CreateUser_Handler,
+			MethodName: "signup",
+			Handler:    _User_Signup_Handler,
 		},
 		{
 			MethodName: "updateUser",
@@ -280,6 +441,26 @@ var User_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "logout",
 			Handler:    _User_Logout_Handler,
+		},
+		{
+			MethodName: "createContact",
+			Handler:    _User_CreateContact_Handler,
+		},
+		{
+			MethodName: "getContacts",
+			Handler:    _User_GetContacts_Handler,
+		},
+		{
+			MethodName: "createChannel",
+			Handler:    _User_CreateChannel_Handler,
+		},
+		{
+			MethodName: "getUsersAssociatedToChannel",
+			Handler:    _User_GetUsersAssociatedToChannel_Handler,
+		},
+		{
+			MethodName: "getChannelsAssociatedToUser",
+			Handler:    _User_GetChannelsAssociatedToUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

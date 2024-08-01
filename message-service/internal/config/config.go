@@ -42,6 +42,10 @@ type CassandraConfig struct {
 	HostAddresses string `yaml:"hostAddresses"` // localhost:9042,localhost:9043
 }
 
+type UserClient struct {
+	HostAddress string `yaml:"hostAddress"` // localhost:5672
+}
+
 type Config struct {
 	Environment string 			`yaml:"environment"`
 	Port 		int 			`yaml:"port"`
@@ -49,6 +53,7 @@ type Config struct {
 	Kafka 		KafkaConfig 	`yaml:"kafka"`
 	Cassandra 	CassandraConfig `yaml:"cassandra"`
 	RabbitMQ 	RabbitMQConfig 	`yaml:"rabbitmq"`
+	UserClient	UserClient		`yaml:"userClient"`
 }
 
 var syncOnceConfig sync.Once

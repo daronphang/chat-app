@@ -6,12 +6,10 @@ import (
 	"message-service/internal"
 	"message-service/internal/domain"
 	"message-service/internal/util"
-	"sort"
-	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 var (
@@ -33,7 +31,7 @@ func (uc *UseCaseService) SaveMessageAndDeliverToRecipients(ctx context.Context,
 	}
 
 	// Get userIds associated to channel.
-	userIDs, err := uc.Repository.GetUserIdsAssociatedToChannels(ctx, arg.ChannelID)
+	users, err := uc.UserClient.GetUsersAssociatedToChannel(ctx, &wrapperspb.StringValue{Value: arg.ChannelID})
 	if err != nil {
 		return err
 	}
@@ -43,7 +41,7 @@ func (uc *UseCaseService) SaveMessageAndDeliverToRecipients(ctx context.Context,
 	// Pushing to queue must be guaranteed.
 	maxGoroutines := 10
 	guard := make(chan bool, maxGoroutines)
-	for _, userID := range userIDs {
+	for _, userID := range users.UserIds {
 		guard <- true
 		go func(userID string) {
 			errMsg := fmt.Sprintf("failed to push message %v to user %v queue", arg.MessageID, userID)
@@ -84,32 +82,3 @@ func (uc *UseCaseService) SaveMessageAndDeliverToRecipients(ctx context.Context,
 	}
 	return nil
 }
-
-func (uc *UseCaseService) AddUsersToChannel(ctx context.Context, channelID string, userIDs []string) error {
-	if channelID == "" {
-		if len(userIDs) == 2 {
-			sort.Strings(userIDs)
-			channelID = strings.Join(userIDs, "")
-		} else {
-			channelID = uuid.NewString()
-		}
-	}
-	if err := uc.Repository.AddUserIDsToChannel(ctx, channelID, userIDs); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (uc *UseCaseService) GetUserRelations(ctx context.Context, userID string) ([]string, error) {
-	relations, err := uc.Repository.GetUserRelations(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-	return relations, nil
-}
-
-func (uc *UseCaseService) JoinGroup(ctx context.Context) {}
-
-func (uc *UseCaseService) LeaveGroup(ctx context.Context) {}
-
-func (uc *UseCaseService) DeleteUserChat(ctx context.Context, client string, channelID string) {}

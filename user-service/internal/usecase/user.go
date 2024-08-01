@@ -7,9 +7,17 @@ import (
 	"github.com/google/uuid"
 )
 
-func (uc *UseCaseService) CreateUser(ctx context.Context, arg domain.NewUser) (domain.UserMetadata, error) {
+func (uc *UseCaseService) Signup(ctx context.Context, arg domain.NewUser) (domain.UserMetadata, error) {
 	arg.UserID = uuid.NewString()
 	rv, err := uc.Repository.CreateUser(ctx, arg)
+	if err != nil {
+		return domain.UserMetadata{}, err
+	}
+	return rv, nil
+}
+
+func (uc *UseCaseService) Login(ctx context.Context, arg domain.Login) (domain.UserMetadata, error) {
+	rv, err := uc.Repository.GetUser(ctx, arg.Email)
 	if err != nil {
 		return domain.UserMetadata{}, err
 	}
@@ -23,7 +31,28 @@ func (uc *UseCaseService) UpdateUser(ctx context.Context, arg domain.UserMetadat
 	return nil
 }
 
-func (uc *UseCaseService) Login(ctx context.Context) (domain.UserMetadata, error) {
-	return domain.UserMetadata{}, nil
+func (uc *UseCaseService) CreateContact(ctx context.Context, arg domain.NewContact) (domain.Contact, error) {
+	friend, err := uc.Repository.GetUser(ctx, arg.FriendEmail)
+	if err != nil {
+		return domain.Contact{}, err
+	}
+
+	arg.FriendID = friend.UserID
+
+	if err := uc.Repository.CreateContact(ctx, arg); err != nil {
+		return domain.Contact{}, err
+	}
+	return domain.Contact{
+		UserID: friend.UserID,
+		Email: friend.Email,
+		DisplayName: arg.DisplayName,
+	}, nil
 }
 
+func (uc *UseCaseService) GetContacts(ctx context.Context, arg string) ([]domain.Contact, error) {
+	rv, err := uc.Repository.GetContacts(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	return rv, nil
+}

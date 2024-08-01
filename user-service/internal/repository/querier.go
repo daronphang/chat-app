@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"user-service/internal/config"
+	"user-service/internal/domain"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -19,7 +20,7 @@ func New(ctx context.Context, cfg *config.Config) (*Querier, error) {
 	return &Querier{db: pool}, nil
 }
 
-func (q *Querier) ExecWithTx(ctx context.Context, cb func(*Querier) (interface{}, error)) func() (interface{}, error) {
+func (q *Querier) ExecWithTx(ctx context.Context, cb func(domain.Repository) (interface{}, error)) func() (interface{}, error) {
 	// Creates closure.
 	return func() (interface{}, error) {
 		tx, err := q.db.Begin(ctx)

@@ -34,6 +34,11 @@ func main() {
 		logger.Fatal("error setting up logger", zap.String("trace", err.Error()))
     }
 
+	// Setup DB.
+	if err := repository.SetupDB(ctx, cfg); err != nil {
+		logger.Fatal("error setting up DB", zap.String("trace", err.Error()))
+	}
+
 	// Create usecase with dependencies.
 	db, err := repository.New(ctx, cfg)
 	if err != nil {
