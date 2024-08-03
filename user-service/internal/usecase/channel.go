@@ -22,10 +22,6 @@ func (uc *UseCaseService) CreateChannel(ctx context.Context, arg domain.NewChann
 			return nil, err
 		}
 
-		if err := qtx.CreateChannelToUserAssociation(ctx, arg); err != nil {
-			return nil, err
-		}
-
 		if len(arg.UserIDs) == 2 {
 			return nil, nil
 		}

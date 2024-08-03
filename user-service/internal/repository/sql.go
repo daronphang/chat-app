@@ -134,24 +134,6 @@ func (q *Querier) CreateUserToChannelAssociation(ctx context.Context, arg domain
 	return nil
 }
 
-func (q *Querier) CreateChannelToUserAssociation(ctx context.Context, arg domain.NewChannel) error {
-	var rows [][]interface{}
-	for _, userID := range arg.UserIDs {
-		rows = append(rows, []interface{}{arg.ChannelID, userID})
-	}
-
-	_, err := q.db.CopyFrom(
-		ctx,
-		pgx.Identifier{"channel_to_user"},
-		[]string{"channel_id", "user_id"},
-		pgx.CopyFromRows(rows),
-	)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (q *Querier) CreateGroupChannel(ctx context.Context, arg domain.NewChannel) error {
 	stmt := `
 	INSERT INTO group_channel (
@@ -170,7 +152,7 @@ func (q *Querier) CreateGroupChannel(ctx context.Context, arg domain.NewChannel)
 
 func (q *Querier) GetUsersAssociatedToChannel(ctx context.Context, arg string) ([]string, error) {
 	stmt := `
-	SELECT user_id FROM channel_to_user
+	SELECT user_id FROM user_to_channel
 	WHERE channel_id = $1
 	`
 

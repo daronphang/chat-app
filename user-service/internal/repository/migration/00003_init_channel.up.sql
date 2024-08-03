@@ -10,10 +10,3 @@ CREATE TABLE user_to_channel (
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     PRIMARY KEY (user_id, channel_id)
 );
-
-CREATE TABLE channel_to_user (
-    channel_id VARCHAR(255) NOT NULL,
-    user_id VARCHAR(255) NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    PRIMARY KEY (channel_id, user_id)
-);

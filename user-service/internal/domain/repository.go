@@ -16,7 +16,6 @@ type Repository interface {
 	CreateContact(ctx context.Context, arg NewContact) error
 	GetContacts(ctx context.Context, arg string) ([]Contact, error)
 	CreateUserToChannelAssociation(ctx context.Context, arg NewChannel) error
-	CreateChannelToUserAssociation(ctx context.Context, arg NewChannel) error
 	CreateGroupChannel(ctx context.Context, arg NewChannel) error
 	GetUsersAssociatedToChannel(ctx context.Context, arg string) ([]string, error)
 	GetChannelsAssociatedToUser(ctx context.Context, arg string) ([]Channel, error)
