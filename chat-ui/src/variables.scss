@@ -1,4 +1,5 @@
 // Typography.
+$font-2xs: 10px;
 $font-xs: 12px;
 $font-sm: 14px;
 $font-reg: 16px;
@@ -8,7 +9,10 @@ $font-xl: 20px;
 // Colors.
 $bg-1: rgb(243 247 253);
 $bg-2: #ffffff;
-$bg-convo: #e2dfd8;
+
+// Chat.
+$bg-channel: #e2dfd8;
+$sender: #d9fdd3;
 
 $primary: #000000;
 $secondary: #54656f;

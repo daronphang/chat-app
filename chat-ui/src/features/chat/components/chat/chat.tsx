@@ -1,17 +1,19 @@
 import { useState } from 'react';
-import Convo, { ConvoProps } from '../convo/convo';
+import { useAppSelector, useAppDispatch } from 'shared/redux/reduxHooks';
+import ChannelDialogue from '../channel/channel';
 import Drawer from '../drawer/drawer';
 import Navbar from '../navbar/navbar';
 import styles from './chat.module.scss';
+import { Channel } from 'features/chat/redux/chatSlice';
 
 export default function Chat() {
-  const [activeConvo, setActiveConvo] = useState<ConvoProps>({ displayName: 'John Doe', channelId: 'test123' });
+  const dispatch = useAppDispatch();
 
   return (
     <div className={styles.chat}>
       <Navbar />
       <Drawer />
-      <Convo displayName={activeConvo.displayName} channelId={activeConvo.channelId} />
+      <ChannelDialogue />
     </div>
   );
 }

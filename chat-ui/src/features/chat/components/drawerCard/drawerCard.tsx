@@ -1,13 +1,26 @@
-import styles from './drawerCard.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Channel } from 'features/chat/redux/chatSlice';
+import styles from './drawerCard.module.scss';
+import { useAppDispatch } from 'shared/redux/reduxHooks';
+import { setCurChannel } from 'features/chat/redux/chatSlice';
 
-export default function DrawerCard() {
+interface DrawerCardProps {
+  props: Channel;
+}
+
+export default function DrawerCard({ props }: DrawerCardProps) {
+  const dispatch = useAppDispatch();
+
+  const handleClick = () => {
+    dispatch(setCurChannel(props));
+  };
+
   return (
-    <div className={`${styles.drawerCard} gap-3`}>
+    <div onClick={handleClick} className={`${styles.drawerCard} gap-3`}>
       <FontAwesomeIcon size="3x" icon={['fas', 'circle-user']} />
       <div className={`${styles.bodyWrapper}`}>
-        <div className={styles.header}>Hello world</div>
-        <div className="truncated">Some very long message here, hello there how are you hello there how are you?</div>
+        <div className={styles.header}>{props.channelName}</div>
+        <div className="truncated">{props.messages[props.messages.length - 1].content}</div>
       </div>
     </div>
   );

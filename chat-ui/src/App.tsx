@@ -10,9 +10,24 @@ import {
   faUsersRectangle,
   faGear,
   faRectangleList,
+  faPaperPlane,
+  faCheck,
+  faCheckDouble,
+  faClock,
 } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
-library.add(faCircleUser, faUsers, faChalkboardUser, faUsersRectangle, faGear, faRectangleList);
+library.add(
+  faCircleUser,
+  faUsers,
+  faChalkboardUser,
+  faUsersRectangle,
+  faGear,
+  faRectangleList,
+  faPaperPlane,
+  faCheck,
+  faCheckDouble,
+  faClock
+);
 
 function App() {
   useEffect(() => {

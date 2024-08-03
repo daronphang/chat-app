@@ -1,0 +1,55 @@
+@use 'src/variables.scss';
+
+@mixin speech-bubble {
+  border-radius: 0.3rem;
+  width: fit-content;
+  max-width: 25rem;
+  background-color: variables.$bg-2;
+  box-sizing: border-box;
+  font-weight: 500;
+  position: relative;
+}
+
+.senderContent {
+  @include speech-bubble;
+  background-color: variables.$sender;
+  margin-left: auto;
+}
+
+.senderContent:after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  border: 15px solid transparent;
+  border-top-color: variables.$sender;
+  border-left: 0;
+  border-bottom: 0;
+  margin-right: -10px;
+}
+
+.receiverContent {
+  @include speech-bubble;
+}
+
+.receiverContent:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  border: 15px solid transparent;
+  border-top-color: variables.$bg-2;
+  border-right: 0;
+  border-bottom: 0;
+  margin-left: -10px;
+}
+
+.metadata {
+  display: flex;
+  justify-content: end;
+  font-size: variables.$font-2xs;
+}
