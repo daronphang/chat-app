@@ -55,7 +55,7 @@ type UserChannelRequest struct {
 	UserIDs		[]string 	`validate:"required"`
 }
 
-type LatestMessagesRequest struct {
-	ChannelID		string	`validate:"required"`
-	LastMessageID 	uint64 	`validate:"required"`
+type PrevMessageRequest struct {
+	ChannelID 		string	`json:"channelId" validate:"required"` 
+	LastMessageID 	string	`json:"lastMessageId" validate:"required"` 
 }

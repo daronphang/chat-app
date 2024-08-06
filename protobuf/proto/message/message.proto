@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package message;
+option go_package = "protobuf/proto/message";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "proto/common/common.proto";
+
+service Message {
+    rpc heartbeat(google.protobuf.Empty) returns (common.MessageResponse) {}
+    rpc getLatestMessages(google.protobuf.StringValue) returns (Messages) {}
+    rpc getPreviousMessages(PrevMessageRequest) returns (Messages) {}
+}
+
+message PrevMessageRequest {
+    string channelId = 1;
+    string lastMessageId = 2;
+}
+
+message Messages {
+    repeated Message messages = 1;
+
+    message Message {
+        uint64 messageId = 1;
+        string channelId = 3;
+        string senderId = 4;
+        string messageType = 5;
+        string content = 6;
+        string createdAt = 7;
+    }
+}

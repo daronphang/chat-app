@@ -1,0 +1,26 @@
+syntax = "proto3";
+package presence;
+option go_package = "protobuf/proto/presence";
+
+import "google/protobuf/empty.proto";
+import "proto/common/common.proto";
+
+service Presence {
+    rpc heartbeat(google.protobuf.Empty) returns (common.MessageResponse) {}
+    rpc clientHeartbeat(User) returns (common.MessageResponse) {}
+    rpc broadcastStatus(BroadcastStatus) returns (common.MessageResponse) {}
+}
+
+message User {
+    string userId = 1;
+    string server = 2;
+} 
+
+message UserStatus {
+    string userId = 1;
+}
+
+message BroadcastStatus {
+    string userId = 1;
+    string status = 2;
+}

@@ -35,7 +35,7 @@ type RedisConfig struct {
 	DB 			int `yaml:"db"` 
 }
 
-type MessageClient struct {
+type UserClient struct {
 	HostAddress string `yaml:"hostAddress"` // localhost:5672
 }
 
@@ -44,7 +44,7 @@ type Config struct {
 	Port 			int 			`yaml:"port"`
 	LogDir 			string 			`yaml:"logDir"`
 	Redis 			RedisConfig 	`yaml:"redis"`
-	MessageClient 	MessageClient 	`yaml:"messageClient"`
+	UserClient 		UserClient 		`yaml:"userClient"`
 	ChatServerAPI	string			`yaml:"chatServerApi"`
 }
 

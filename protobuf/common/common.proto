@@ -1,8 +1,0 @@
-syntax = "proto3";
-
-package common;
-option go_package = "protobuf/common";
-
-message MessageResponse {
-    string message = 1;
-}

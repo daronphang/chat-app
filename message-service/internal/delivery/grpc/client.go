@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	pb "protobuf/user"
+	pb "protobuf/proto/user"
 )
 
 func NewClient(cfg *config.Config) (pb.UserClient, error) {

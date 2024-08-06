@@ -16,7 +16,7 @@ func (uc *UseCaseService) Signup(ctx context.Context, arg domain.NewUser) (domai
 	return rv, nil
 }
 
-func (uc *UseCaseService) Login(ctx context.Context, arg domain.Login) (domain.UserMetadata, error) {
+func (uc *UseCaseService) Login(ctx context.Context, arg domain.UserCredentials) (domain.UserMetadata, error) {
 	rv, err := uc.Repository.GetUser(ctx, arg.Email)
 	if err != nil {
 		return domain.UserMetadata{}, err

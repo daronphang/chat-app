@@ -6,18 +6,18 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	pb "protobuf/message"
+	pb "protobuf/proto/user"
 )
 
-func NewClient(cfg *config.Config) (pb.MessageClient, error) {
+func NewClient(cfg *config.Config) (pb.UserClient, error) {
 	conn, err := grpc.NewClient(
-		cfg.MessageClient.HostAddress,
+		cfg.UserClient.HostAddress,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
 		return nil, err
 	}
 	
-	client := pb.NewMessageClient(conn)
+	client := pb.NewUserClient(conn)
 	return client, nil
 }

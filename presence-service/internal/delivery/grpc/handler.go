@@ -6,8 +6,8 @@ import (
 	"presence-service/internal"
 	"presence-service/internal/domain"
 	cv "presence-service/internal/validator"
-	"protobuf/common"
-	pb "protobuf/presence"
+	"protobuf/proto/common"
+	pb "protobuf/proto/presence"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc/status"

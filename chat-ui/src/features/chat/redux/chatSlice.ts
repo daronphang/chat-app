@@ -1,18 +1,22 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+// 1 = sending, 2 = sent, 3 = delivered
+export type Delivery = 1 | 2 | 3;
+
 export interface Message {
-  messageId: string;
+  messageId: number;
   channelId: string;
   senderId: string;
   messageType: string;
   content: string;
   createdAt: string;
-  delivery?: number; // 0 = sending, 1 = sent, 2 = delivered
+  delivery?: Delivery;
 }
 
 export interface Channel {
   channelId: string;
   channelName: string;
+  createdAt: string;
   messages: Message[];
   prev: Channel | null;
   next: Channel | null;
@@ -28,50 +32,22 @@ interface UnreadChannelHash {
 
 interface ChatState {
   channelHash: ChannelHash;
-  head: Channel | null;
   curChannel: Channel | null;
   unreadChannels: UnreadChannelHash;
+  channelHead: Channel | null;
 }
 
 const initialState: ChatState = {
   channelHash: {},
-  head: {
-    channelId: 'abc123',
-    channelName: 'hello world!!',
-    messages: [
-      {
-        channelId: 'abc123',
-        senderId: 'user123',
-        content: 'hello how are you?',
-        messageId: 'msg123',
-        messageType: 'text',
-        createdAt: new Date().toISOString(),
-        delivery: 2,
-      },
-      {
-        channelId: 'abc123',
-        senderId: 'anotheruser123',
-        content: 'I am very well',
-        messageId: 'msg1234',
-        messageType: 'text',
-        createdAt: new Date().toISOString(),
-      },
-    ],
-    prev: null,
-    next: null,
-  },
   curChannel: null,
   unreadChannels: {},
+  channelHead: null,
 };
 
 export const chatSlice = createSlice({
   name: 'chat',
   initialState,
   reducers: {
-    setHead: (state, action: PayloadAction<Channel>) => {
-      state.head = action.payload;
-      return state;
-    },
     setCurChannel: (state, action: PayloadAction<Channel>) => {
       state.curChannel = action.payload;
       return state;
@@ -84,51 +60,84 @@ export const chatSlice = createSlice({
       delete state.unreadChannels[action.payload];
       return state;
     },
+    setHead: (state, action: PayloadAction<Channel>) => {
+      state.channelHead = action.payload;
+      return state;
+    },
     addNewChannel: (state, action: PayloadAction<Channel>) => {
       // Multiple state updates required.
       const key = action.payload.channelId;
-      if (!(key in state.channelHash)) {
-        state.channelHash[key] = action.payload;
-
-        // Update linked list head.
-        if (state.head) {
-          action.payload.next = state.head;
-          state.head.prev = action.payload;
-        }
-        state.head = action.payload;
+      if (key in state.channelHash) {
+        return state;
       }
+
+      // Update channel hash.
+      state.channelHash[key] = action.payload;
+
+      // Update channel head.
+      if (!state.channelHead) {
+        state.channelHead = action.payload;
+      } else {
+        state.channelHead.next = action.payload;
+        action.payload.prev = state.channelHead;
+        state.channelHead = action.payload;
+      }
+      return state;
+    },
+    initChannels: (state, action: PayloadAction<Channel[]>) => {
+      action.payload.forEach(row => {
+        state.channelHash[row.channelId] = row;
+      });
       return state;
     },
     addNewMessage: (state, action: PayloadAction<Message>) => {
       // Multiple state updates required.
       // Channel must first be added if it does not exist.
       const key = action.payload.channelId;
-      if (key in state.channelHash) {
-        const channel = state.channelHash[key];
-        channel.messages.push(action.payload);
-
-        // Update linked list head.
-        if (channel.prev) {
-          channel.prev.next = channel.next;
-
-          if (channel.next) {
-            channel.next.prev = channel.prev;
-          }
-        }
-
-        channel.prev = null;
-
-        if (state.head) {
-          channel.next = state.head;
-          state.head.prev = channel;
-        }
-        state.head = channel;
+      if (!(key in state.channelHash)) {
+        return state;
       }
+
+      // update message array in channel.
+      const channel = state.channelHash[key];
+      channel.messages.push(action.payload);
+
+      // Update channel head.
+      if (!state.channelHead) {
+        return state;
+      } else if (state.channelHead.channelId === channel.channelId) {
+        return state;
+      }
+
+      if (channel.next) {
+        channel.next.prev = channel.prev;
+      }
+      if (channel.prev) {
+        channel.prev.next = channel.next;
+      }
+      channel.next = null;
+      channel.prev = state.channelHead;
+      state.channelHead.next = channel;
+      state.channelHead = channel;
+
+      return state;
+    },
+    updateChannel: (state, action: PayloadAction<Channel>) => {
+      const key = action.payload.channelId;
+      state.channelHash[key] = action.payload;
       return state;
     },
   },
 });
 
-export const { setHead, addNewChannel, addNewMessage, setCurChannel, addUnreadChannel, removeReadChannel } =
-  chatSlice.actions;
+export const {
+  setHead,
+  addNewChannel,
+  initChannels,
+  updateChannel,
+  addNewMessage,
+  setCurChannel,
+  addUnreadChannel,
+  removeReadChannel,
+} = chatSlice.actions;
 export default chatSlice.reducer;

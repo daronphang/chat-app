@@ -2,14 +2,14 @@ package usecase
 
 import (
 	"presence-service/internal/domain"
-	pb "protobuf/message"
+	pb "protobuf/proto/user"
 )
 
 type UseCaseService struct {
 	Repository 		domain.Repository
-	MessageClient   pb.MessageClient
+	UserClient   pb.UserClient
 }
 
-func NewUseCaseService(repo domain.Repository, mc pb.MessageClient) *UseCaseService {
-	return &UseCaseService{Repository: repo, MessageClient: mc}
+func NewUseCaseService(repo domain.Repository, u pb.UserClient) *UseCaseService {
+	return &UseCaseService{Repository: repo, UserClient: u}
 }

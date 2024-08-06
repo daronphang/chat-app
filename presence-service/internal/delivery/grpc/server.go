@@ -4,7 +4,7 @@ import (
 	"presence-service/internal/delivery/grpc/interceptor"
 	"presence-service/internal/usecase"
 
-	pb "protobuf/presence"
+	pb "protobuf/proto/presence"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"

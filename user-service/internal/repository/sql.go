@@ -177,7 +177,8 @@ func (q *Querier) GetChannelsAssociatedToUser(ctx context.Context, arg string) (
 	stmt := `
 	SELECT 
 	UTC.channel_id AS channel_id,
-	CASE WHEN GC.group_name IS NOT NULL THEN GC.group_NAME ELSE UC.display_name END AS channel_name	
+	CASE WHEN GC.group_name IS NOT NULL THEN GC.group_NAME ELSE UC.display_name END AS channel_name,
+	UTC.created_at as created_at	
 	FROM
 	user_to_channel AS UTC
 	LEFT JOIN group_channel AS GC ON GC.channel_id = UTC.channel_id
@@ -192,14 +193,17 @@ func (q *Querier) GetChannelsAssociatedToUser(ctx context.Context, arg string) (
 
 	defer rows.Close()
 	var items []domain.Channel
+	var ts pgtype.Timestamp
 	for rows.Next() {
 		var i domain.Channel
 		if err := rows.Scan(
 			&i.ChannelID,
 			&i.ChannelName,
+			&ts,
 		); err != nil {
 			return nil, err
 		}
+		i.CreatedAt = ts.Time.String()
 		items = append(items, i)
 	}
 	return items, err

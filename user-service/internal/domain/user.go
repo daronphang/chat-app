@@ -13,7 +13,7 @@ type UserMetadata struct {
 	CreatedAt	string	`json:"createdAt"`
 }
 
-type Login struct {
+type UserCredentials struct {
 	Email		string 	`json:"email" validate:"required"`
 }
 

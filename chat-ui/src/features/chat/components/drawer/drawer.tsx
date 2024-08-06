@@ -2,15 +2,15 @@ import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import { Channel } from 'features/chat/redux/chatSlice';
-import { useAppDispatch, useAppSelector } from 'shared/redux/reduxHooks';
-import { addAppListener } from 'shared/redux/listenerMiddleware';
+import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
+import { addAppListener } from 'core/redux/listenerMiddleware';
 import DrawerCard from '../drawerCard/drawerCard';
 import styles from './drawer.module.scss';
 
 export default function Drawer() {
   const [channels, setChannels] = useState<JSX.Element[]>([]);
   const dispatch = useAppDispatch();
-  const head = useAppSelector(state => state.chat.head);
+  const head = useAppSelector(state => state.chat.channelHead);
 
   useEffect(() => {
     if (head) {
@@ -22,13 +22,13 @@ export default function Drawer() {
     dispatch(
       addAppListener({
         predicate: action => {
-          if (['chat/addNewMessage', 'chat/addNewChannel'].includes(action.type)) {
+          if (['chat/setHead', 'chat/addNewMessage', 'chat/addNewChannel'].includes(action.type)) {
             return true;
           }
           return false;
         },
         effect: (action, listenerApi) => {
-          const head = listenerApi.getState().chat.head;
+          const head = listenerApi.getState().chat.channelHead;
           if (head) {
             updateChannelsFromHead(head);
           }
@@ -38,11 +38,13 @@ export default function Drawer() {
   }, []);
 
   const updateChannelsFromHead = (head: Channel) => {
+    // Need to iterate through linked list of channels for DOM update.
+    // This is because the linked list will be reordered and not just appended.
     let cur: Channel | null = head;
     const channels: JSX.Element[] = [];
     while (cur) {
       channels.push(<DrawerCard key={cur.channelId} props={cur} />);
-      cur = cur.next;
+      cur = cur.prev;
     }
     setChannels(channels);
   };

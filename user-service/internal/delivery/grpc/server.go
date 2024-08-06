@@ -4,7 +4,7 @@ import (
 	"user-service/internal/delivery/grpc/interceptor"
 	"user-service/internal/usecase"
 
-	pb "protobuf/user"
+	pb "protobuf/proto/user"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"

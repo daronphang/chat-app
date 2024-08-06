@@ -4,7 +4,7 @@ import (
 	"context"
 	"message-service/internal/domain"
 
-	pb "protobuf/user"
+	pb "protobuf/proto/user"
 )
 
 type EventBroker interface {

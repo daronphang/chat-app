@@ -8,9 +8,9 @@ import (
 	"presence-service/internal"
 	"presence-service/internal/config"
 	"presence-service/internal/domain"
-	pb "protobuf/message"
 
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 var (
@@ -19,7 +19,7 @@ var (
 
 func (uc *UseCaseService) BroadcastStatus(ctx context.Context, arg domain.UserStatus) error {
 	// Get all friends of user.
-	relations, err := uc.MessageClient.GetUserRelations(ctx, &pb.User{UserId: arg.UserID})
+	relations, err := uc.UserClient.GetUsersAssociatedToChannel(ctx, &wrapperspb.StringValue{Value: arg.UserID})
 	if err != nil {
 		return err
 	}

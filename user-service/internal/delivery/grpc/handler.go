@@ -2,8 +2,8 @@ package grpc
 
 import (
 	"context"
-	"protobuf/common"
-	pb "protobuf/user"
+	"protobuf/proto/common"
+	pb "protobuf/proto/user"
 	"user-service/internal"
 	"user-service/internal/domain"
 	cv "user-service/internal/validator"
@@ -34,7 +34,7 @@ func (s *GRPCServer) Signup(ctx context.Context, arg *pb.NewUser) (*pb.UserMetad
 	
 	rv, err := s.uc.Signup(ctx, p); 
 	if err != nil {
-		return nil, status.Error(2, err.Error())
+		return nil, status.Error(10, err.Error())
 	}
 	return &pb.UserMetadata{
 		UserId: rv.UserID,
@@ -44,8 +44,8 @@ func (s *GRPCServer) Signup(ctx context.Context, arg *pb.NewUser) (*pb.UserMetad
 	}, nil
 }
 
-func (s *GRPCServer) Login(ctx context.Context, arg *pb.Login) (*pb.UserMetadata, error) {	
-	p := domain.Login{
+func (s *GRPCServer) Login(ctx context.Context, arg *pb.UserCredentials) (*pb.UserMetadata, error) {	
+	p := domain.UserCredentials{
 		Email: arg.Email,
 	}
 	if err := cv.ValidateStruct(p); err != nil {
@@ -55,7 +55,7 @@ func (s *GRPCServer) Login(ctx context.Context, arg *pb.Login) (*pb.UserMetadata
 	
 	rv, err := s.uc.Login(ctx, p); 
 	if err != nil {
-		return nil, status.Error(2, err.Error())
+		return nil, status.Error(16, err.Error())
 	}
 	return &pb.UserMetadata{
 		UserId: rv.UserID,
@@ -77,7 +77,7 @@ func (s *GRPCServer) UpdateUser(ctx context.Context, arg *pb.UserMetadata) (*com
 	}
 	
 	if err := s.uc.UpdateUser(ctx, p); err != nil {
-		return nil, status.Error(2, err.Error())
+		return nil, status.Error(10, err.Error())
 	}
 	return &common.MessageResponse{Message: "user updated"}, nil
 }
@@ -86,7 +86,7 @@ func (s *GRPCServer) UpdateUser(ctx context.Context, arg *pb.UserMetadata) (*com
 func (s *GRPCServer) GetBestServer(ctx context.Context,  _ *emptypb.Empty) (*common.MessageResponse, error) {
 	server, err := s.uc.GetBestServer(ctx)
 	if err != nil {
-		return nil, status.Errorf(2, err.Error())
+		return nil, status.Errorf(10, err.Error())
 	}
 	return &common.MessageResponse{Message: server}, nil
 }
@@ -104,7 +104,7 @@ func (s *GRPCServer) CreateContact(ctx context.Context, arg *pb.NewContact) (*pb
 	
 	rv, err := s.uc.CreateContact(ctx, p)
 	if err != nil {
-		return nil, status.Error(2, err.Error())
+		return nil, status.Error(10, err.Error())
 	}
 	return &pb.Contact{
 		UserId: rv.UserID,
@@ -114,9 +114,13 @@ func (s *GRPCServer) CreateContact(ctx context.Context, arg *pb.NewContact) (*pb
 }
 
 func (s *GRPCServer) GetContacts(ctx context.Context, arg *wrappers.StringValue) (*pb.Contacts, error) {	
+	if (arg.Value == "") {
+		return nil, status.Errorf(9, "user id is missing")
+	}
+	
 	rv, err := s.uc.GetContacts(ctx, arg.Value)
 	if err != nil {
-		return nil, status.Error(2, err.Error())
+		return nil, status.Error(10, err.Error())
 	}
 
 	var contacts []*pb.Contact
@@ -143,7 +147,7 @@ func (s *GRPCServer) CreateChannel(ctx context.Context, arg *pb.NewChannel) (*pb
 	
 	rv, err := s.uc.CreateChannel(ctx, p)
 	if err != nil {
-		return nil, status.Error(2, err.Error())
+		return nil, status.Error(10, err.Error())
 	}
 	return &pb.Channel{
 		ChannelId: rv.ChannelID,
@@ -152,17 +156,25 @@ func (s *GRPCServer) CreateChannel(ctx context.Context, arg *pb.NewChannel) (*pb
 }
 
 func (s *GRPCServer) GetUsersAssociatedToChannel(ctx context.Context, arg *wrappers.StringValue) (*pb.Users, error) {	
+	if (arg.Value == "") {
+		return nil, status.Errorf(9, "channel id is missing")
+	}
+	
 	rv, err := s.uc.GetUsersAssociatedToChannel(ctx, arg.Value)
 	if err != nil {
-		return nil, status.Error(2, err.Error())
+		return nil, status.Error(10, err.Error())
 	}
 	return &pb.Users{UserIds: rv}, nil
 }
 
 func (s *GRPCServer) GetChannelsAssociatedToUser(ctx context.Context, arg *wrappers.StringValue) (*pb.Channels, error) {	
+	if (arg.Value == "") {
+		return nil, status.Errorf(9, "user id is missing")
+	}
+	
 	rv, err := s.uc.GetChannelsAssociatedToUser(ctx, arg.Value)
 	if err != nil {
-		return nil, status.Error(2, err.Error())
+		return nil, status.Error(10, err.Error())
 	}
 
 	var channels []*pb.Channel
@@ -170,6 +182,7 @@ func (s *GRPCServer) GetChannelsAssociatedToUser(ctx context.Context, arg *wrapp
 		channels = append(channels, &pb.Channel{
 			ChannelId: x.ChannelID,
 			ChannelName: x.ChannelName,
+			CreatedAt: x.CreatedAt,
 		})
 	}
 

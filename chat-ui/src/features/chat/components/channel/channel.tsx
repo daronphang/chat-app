@@ -2,8 +2,8 @@ import { KeyboardEvent, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import { Channel } from 'features/chat/redux/chatSlice';
-import { addAppListener } from 'shared/redux/listenerMiddleware';
-import { useAppDispatch } from 'shared/redux/reduxHooks';
+import { addAppListener } from 'core/redux/listenerMiddleware';
+import { useAppDispatch } from 'core/redux/reduxHooks';
 import styles from './channel.module.scss';
 import AppLogo from 'assets/images/chatLogo.png';
 import Content from '../content/content';

@@ -6,16 +6,54 @@ import (
 	"time"
 )
 
-func (q *Querier) GetLatestMessages(ctx context.Context, channelID string, lastMessageID uint64) ([]domain.Message, error) {
+func (q *Querier) GetLatestMessages(ctx context.Context, channelID string) ([]domain.Message, error) {
 	stmt := `
 	SELECT messageId, channelId, senderId, messageType, content, createdAt 
-	FROM message WHERE channelId = ? and messageId > ?
-	ORDER BY messageId ASC
+	FROM message WHERE channelId = ?
+	ORDER BY messageId DESC
+	LIMIT 100
 	`
 	scanner := q.session.Query(
 		stmt,
 		channelID,
-		lastMessageID,
+ 	).WithContext(ctx).Iter().Scanner()
+
+	var items []domain.Message
+	for scanner.Next() {
+		var i domain.Message
+		var createdAt int64
+		if err := scanner.Scan(
+			&i.MessageID,
+			&i.ChannelID,
+			&i.SenderID,
+			&i.MessageType,
+			&i.Content,
+			&createdAt,
+		); err != nil {
+			return nil, err
+		}
+		createdAt /= 1000
+		i.CreatedAt = time.Unix(createdAt, 0).Format("2006-01-02T15:04:05Z07:00")
+		items = append(items, i)
+	}
+	// scanner.Err() closes the iterator, so scanner nor iter should be used afterwards.
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (q *Querier) GetPreviousMessages(ctx context.Context, arg domain.PrevMessageRequest) ([]domain.Message, error) {
+	stmt := `
+	SELECT messageId, channelId, senderId, messageType, content, createdAt 
+	FROM message WHERE channelId = ? AND messageId < ?
+	ORDER BY messageId DESC
+	LIMIT 100
+	`
+	scanner := q.session.Query(
+		stmt,
+		arg.ChannelID,
+		arg.LastMessageID,
  	).WithContext(ctx).Iter().Scanner()
 
 	var items []domain.Message

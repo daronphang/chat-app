@@ -8,7 +8,7 @@ export interface UserMetadata {
 }
 
 const initialState: UserMetadata = {
-  userId: 'user123',
+  userId: '',
   email: '',
   displayName: '',
   contacts: [],
@@ -18,12 +18,25 @@ export const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    addContact: (state, action: PayloadAction<UserMetadata>) => {
-      state.contacts.push(action.payload);
+    setUser: (state, action: PayloadAction<UserMetadata>) => {
+      state.userId = action.payload.userId;
+      state.email = action.payload.email;
+      state.displayName = action.payload.displayName;
+      return state;
+    },
+    removeUser: (state, action) => {
+      state.userId = '';
+      state.email = '';
+      state.displayName = '';
+      state.contacts = [];
+      return state;
+    },
+    addContacts: (state, action: PayloadAction<UserMetadata[]>) => {
+      state.contacts = action.payload;
       return state;
     },
   },
 });
 
-export const { addContact } = userSlice.actions;
+export const { setUser, removeUser, addContacts } = userSlice.actions;
 export default userSlice.reducer;

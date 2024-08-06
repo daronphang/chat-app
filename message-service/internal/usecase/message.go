@@ -16,8 +16,16 @@ var (
 	logger, _ = internal.WireLogger()
 )
 
-func (uc *UseCaseService) GetLatestMessages(ctx context.Context, arg domain.LatestMessagesRequest) ([]domain.Message, error) {
-	rv, err := uc.Repository.GetLatestMessages(ctx, arg.ChannelID, arg.LastMessageID)
+func (uc *UseCaseService) GetLatestMessages(ctx context.Context, arg string) ([]domain.Message, error) {
+	rv, err := uc.Repository.GetLatestMessages(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	return rv, nil
+}
+
+func (uc *UseCaseService) GetPreviousMessages(ctx context.Context, arg domain.PrevMessageRequest) ([]domain.Message, error) {
+	rv, err := uc.Repository.GetPreviousMessages(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
