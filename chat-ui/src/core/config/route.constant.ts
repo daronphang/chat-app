@@ -1,4 +1,4 @@
 export const RoutePaths = {
-  CHAT: '/chat',
+  CHAT: '/',
   LOGIN: '/login',
 };

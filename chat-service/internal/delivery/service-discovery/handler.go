@@ -112,9 +112,11 @@ func getServerMetadata(uuid string) (domain.ServerMetadata, error) {
 	// 	return domain.ServerMetadata{}, err
 	// }
 
+	fmt.Println(ip)
+
 	api := url.URL{
-		Scheme: "http",
-		Host: ip.String(),
+		Scheme: "ws",
+		Host: "localhost:8080", // ip.String()
 		Path: "api/v1/ws",
 	}
 	

@@ -41,8 +41,8 @@ func New(logger *zap.Logger, uc *uc.UseCaseService, wsHandler func(w http.Respon
 	msgGroup := baseGroup.Group("/message")
 	api.RegisterMessageRoutes(msgGroup, rh)
 
-	presenceGroup := baseGroup.Group("/presence")
-	api.RegisterPresenceRoutes(presenceGroup, rh)
+	eventGroup := baseGroup.Group("/event")
+	api.RegisterEventRoutes(eventGroup, rh)
 
 	// Register websocket.
 	baseGroup.GET("/ws", func(c echo.Context) error {

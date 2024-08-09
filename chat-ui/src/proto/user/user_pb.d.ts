@@ -58,6 +58,11 @@ export class UserMetadata extends jspb.Message {
   getCreatedat(): string;
   setCreatedat(value: string): UserMetadata;
 
+  getContactsList(): Array<Contact>;
+  setContactsList(value: Array<Contact>): UserMetadata;
+  clearContactsList(): UserMetadata;
+  addContacts(value?: Contact, index?: number): Contact;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UserMetadata.AsObject;
   static toObject(includeInstance: boolean, msg: UserMetadata): UserMetadata.AsObject;
@@ -72,6 +77,7 @@ export namespace UserMetadata {
     email: string,
     displayname: string,
     createdat: string,
+    contactsList: Array<Contact.AsObject>,
   }
 }
 

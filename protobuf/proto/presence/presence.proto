@@ -8,7 +8,7 @@ import "proto/common/common.proto";
 service Presence {
     rpc heartbeat(google.protobuf.Empty) returns (common.MessageResponse) {}
     rpc clientHeartbeat(User) returns (common.MessageResponse) {}
-    rpc broadcastStatus(BroadcastStatus) returns (common.MessageResponse) {}
+    rpc broadcastUserStatus(BroadcastUserStatus) returns (common.MessageResponse) {}
 }
 
 message User {
@@ -20,7 +20,7 @@ message UserStatus {
     string userId = 1;
 }
 
-message BroadcastStatus {
+message BroadcastUserStatus {
     string userId = 1;
     string status = 2;
 }

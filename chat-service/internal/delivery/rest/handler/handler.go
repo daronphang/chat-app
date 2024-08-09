@@ -11,11 +11,11 @@ import (
 var logger, _ = internal.WireLogger()
 
 type RestHandler struct {
-	UseCase *usecase.UseCaseService
+	usecase *usecase.UseCaseService
 }
 
 func NewRestHandler(uc *usecase.UseCaseService) *RestHandler {
-	return &RestHandler{UseCase: uc}
+	return &RestHandler{usecase: uc}
 }
 
 func (h *RestHandler) Heartbeat(c echo.Context) error {

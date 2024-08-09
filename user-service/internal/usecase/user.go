@@ -13,15 +13,26 @@ func (uc *UseCaseService) Signup(ctx context.Context, arg domain.NewUser) (domai
 	if err != nil {
 		return domain.UserMetadata{}, err
 	}
+
+	// Create user topic.
+	if err := uc.EventBroker.CreateUserTopic(ctx, arg.UserID); err != nil {
+		return domain.UserMetadata{}, err
+	}
+
 	return rv, nil
 }
 
 func (uc *UseCaseService) Login(ctx context.Context, arg domain.UserCredentials) (domain.UserMetadata, error) {
-	rv, err := uc.Repository.GetUser(ctx, arg.Email)
+	um, err := uc.Repository.GetUser(ctx, arg.Email)
 	if err != nil {
 		return domain.UserMetadata{}, err
 	}
-	return rv, nil
+	contacts, err := uc.Repository.GetContacts(ctx, um.UserID)
+	if err != nil {
+		return domain.UserMetadata{}, err
+	}
+	um.Contacts = contacts
+	return um, nil
 }
 
 func (uc *UseCaseService) UpdateUser(ctx context.Context, arg domain.UserMetadata) error {

@@ -18,6 +18,14 @@ var (
 	}
 )
 
+type MessageStatus string
+
+const (
+	Received MessageStatus = "received"
+	Delivered MessageStatus = "delivered"
+	Read MessageStatus = "read"
+)
+
 /*
 Topics are explicitly configured for the following reasons:
 
@@ -42,12 +50,13 @@ type BrokerQueueConfig struct {
 }
 
 type Message struct {
-	MessageID 			uint64 `json:"messageId"`
-	ChannelID 			string `json:"channelId" validate:"required"` 
-	SenderID 			string `json:"senderId" validate:"required"`
-	MessageType 		string `json:"messageType" validate:"required"`
-	Content 			string `json:"content" validate:"required"`
-	CreatedAt 			string `json:"createdAt"`
+	MessageID 			uint64 			`json:"messageId"`
+	ChannelID 			string 			`json:"channelId" validate:"required"` 
+	SenderID 			string 			`json:"senderId" validate:"required"`
+	MessageType 		string 			`json:"messageType" validate:"required"`
+	Content 			string 			`json:"content" validate:"required"`
+	CreatedAt 			string 			`json:"createdAt"`
+	MessageStatus		MessageStatus	`json:"messageStatus"` 
 }
 
 type UserChannelRequest struct {

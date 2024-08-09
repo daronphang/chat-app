@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
 import { RpcError } from 'grpc-web';
+import { useSnackbar } from 'notistack';
 
 import { UserCredentials } from 'proto/user/user_pb';
 import { setUser } from 'features/user/redux/userSlice';
 import { RoutePaths } from 'core/config/route.constant';
-import styles from './login.module.scss';
-import { useSnackbar } from 'notistack';
-import { defaultSnackbarOptions } from 'shared/utils/snackbar';
+import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
 import { ApiErrors } from 'core/config/api.constant';
+import styles from './login.module.scss';
 
 export default function Login() {
   const [loading, isLoading] = useState<boolean>(false);
@@ -41,12 +41,12 @@ export default function Login() {
 
       if (err.code === 14) {
         enqueueSnackbar(ApiErrors.NETWORK_ERROR, {
-          ...defaultSnackbarOptions(),
+          ...defaultSnackbarOptions,
           variant: 'error',
         });
       } else {
         enqueueSnackbar('Invalid credentials', {
-          ...defaultSnackbarOptions(),
+          ...defaultSnackbarOptions,
           variant: 'error',
         });
       }

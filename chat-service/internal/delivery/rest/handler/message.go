@@ -14,7 +14,7 @@ func (h *RestHandler) SendMsgToClient(c echo.Context) error {
 		logger.Error("validation error", zap.String("trace", err.Error()))
 		return newRequestValidationError(c, http.StatusBadRequest, err)
 	}
-	if err := h.UseCase.EventBroker.PublishMessage(c.Request().Context(), p.Message.ChannelID, p.ReceiverID, p.Message); err != nil {
+	if err := h.usecase.EventBroker.PublishMessage(c.Request().Context(), p.Message.ChannelID, p.ReceiverID, p.Message); err != nil {
 		logger.Error("error sending message to client", zap.String("trace", err.Error()))
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}

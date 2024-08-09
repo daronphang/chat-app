@@ -177,12 +177,13 @@ func (q *Querier) GetChannelsAssociatedToUser(ctx context.Context, arg string) (
 	stmt := `
 	SELECT 
 	UTC.channel_id AS channel_id,
-	CASE WHEN GC.group_name IS NOT NULL THEN GC.group_NAME ELSE UC.display_name END AS channel_name,
+	CASE WHEN GC.group_name IS NOT NULL THEN GC.group_NAME WHEN uc.display_name IS NOT NULL THEN uc.display_name ELSE UM.email END AS channel_name,
 	UTC.created_at as created_at	
 	FROM
 	user_to_channel AS UTC
 	LEFT JOIN group_channel AS GC ON GC.channel_id = UTC.channel_id
 	LEFT JOIN user_contact AS UC ON UC.user_id = UTC.user_id AND POSITION(UC.friend_id IN UTC.channel_id) > 0
+	LEFT JOIN user_metadata AS UM ON UM.user_id != UTC.user_id AND POSITION(UM.user_id IN UTC.channel_id) > 0
 	WHERE UTC.user_id = $1
 	`
 
@@ -204,6 +205,31 @@ func (q *Querier) GetChannelsAssociatedToUser(ctx context.Context, arg string) (
 			return nil, err
 		}
 		i.CreatedAt = ts.Time.String()
+		items = append(items, i)
+	}
+	return items, err
+}
+
+// To fetch both user contacts and unknown users of channels the user is in.
+func (q *Querier) GetUsersAssociatedToTargetUser(ctx context.Context, arg string) ([]string, error) {
+	// TODO:
+	stmt := `
+	SELECT user_id FROM user_to_channel
+	WHERE channel_id = $1
+	`
+
+	rows, err := q.db.Query(ctx, stmt, arg)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var i string
+		if err := rows.Scan(&i); err != nil {
+			return nil, err
+		}
 		items = append(items, i)
 	}
 	return items, err

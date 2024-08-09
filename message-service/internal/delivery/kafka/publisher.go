@@ -43,7 +43,7 @@ func (k *KafkaClient) PublishMessage(ctx context.Context, key string, topic stri
 		Value: v,
 		Topic: topic,
 	}
-	if err := k.Writer.WriteMessages(ctx, msg); err != nil {
+	if err := k.writer.WriteMessages(ctx, msg); err != nil {
 		return err
 	}
 	return nil

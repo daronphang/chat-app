@@ -57,11 +57,21 @@ func (s *GRPCServer) Login(ctx context.Context, arg *pb.UserCredentials) (*pb.Us
 	if err != nil {
 		return nil, status.Error(16, err.Error())
 	}
+
+	contacts := make([]*pb.Contact, 0)
+	for _, contact := range rv.Contacts {
+		contacts = append(contacts, &pb.Contact{
+			UserId: contact.UserID,
+			Email: contact.Email,
+			DisplayName: contact.DisplayName,
+		})
+	}
 	return &pb.UserMetadata{
 		UserId: rv.UserID,
 		Email: rv.Email,
 		DisplayName: rv.DisplayName,
 		CreatedAt: rv.CreatedAt,
+		Contacts: contacts,
 	}, nil
 }
 
@@ -187,4 +197,16 @@ func (s *GRPCServer) GetChannelsAssociatedToUser(ctx context.Context, arg *wrapp
 	}
 
 	return &pb.Channels{Channels: channels}, nil
+}
+
+func (s *GRPCServer) GetUsersAssociatedToTargetUser(ctx context.Context, arg *wrappers.StringValue) (*pb.Users, error) {
+	if (arg.Value == "") {
+		return nil, status.Errorf(9, "user id is missing")
+	}
+
+	rv, err := s.uc.GetUsersAssociatedToTargetUser(ctx, arg.Value)
+	if err != nil {
+		return nil, status.Error(10, err.Error())
+	}
+	return &pb.Users{UserIds: rv}, nil
 }

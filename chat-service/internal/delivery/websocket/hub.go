@@ -1,7 +1,6 @@
 package ws
 
 import (
-	"chat-service/internal/config"
 	"chat-service/internal/delivery/kafka"
 	"chat-service/internal/domain"
 	"chat-service/internal/usecase"
@@ -22,8 +21,8 @@ type Device struct {
 	clientID 	string
 	hub 		*Hub
 	conn 		*websocket.Conn
-	send 		chan []byte // Buffered channel of outbound messages.
-	presence	chan []byte
+	send 		chan []byte // Buffered channel of outbound data to client.
+	consumer	*kafka.KafkaConsumer
 }
 
 type Client struct {
@@ -33,10 +32,14 @@ type Client struct {
 
 type Hub struct {
 	clients 			map[string]*Client
-	receive 			chan []byte	// Buffered channel of inbound messages.
+	receive 			chan []byte	// Buffered channel of inbound data from client.
 	registerDevice 		chan *Device
 	unregisterDevice 	chan *Device
-	uc 					*usecase.UseCaseService
+	usecase 			*usecase.UseCaseService
+}
+
+func ProvideHub() *Hub {
+	return hub
 }
 
 func NewHub(uc *usecase.UseCaseService) *Hub {
@@ -45,17 +48,21 @@ func NewHub(uc *usecase.UseCaseService) *Hub {
 		registerDevice:   	make(chan *Device),
 		unregisterDevice: 	make(chan *Device),
 		clients:    		make(map[string]*Client),
-		uc: 				uc,
+		usecase: 			uc,
 	}
 	return hub
 }
 
-func ProvideHub() *Hub {
-	return hub
+func (h *Hub) Close() {
+	for _, client := range h.clients {
+		for _, device := range client.devices {
+			device.consumer.Close()
+		}
+	}
 }
 
-func (h *Hub) handleInboundMsg(ctx context.Context, msg []byte) {
-	// Validate inbound message, push to queue and send ack.
+func (h *Hub) handleReceiveMessage(ctx context.Context, msg []byte) {
+	// Validate message from client.
 	v := new(domain.Message)
 	if err := cv.UnmarshalAndValidate(msg, v); err != nil {
 		logger.Error(
@@ -64,7 +71,8 @@ func (h *Hub) handleInboundMsg(ctx context.Context, msg []byte) {
 		return
 	}
 
-	rv, err := h.uc.SendMessage(ctx, *v)
+	// Save message.
+	rv, err := h.usecase.SaveNewMessage(ctx, *v)
 	if err != nil {
 		logger.Error(
 			"failed to send inbound message", 
@@ -73,8 +81,9 @@ func (h *Hub) handleInboundMsg(ctx context.Context, msg []byte) {
 		)
 		return
 	}
-	
-	if err := h.uc.ForwardMsgToClient(ctx, rv.SenderID, rv); err != nil {
+
+	// Send acknowledgement back to client.
+	if err := h.usecase.SendEventToClient(ctx, rv.SenderID, domain.NewMessage, rv); err != nil {
 		logger.Error(
 			"failed to ack inbound message to sender",
 			zap.String("payload", string(msg)),
@@ -83,55 +92,45 @@ func (h *Hub) handleInboundMsg(ctx context.Context, msg []byte) {
 	}
 }
 
-func (h *Hub) createNewClient(cfg *config.Config, device *Device) error {
-	// Ensure topic is created first before reading.
-	tcfg := domain.UserTopicConfig
-	tcfg.Topic = device.clientID
-	tcfg.ConsumerGroupID = device.deviceID
-	if err := kafka.CreateKafkaTopics(cfg, tcfg); err != nil {
-		return err
-	}
-
-	// Create new client.
+func (h *Hub) createNewClient(device *Device) {
 	client := &Client{
 		clientID: device.clientID,
 		devices: make(map[string]*Device),
 	}
 	h.clients[client.clientID] = client	
 	client.devices[device.deviceID] = device
-
-	return nil
 }
 
-func (h *Hub) Run(ctx context.Context, cfg *config.Config) {
+func (h *Hub) Run(ctx context.Context, brokers []string) {
 	for {
 		select {
 		case <- ctx.Done():
 			return
 		case device := <-h.registerDevice:
-			// TODO: Take note of Kafka dependency in this layer.
 			client, ok := h.clients[device.clientID]
 			if !ok {
-				if err := h.createNewClient(cfg, device); err != nil {
-					logger.Error(
-						fmt.Sprintf("unable to create client for %v", device.clientID),
-						zap.String("trace", err.Error()),
-					)
-					device.conn.Close()
-				}
+				h.createNewClient(device)
 			} else {
 				client.devices[device.deviceID] = device
 			}
+			// Take note of Kafka dependency in this layer.
 			// Each device will consume from the user topic at different 
 			// offset values. Hence, a new reader is required.
-			consumer := kafka.NewConsumer(cfg, device.deviceID, device.clientID)
-			go consumer.ConsumeMsgFromUserTopic(ctx, h.uc)
+			cfg := kafka.KafkaConsumerConfig{
+				Brokers: 			brokers,
+				ConsumerGroupID: 	device.deviceID,
+				Topic: 				device.clientID,
+			}
+			device.consumer = kafka.NewConsumer(cfg)
+			go device.consumer.ConsumeFromUserTopic(ctx, h.usecase)
 		case device := <-h.unregisterDevice:
 			client, ok := h.clients[device.clientID]
 			if !ok {
 				break
 			}
+			
 			close(device.send)
+			device.consumer.Close()
 
 			if len(client.devices) == 1 {
 				// Remove client.
@@ -146,7 +145,7 @@ func (h *Hub) Run(ctx context.Context, cfg *config.Config) {
 			guard := make(chan bool, maxGoroutines)
 			guard <- true
 			go func() {
-				h.handleInboundMsg(ctx, msg)
+				h.handleReceiveMessage(ctx, msg)
 				<- guard
 			}()
 		}

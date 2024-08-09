@@ -36,6 +36,7 @@ type UserClient interface {
 	CreateChannel(ctx context.Context, in *NewChannel, opts ...grpc.CallOption) (*Channel, error)
 	GetUsersAssociatedToChannel(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Users, error)
 	GetChannelsAssociatedToUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Channels, error)
+	GetUsersAssociatedToTargetUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Users, error)
 }
 
 type userClient struct {
@@ -145,6 +146,15 @@ func (c *userClient) GetChannelsAssociatedToUser(ctx context.Context, in *wrappe
 	return out, nil
 }
 
+func (c *userClient) GetUsersAssociatedToTargetUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Users, error) {
+	out := new(Users)
+	err := c.cc.Invoke(ctx, "/user.User/getUsersAssociatedToTargetUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServer is the server API for User service.
 // All implementations must embed UnimplementedUserServer
 // for forward compatibility
@@ -160,6 +170,7 @@ type UserServer interface {
 	CreateChannel(context.Context, *NewChannel) (*Channel, error)
 	GetUsersAssociatedToChannel(context.Context, *wrapperspb.StringValue) (*Users, error)
 	GetChannelsAssociatedToUser(context.Context, *wrapperspb.StringValue) (*Channels, error)
+	GetUsersAssociatedToTargetUser(context.Context, *wrapperspb.StringValue) (*Users, error)
 	mustEmbedUnimplementedUserServer()
 }
 
@@ -199,6 +210,9 @@ func (UnimplementedUserServer) GetUsersAssociatedToChannel(context.Context, *wra
 }
 func (UnimplementedUserServer) GetChannelsAssociatedToUser(context.Context, *wrapperspb.StringValue) (*Channels, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetChannelsAssociatedToUser not implemented")
+}
+func (UnimplementedUserServer) GetUsersAssociatedToTargetUser(context.Context, *wrapperspb.StringValue) (*Users, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsersAssociatedToTargetUser not implemented")
 }
 func (UnimplementedUserServer) mustEmbedUnimplementedUserServer() {}
 
@@ -411,6 +425,24 @@ func _User_GetChannelsAssociatedToUser_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _User_GetUsersAssociatedToTargetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(wrapperspb.StringValue)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).GetUsersAssociatedToTargetUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.User/getUsersAssociatedToTargetUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).GetUsersAssociatedToTargetUser(ctx, req.(*wrapperspb.StringValue))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // User_ServiceDesc is the grpc.ServiceDesc for User service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -461,6 +493,10 @@ var User_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "getChannelsAssociatedToUser",
 			Handler:    _User_GetChannelsAssociatedToUser_Handler,
+		},
+		{
+			MethodName: "getUsersAssociatedToTargetUser",
+			Handler:    _User_GetUsersAssociatedToTargetUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

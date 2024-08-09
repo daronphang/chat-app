@@ -7,10 +7,11 @@ type NewUser struct {
 }
 
 type UserMetadata struct {
-	UserID 		string 	`json:"userId" validate:"required"`
-	Email		string 	`json:"email" validate:"required"`
-	DisplayName	string	`json:"displayName" validate:"required"`
-	CreatedAt	string	`json:"createdAt"`
+	UserID 		string 		`json:"userId" validate:"required"`
+	Email		string 		`json:"email" validate:"required"`
+	DisplayName	string		`json:"displayName" validate:"required"`
+	CreatedAt	string		`json:"createdAt"`
+	Contacts	[]Contact	`json:"contacts"`
 }
 
 type UserCredentials struct {

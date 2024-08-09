@@ -412,7 +412,8 @@ proto.message.Messages.Message.toObject = function(includeInstance, msg) {
     senderid: jspb.Message.getFieldWithDefault(msg, 4, ""),
     messagetype: jspb.Message.getFieldWithDefault(msg, 5, ""),
     content: jspb.Message.getFieldWithDefault(msg, 6, ""),
-    createdat: jspb.Message.getFieldWithDefault(msg, 7, "")
+    createdat: jspb.Message.getFieldWithDefault(msg, 7, ""),
+    messagestatus: jspb.Message.getFieldWithDefault(msg, 9, "")
   };
 
   if (includeInstance) {
@@ -472,6 +473,10 @@ proto.message.Messages.Message.deserializeBinaryFromReader = function(msg, reade
     case 7:
       var value = /** @type {string} */ (reader.readString());
       msg.setCreatedat(value);
+      break;
+    case 9:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setMessagestatus(value);
       break;
     default:
       reader.skipField();
@@ -541,6 +546,13 @@ proto.message.Messages.Message.serializeBinaryToWriter = function(message, write
   if (f.length > 0) {
     writer.writeString(
       7,
+      f
+    );
+  }
+  f = message.getMessagestatus();
+  if (f.length > 0) {
+    writer.writeString(
+      9,
       f
     );
   }
@@ -652,6 +664,24 @@ proto.message.Messages.Message.prototype.getCreatedat = function() {
  */
 proto.message.Messages.Message.prototype.setCreatedat = function(value) {
   return jspb.Message.setProto3StringField(this, 7, value);
+};
+
+
+/**
+ * optional string messageStatus = 9;
+ * @return {string}
+ */
+proto.message.Messages.Message.prototype.getMessagestatus = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 9, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.message.Messages.Message} returns this
+ */
+proto.message.Messages.Message.prototype.setMessagestatus = function(value) {
+  return jspb.Message.setProto3StringField(this, 9, value);
 };
 
 

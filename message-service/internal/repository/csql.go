@@ -8,7 +8,7 @@ import (
 
 func (q *Querier) GetLatestMessages(ctx context.Context, channelID string) ([]domain.Message, error) {
 	stmt := `
-	SELECT messageId, channelId, senderId, messageType, content, createdAt 
+	SELECT messageId, channelId, senderId, messageType, content, messageStatus, createdAt 
 	FROM message WHERE channelId = ?
 	ORDER BY messageId DESC
 	LIMIT 100
@@ -28,6 +28,7 @@ func (q *Querier) GetLatestMessages(ctx context.Context, channelID string) ([]do
 			&i.SenderID,
 			&i.MessageType,
 			&i.Content,
+			&i.MessageStatus,
 			&createdAt,
 		); err != nil {
 			return nil, err
@@ -45,7 +46,7 @@ func (q *Querier) GetLatestMessages(ctx context.Context, channelID string) ([]do
 
 func (q *Querier) GetPreviousMessages(ctx context.Context, arg domain.PrevMessageRequest) ([]domain.Message, error) {
 	stmt := `
-	SELECT messageId, channelId, senderId, messageType, content, createdAt 
+	SELECT messageId, channelId, senderId, messageType, content, messageStatus, createdAt 
 	FROM message WHERE channelId = ? AND messageId < ?
 	ORDER BY messageId DESC
 	LIMIT 100
@@ -66,6 +67,7 @@ func (q *Querier) GetPreviousMessages(ctx context.Context, arg domain.PrevMessag
 			&i.SenderID,
 			&i.MessageType,
 			&i.Content,
+			&i.MessageStatus,
 			&createdAt,
 		); err != nil {
 			return nil, err
@@ -83,9 +85,9 @@ func (q *Querier) GetPreviousMessages(ctx context.Context, arg domain.PrevMessag
 
 func (q *Querier) CreateMessage(ctx context.Context, arg domain.Message) error {
 	stmt := `
-	INSERT INTO message (messageId, channelId, senderId, messageType, content, createdAt) 
+	INSERT INTO message (messageId, channelId, senderId, messageType, content, messageStatus, createdAt) 
 	VALUES 
-	(?, ?, ?, ?, ?, ?)
+	(?, ?, ?, ?, ?, ?, ?)
 	`
 
 	createdAt, err := time.Parse("2006-01-02T15:04:05Z07:00", arg.CreatedAt)
@@ -100,7 +102,26 @@ func (q *Querier) CreateMessage(ctx context.Context, arg domain.Message) error {
 		arg.SenderID,
 		arg.MessageType,
 		arg.Content,
+		arg.MessageStatus,
 		createdAt,
+	).WithContext(ctx).Exec(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (q *Querier) UpdateMessageStatus(ctx context.Context, arg domain.Message) error {
+	stmt := `
+	UPDATE message 
+	SET messageStatus = ?
+	WHERE channelId = ? AND messageId = ?
+	`
+
+	if err := q.session.Query(
+		stmt,
+		arg.MessageStatus,
+		arg.ChannelID,
+		arg.MessageID,
 	).WithContext(ctx).Exec(); err != nil {
 		return err
 	}

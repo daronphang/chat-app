@@ -10,8 +10,7 @@ type EventBroker interface {
 }
 
 type ServerClienter interface {
-	DeliverOutboundMsg(ctx context.Context, clientId string, arg domain.Message) error
-	BroadcastPresenceStatus(ctx context.Context, arg domain.PresenceStatus) error
+	SendEventToClient(ctx context.Context, clientID string, event domain.Event, payload interface{}) error 
 }
 
 type UseCaseService struct {

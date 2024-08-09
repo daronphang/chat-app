@@ -16,12 +16,12 @@ var (
 )
 
 type KafkaClient struct {
-	Reader *kafka.Reader
-	Writer *kafka.Writer
+	reader *kafka.Reader
+	writer *kafka.Writer
 }
 
 func New(r *kafka.Reader, w *kafka.Writer) *KafkaClient {
-	return &KafkaClient{Reader: r, Writer: w}
+	return &KafkaClient{reader: r, writer: w}
 }
 
 func CreateKafkaTopic(cfg *config.Config, topicCfg domain.BrokerTopicConfig) error {
@@ -57,4 +57,8 @@ func CreateKafkaTopic(cfg *config.Config, topicCfg domain.BrokerTopicConfig) err
 	}
 	
 	return nil
+}
+
+func (kc *KafkaClient) Close() {
+	kc.writer.Close()
 }

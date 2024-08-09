@@ -65,6 +65,9 @@ export namespace Messages {
     getCreatedat(): string;
     setCreatedat(value: string): Message;
 
+    getMessagestatus(): string;
+    setMessagestatus(value: string): Message;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): Message.AsObject;
     static toObject(includeInstance: boolean, msg: Message): Message.AsObject;
@@ -81,6 +84,7 @@ export namespace Messages {
       messagetype: string,
       content: string,
       createdat: string,
+      messagestatus: string,
     }
   }
 

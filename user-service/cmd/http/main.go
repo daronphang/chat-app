@@ -10,6 +10,7 @@ import (
 	"user-service/internal"
 	"user-service/internal/config"
 	g "user-service/internal/delivery/grpc"
+	k "user-service/internal/delivery/kafka"
 	svcdis "user-service/internal/delivery/service-discovery"
 	"user-service/internal/repository"
 	"user-service/internal/usecase"
@@ -48,8 +49,8 @@ func main() {
 	if err != nil {
 		logger.Fatal("error connecting to etcd", zap.String("trace", err.Error()))
 	}
-
-	uc := usecase.NewUseCaseService(db, sd)
+	kc := k.New(cfg)
+	uc := usecase.NewUseCaseService(db, sd, kc)
 
 	// Listen to protocol and port.
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", cfg.Port))
@@ -76,15 +77,13 @@ func main() {
 	<-ctx.Done()
 	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	gracefulShutdown(s, db, sd)
+	gracefulShutdown(s, db, sd, kc)
 }
 
-func gracefulShutdown(s *grpc.Server, db *repository.Querier, sd *svcdis.ServiceDiscoveryClient) {
+func gracefulShutdown(s *grpc.Server, db *repository.Querier, sd *svcdis.ServiceDiscoveryClient, kc *k.KafkaClient) {
 	fmt.Println("performing graceful shutdown...")
-
 	s.GracefulStop()
-
 	db.Close()
-
 	sd.Close()
+	kc.Close()
 }

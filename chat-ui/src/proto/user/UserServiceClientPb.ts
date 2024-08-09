@@ -515,5 +515,48 @@ export class UserClient {
     this.methodDescriptorgetChannelsAssociatedToUser);
   }
 
+  methodDescriptorgetUsersAssociatedToTargetUser = new grpcWeb.MethodDescriptor(
+    '/user.User/getUsersAssociatedToTargetUser',
+    grpcWeb.MethodType.UNARY,
+    google_protobuf_wrappers_pb.StringValue,
+    proto_user_user_pb.Users,
+    (request: google_protobuf_wrappers_pb.StringValue) => {
+      return request.serializeBinary();
+    },
+    proto_user_user_pb.Users.deserializeBinary
+  );
+
+  getUsersAssociatedToTargetUser(
+    request: google_protobuf_wrappers_pb.StringValue,
+    metadata?: grpcWeb.Metadata | null): Promise<proto_user_user_pb.Users>;
+
+  getUsersAssociatedToTargetUser(
+    request: google_protobuf_wrappers_pb.StringValue,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: proto_user_user_pb.Users) => void): grpcWeb.ClientReadableStream<proto_user_user_pb.Users>;
+
+  getUsersAssociatedToTargetUser(
+    request: google_protobuf_wrappers_pb.StringValue,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: proto_user_user_pb.Users) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/user.User/getUsersAssociatedToTargetUser',
+        request,
+        metadata || {},
+        this.methodDescriptorgetUsersAssociatedToTargetUser,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/user.User/getUsersAssociatedToTargetUser',
+    request,
+    metadata || {},
+    this.methodDescriptorgetUsersAssociatedToTargetUser);
+  }
+
 }
 

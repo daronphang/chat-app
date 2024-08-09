@@ -7,12 +7,12 @@ import (
 	"chat-service/internal/delivery/rest"
 	svcdis "chat-service/internal/delivery/service-discovery"
 	ws "chat-service/internal/delivery/websocket"
-	"chat-service/internal/domain"
 	uc "chat-service/internal/usecase"
 	"context"
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -35,11 +35,6 @@ func main() {
 		logger.Fatal("error setting up logger", zap.String("trace", err.Error()))
     }
 
-	// Create Kafka topics.
-	if err := kafka.CreateKafkaTopics(cfg, domain.MessageTopicConfig); err != nil {
-		logger.Fatal("error creating kafka topics", zap.String("trace", err.Error()))
-	}
-
 	// Create service discovery client.
 	sd, err := svcdis.New(cfg)
 	if err != nil {
@@ -54,7 +49,8 @@ func main() {
 
 	// Init websocket hub.
 	hub := ws.NewHub(uc)
-	go hub.Run(ctx, cfg)
+	brokers := strings.Split(cfg.Kafka.BrokerAddresses, ",")
+	go hub.Run(ctx, brokers)
 
 	// Create server.
 	s := rest.New(logger, uc, ws.ServeWs)
@@ -63,7 +59,7 @@ func main() {
 	go func() {
 		fmt.Printf("starting REST server in port %v", cfg.Port)
 		if err := s.Echo.Start(fmt.Sprintf(":%v", cfg.Port)); err != nil {
-			gracefulShutdown(ctx, s, eb)
+			gracefulShutdown(ctx, s, eb, hub)
 			logger.Fatal("failed to start REST server", zap.String("trace", err.Error()))
 		}
 	}()
@@ -79,15 +75,13 @@ func main() {
 	<-ctx.Done()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	gracefulShutdown(ctx, s, eb)
+	gracefulShutdown(ctx, s, eb, hub)
 }
 
-func gracefulShutdown(ctx context.Context, s *rest.RestServer, k *kafka.KafkaClient) {
+func gracefulShutdown(ctx context.Context, s *rest.RestServer, k *kafka.KafkaClient, hub *ws.Hub) {
 	fmt.Println("performing graceful shutdown...")
-	if err := k.Writer.Close(); err != nil {
-		logger.Error("failed to close Kafka writer", zap.String("trace", err.Error()))
-	}
-
+	k.Close()
+	hub.Close()
 	if err := s.Echo.Shutdown(ctx); err != nil {
 		logger.Error("failed to shutdown REST server", zap.String("trace", err.Error()))
 	}

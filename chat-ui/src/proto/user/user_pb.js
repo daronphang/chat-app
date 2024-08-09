@@ -90,7 +90,7 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.user.UserMetadata = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(this, opt_data, 0, -1, proto.user.UserMetadata.repeatedFields_, null);
 };
 goog.inherits(proto.user.UserMetadata, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -538,6 +538,13 @@ proto.user.UserCredentials.prototype.setEmail = function(value) {
 
 
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.user.UserMetadata.repeatedFields_ = [5];
+
 
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -572,7 +579,9 @@ proto.user.UserMetadata.toObject = function(includeInstance, msg) {
     userid: jspb.Message.getFieldWithDefault(msg, 1, ""),
     email: jspb.Message.getFieldWithDefault(msg, 2, ""),
     displayname: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    createdat: jspb.Message.getFieldWithDefault(msg, 4, "")
+    createdat: jspb.Message.getFieldWithDefault(msg, 4, ""),
+    contactsList: jspb.Message.toObjectList(msg.getContactsList(),
+    proto.user.Contact.toObject, includeInstance)
   };
 
   if (includeInstance) {
@@ -624,6 +633,11 @@ proto.user.UserMetadata.deserializeBinaryFromReader = function(msg, reader) {
     case 4:
       var value = /** @type {string} */ (reader.readString());
       msg.setCreatedat(value);
+      break;
+    case 5:
+      var value = new proto.user.Contact;
+      reader.readMessage(value,proto.user.Contact.deserializeBinaryFromReader);
+      msg.addContacts(value);
       break;
     default:
       reader.skipField();
@@ -680,6 +694,14 @@ proto.user.UserMetadata.serializeBinaryToWriter = function(message, writer) {
     writer.writeString(
       4,
       f
+    );
+  }
+  f = message.getContactsList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
+      5,
+      f,
+      proto.user.Contact.serializeBinaryToWriter
     );
   }
 };
@@ -754,6 +776,44 @@ proto.user.UserMetadata.prototype.getCreatedat = function() {
  */
 proto.user.UserMetadata.prototype.setCreatedat = function(value) {
   return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+/**
+ * repeated Contact contacts = 5;
+ * @return {!Array<!proto.user.Contact>}
+ */
+proto.user.UserMetadata.prototype.getContactsList = function() {
+  return /** @type{!Array<!proto.user.Contact>} */ (
+    jspb.Message.getRepeatedWrapperField(this, proto.user.Contact, 5));
+};
+
+
+/**
+ * @param {!Array<!proto.user.Contact>} value
+ * @return {!proto.user.UserMetadata} returns this
+*/
+proto.user.UserMetadata.prototype.setContactsList = function(value) {
+  return jspb.Message.setRepeatedWrapperField(this, 5, value);
+};
+
+
+/**
+ * @param {!proto.user.Contact=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.user.Contact}
+ */
+proto.user.UserMetadata.prototype.addContacts = function(opt_value, opt_index) {
+  return jspb.Message.addToRepeatedWrapperField(this, 5, opt_value, proto.user.Contact, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.user.UserMetadata} returns this
+ */
+proto.user.UserMetadata.prototype.clearContactsList = function() {
+  return this.setContactsList([]);
 };
 
 

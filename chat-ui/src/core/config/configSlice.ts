@@ -1,10 +1,12 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { Config, Environment } from './config.constant';
 import { BaseApi, DevApi, ProdApi } from './api.constant';
+import { WebSocketHook } from 'react-use-websocket/dist/lib/types';
 
 interface ConfigState {
   config: Config;
   api: BaseApi;
+  wsUrl: string;
 }
 
 const initializeState = (): ConfigState => {
@@ -22,13 +24,20 @@ const initializeState = (): ConfigState => {
   return {
     config,
     api,
+    wsUrl: '',
   };
 };
 
 export const configSlice = createSlice({
   name: 'config',
   initialState: initializeState(),
-  reducers: {},
+  reducers: {
+    setWsUrl: (state, action: PayloadAction<string>) => {
+      state.wsUrl = action.payload;
+      return state;
+    },
+  },
 });
 
+export const { setWsUrl } = configSlice.actions;
 export default configSlice.reducer;

@@ -28,5 +28,6 @@ message Messages {
         string messageType = 5;
         string content = 6;
         string createdAt = 7;
+        string messageStatus = 9;
     }
 }

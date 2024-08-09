@@ -1,21 +1,38 @@
 import { KeyboardEvent, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { Channel } from 'features/chat/redux/chatSlice';
+import { Channel, Message, WebSocketEvent, addNewMessage } from 'features/chat/redux/chatSlice';
 import { addAppListener } from 'core/redux/listenerMiddleware';
-import { useAppDispatch } from 'core/redux/reduxHooks';
+import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
 import styles from './channel.module.scss';
 import AppLogo from 'assets/images/chatLogo.png';
 import Content from '../content/content';
 import { useForm } from 'react-hook-form';
-
+import useWebSocket from 'react-use-websocket';
+import { defaultWsOptions } from 'core/config/ws.constant';
 interface FormInput {
-  message: string;
+  content: string;
 }
 
 export default function ChannelDialogue() {
   const [channel, setChannel] = useState<Channel | null>(null);
   const [content, setContent] = useState<JSX.Element[]>([]);
+  const user = useAppSelector(state => state.user);
+  const wsUrl = useAppSelector(state => state.config.wsUrl);
+  const { sendJsonMessage } = useWebSocket(wsUrl, {
+    ...defaultWsOptions,
+    filter: event => {
+      console.log(event.data);
+      const temp = JSON.parse(event.data) as WebSocketEvent;
+      if (temp.event === 'message') {
+        return true;
+      }
+      return false;
+    },
+    onMessage: event => {
+      const temp = JSON.parse(event.data) as WebSocketEvent;
+    },
+  });
   const dispatch = useAppDispatch();
   const {
     register,
@@ -24,7 +41,7 @@ export default function ChannelDialogue() {
     reset,
     formState: { touchedFields, isValid, errors, isSubmitted },
   } = useForm<FormInput>({
-    defaultValues: { message: '' },
+    defaultValues: { content: '' },
     mode: 'onTouched', // default is onSubmit for validation to trigger
   });
 
@@ -39,28 +56,11 @@ export default function ChannelDialogue() {
           return false;
         },
         effect: (action, listenerApi) => {
-          const activeChannel = listenerApi.getState().chat.curChannel;
-          if (activeChannel) {
-            setChannel(activeChannel);
-            displayContent(activeChannel);
+          const curChannel = listenerApi.getState().chat.curChannel;
+          if (curChannel && curChannel.channelId !== channel?.channelId) {
+            setChannel(curChannel);
+            displayContent(curChannel);
           }
-        },
-      }),
-      addAppListener({
-        predicate: action => {
-          if (action.type === 'chat/addNewMessage') {
-            return true;
-          }
-          return false;
-        },
-        effect: (action, listenerApi) => {
-          const activeChannel = listenerApi.getState().chat.curChannel;
-
-          if (activeChannel) {
-            displayContent(activeChannel);
-          }
-
-          setChannel(activeChannel);
         },
       })
     );
@@ -72,8 +72,18 @@ export default function ChannelDialogue() {
   };
 
   const onSubmit = (data: FormInput) => {
-    console.log(data);
+    const message: Message = {
+      messageId: 0,
+      channelId: channel?.channelId as string,
+      senderId: user.userId,
+      messageType: 'string',
+      content: data.content,
+      createdAt: new Date().toISOString(),
+      messageStatus: 'pending',
+    };
+    dispatch(addNewMessage(message));
     reset();
+    sendJsonMessage(message);
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -84,6 +94,18 @@ export default function ChannelDialogue() {
       return;
     }
   };
+
+  const handleNewMessage = (msg: Message) => {
+    if (msg.channelId === channel?.channelId) {
+      setContent(v => {
+        v.push(<Content props={msg} key={msg.messageId} />);
+        return v;
+      });
+    }
+    dispatch(addNewMessage(msg));
+  };
+
+  const handleOldMessages = () => {};
 
   return (
     <>
@@ -103,7 +125,7 @@ export default function ChannelDialogue() {
             {/* <div className="flex-spacer"></div> */}
             <form className={styles.formWrapper}>
               <textarea
-                {...register('message')}
+                {...register('content')}
                 id="message-text-area"
                 wrap="hard"
                 rows={1}

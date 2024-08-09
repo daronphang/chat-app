@@ -32,8 +32,16 @@ func (uc *UseCaseService) GetPreviousMessages(ctx context.Context, arg domain.Pr
 	return rv, nil
 }
 
-func (uc *UseCaseService) SaveMessageAndDeliverToRecipients(ctx context.Context, arg domain.Message) error {
+func (uc *UseCaseService) UpdateMessageStatus(ctx context.Context, arg domain.Message) error {
+	if err := uc.Repository.UpdateMessageStatus(ctx, arg); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (uc *UseCaseService) SaveAndDeliverMessageToRecipients(ctx context.Context, arg domain.Message) error {
 	// Save message in db.
+	arg.MessageStatus = domain.Received
 	if err := uc.Repository.CreateMessage(ctx, arg); err != nil {
 		return err
 	}
@@ -44,12 +52,18 @@ func (uc *UseCaseService) SaveMessageAndDeliverToRecipients(ctx context.Context,
 		return err
 	}
 
+	// Get offline users.
+	offlineUsers, err := 
+
 	// Push message to the queues of all users in the channel.
 	// TODO: Assumption made that the topic is already created.
 	// Pushing to queue must be guaranteed.
 	maxGoroutines := 10
 	guard := make(chan bool, maxGoroutines)
 	for _, userID := range users.UserIds {
+		if userID == arg.SenderID {
+			continue
+		}
 		guard <- true
 		go func(userID string) {
 			errMsg := fmt.Sprintf("failed to push message %v to user %v queue", arg.MessageID, userID)
@@ -88,5 +102,23 @@ func (uc *UseCaseService) SaveMessageAndDeliverToRecipients(ctx context.Context,
 			<- guard
 		}(userID)
 	}
+
+	// Update status of message in db.
+	arg.MessageStatus = domain.Delivered
+	if err := uc.UpdateMessageStatus(ctx, arg); err != nil {
+		return err
+	}
+
+	// Instead of sending messages directly to the sender's devices (need to keep record),
+	// to push messages into sender's queue.
+	// Tradeoff between storing duplicated messages vs maintaining chat server sessions of
+	// sender's devices.
+	if err := uc.EventBroker.PublishMessage(ctx, arg.SenderID, arg.SenderID, arg); err != nil {
+		logger.Error(
+			fmt.Sprintf("failed to broadcast delivered status to sender %v for message %v", arg.SenderID, arg.MessageID),
+			zap.String("trace", err.Error()),
+		)
+	}
+
 	return nil
 }

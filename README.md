@@ -39,11 +39,7 @@ For both sending and receiving messages, websocket is preferred between client a
 
 ### Others
 
-For other features including signup, authentication, profile change, retrieval of older messages, REST over HTTP is preferred.
-
-### Between internal services
-
-For communication between internal services, gRPC is preferred over HTTP.
+For other features including signup, authentication, profile change, retrieval of older messages, REST over HTTP or gRPC is preferred.
 
 ## Service discovery
 
@@ -77,7 +73,7 @@ In Cassandra, records are sharded by the partition keys. On each node, records w
 
 ### Message
 
-When a message is received, it will be pushed to a queue. Kafka is chosen as it provides the following guarantees:
+When a message is received, it will be pushed to a queue for processing. Kafka is chosen as it provides the following guarantees:
 
 - Exactly once delivery and message ordering
 - Scalability
@@ -88,7 +84,6 @@ Key features of a message:
 - IDs should be sortable by time (cannot rely on createdAt as two messages can be created at the same time)
 - Each message belongs to a channel
 - Channel can either refer to a group or 1-on-1 chat
-- prevMsgId helps when there is a communication breakdown between chat servers; if a successful message is received but the prevMsgId is mismatched, client will retrieve all the messages from the current prevMsgId
 
 For generating IDs, there are three approaches:
 
@@ -96,14 +91,16 @@ For generating IDs, there are three approaches:
 - Use a global 64-bit sequence number
 - Use local sequence number generator; this is sufficient as maintaining order within a channel is sufficient
 
+For 1-on-1 chats, to prevent duplicated channels from being created at the same time from both users, the channelId for 1-on-1 chat is the combination of both userIds sorted in ascending order.
+
 ```json
 {
   "msgId": 123546341,
-  "prevMsgId": 12315141,
   "channelId": "p6o5n4m3l2-k1j0-i9h8-g7f6-e5d4c3b2a1",
   "senderId": "5e4d3c2b-1a0p-9o8n-7m6l-5k4j3i2h1g0f9e8d7",
   "type": "message",
   "content": "Hello, how are you?",
+  "messageStatus": "delivered",
   "createdAt": "2023-09-17T10:30:00.000"
 }
 ```
@@ -112,23 +109,24 @@ For generating IDs, there are three approaches:
 
 There are two implementations available.
 
-For option 1, we have one table where the partition key is the channelId and the sort key is the userId. If NoSQL is used, a secondary index is not needed as it does not improve performance for high-cardinality columns in KV store (channelId-userId is unique). Otherwise, you can create secondary index on userId column.
+For option 1, we have one table storing the channelId and userId, and the primary key is the combination of both. This is suitable for SQL. If NoSQL is used, a secondary index is not needed as it does not improve performance for high-cardinality columns in KV store (channelId-userId is unique). Otherwise, you can create secondary index on userId column.
 
 ```json
 {
   "channelId": "p6o5n4m3l2-k1j0-i9h8-g7f6-e5d4c3b2a1",
-  "userId": "5e4d3c2b-1a0p-9o8n-7m6l-5k4j3i2h1g0f9e8d7"
+  "userId": "5e4d3c2b-1a0p-9o8n-7m6l-5k4j3i2h1g0f9e8d7",
+  "createdAt": "2023-09-17T10:30:00.000"
 }
 ```
 
-For option 2, two tables are created:
+If NoSQL is chosen, option 2 is preferred where two tables are created:
 
 - First table will use channelId as the partition key and userId as sort key; this is used for broadcasting messages from a channel
 - Second table will use userId as the partition key and channelId as sort key; this is used for determining the channels a user belongs to
 
 ### User-and-chat-server relationship
 
-Each user can have multiple chat-servers if multiple devices are used. SQL can be used to store this data.
+Each user can be connected to multiple chat-servers if multiple devices are used. Key-value store can be used to persist this data temporarily e.g. Redis.
 
 A heartbeat mechanism can be implemented to determine if the client is still connected to the chat server in the event of network disruption.
 
@@ -140,29 +138,48 @@ A heartbeat mechanism can be implemented to determine if the client is still con
 }
 ```
 
-## 1-on-1 chat
-
-### Message flow
-
-1. User A sends a chat message to Chat server 1
-2. Chat server 1 receives message and generates a message ID from ID generator
-3. Chat server 1 sends message to message sync queue and ack message delivery
-4. Message server pulls message from queue and stores in key-value store
-5. Message is forwarded to user B's message queue
-6. If user B is online, Chat server 2 pulls message from queue and sends message to user B via websocket connection
-7. If user B is offline, a push notification is sent to user B
-
 ## Message acknowledgement
 
 When the message is successfully pushed to the broker queue, a message acknowledgement back to the client will be sent. If the acknowledgement message does not include a messageId, the message failed to deliver.
+
+## Unread messages
+
+When a user opens a channel, all unread messages will be marked as read, even if the user did not visit every message.
+
+## Channel events
+
+Channel events can refer to user changing group name, adding/deleting new users, etc. A separate table needs to be created to store all events related to a channel.
 
 ## Message synchronization across multiple devices
 
 Each user will have a dedicated queue of inbound messages which will act as the single source of truth for new messages. If a user has sent a message from one device, once the message has been delivered to the recipients, it will be pushed to the user's queue for confirmation.
 
-## Message out-of-order or failed delivery
+## User-centric queue (personal inbox)
 
-To handle messages that are received out-of-order or failed delivery due to network issues, we append a previousMessageId to each message and will be maintained in the chat-server session. If the client receives a message with a mismatch, it will fetch the latest messages from the message server.
+When new messages or channel events need to be delivered to a user, if the user is online, they can be pushed directly to the chat server the user is connected to. However, the downside is that the chat server can be overwhelmed with many HTTP calls, and order-of-delivery can become inconsistent.
+
+Another alternative is to have a message queue (inbox) for each user. Users will subscribe to their own queue as the source of truth for new messages or events. Benefits include:
+
+- Simplifies message sync flow as each client only needs to check their own inbox
+- Services that need to broadcast events/messages to users are agnostic of which chat server they are connected to
+- Messages/events are guaranteed to be delivered to the user in the event of transient network failures i.e. user will not miss out messages/events
+
+However, the downsides include:
+
+- Events and messages are duplicated in the message queue which can get expensive; however, since the queue is for storing current events, retention period can be shortened
+- Older events/messages will get deleted after a certain period; users will still need to fetch data from database
+
+## 1-on-1 chat
+
+### Message flow
+
+1. User A sends a message to Chat Server 1
+2. Chat Server 1 receives message and generates a message ID from ID generator
+3. Chat Server 1 sends message to message queue and ack message delivery back to sender
+4. Message Server pulls message from queue and stores in key-value store
+5. Message Server publishes message to user B's queue (personal inbox)
+6. If user B is online, Message Server pushes message to Chat Server 2, which forwards message to user B via websocket
+7. If user B is offline, Message Server sends push notification to user B
 
 ## Group chats
 

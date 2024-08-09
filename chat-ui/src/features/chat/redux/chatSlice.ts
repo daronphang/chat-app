@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 // 1 = sending, 2 = sent, 3 = delivered
-export type Delivery = 1 | 2 | 3;
+export type MessageStatus = 'pending' | 'received' | 'delivered' | 'read';
 
 export interface Message {
   messageId: number;
@@ -10,7 +10,7 @@ export interface Message {
   messageType: string;
   content: string;
   createdAt: string;
-  delivery?: Delivery;
+  messageStatus: MessageStatus;
 }
 
 export interface Channel {
@@ -35,6 +35,11 @@ interface ChatState {
   curChannel: Channel | null;
   unreadChannels: UnreadChannelHash;
   channelHead: Channel | null;
+}
+
+export interface WebSocketEvent {
+  event: string;
+  data: any;
 }
 
 const initialState: ChatState = {

@@ -19,4 +19,5 @@ type Repository interface {
 	CreateGroupChannel(ctx context.Context, arg NewChannel) error
 	GetUsersAssociatedToChannel(ctx context.Context, arg string) ([]string, error)
 	GetChannelsAssociatedToUser(ctx context.Context, arg string) ([]Channel, error)
+	GetUsersAssociatedToTargetUser(ctx context.Context, arg string) ([]string, error)
 }
