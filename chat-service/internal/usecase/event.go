@@ -5,8 +5,8 @@ import (
 	"context"
 )
 
-func (uc *UseCaseService) SendEventToClient(ctx context.Context, clientId string, event domain.Event, payload interface{}) error {
-	if err := uc.ServerClienter.SendEventToClient(ctx, clientId, event, payload); err != nil {
+func (uc *UseCaseService) SendEventToClient(ctx context.Context, clientId string, event domain.BaseEvent) error {
+	if err := uc.ServerClienter.SendEventToClient(ctx, clientId, event); err != nil {
 		return err
 	}
 	return nil

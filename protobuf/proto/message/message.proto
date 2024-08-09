@@ -19,15 +19,5 @@ message PrevMessageRequest {
 }
 
 message Messages {
-    repeated Message messages = 1;
-
-    message Message {
-        uint64 messageId = 1;
-        string channelId = 3;
-        string senderId = 4;
-        string messageType = 5;
-        string content = 6;
-        string createdAt = 7;
-        string messageStatus = 9;
-    }
+    repeated common.Message messages = 1;
 }

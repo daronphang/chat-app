@@ -21,7 +21,7 @@ func New() WebSocketer {
 	return WebSocketer{}
 }
 
-func (ws WebSocketer) SendEventToClient(ctx context.Context, clientID string, event domain.Event, payload interface{}) error {
+func (ws WebSocketer) SendEventToClient(ctx context.Context, clientID string, event domain.BaseEvent) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -29,14 +29,11 @@ func (ws WebSocketer) SendEventToClient(ctx context.Context, clientID string, ev
 	client, ok := hub.clients[clientID]
 	if !ok {
 		return MissingClientError{
-			Message: fmt.Sprintf("client %v is not connected to chat server, unable to send event: %v", clientID, payload),
+			Message: fmt.Sprintf("client %v is not connected to chat server, unable to send event: %v", clientID, event),
 		}
 	}
 
-	data, err := json.Marshal(domain.WebSocketEvent{
-		Event: event,
-		Data: payload,
-	})
+	data, err := json.Marshal(event)
 	if err != nil {
 		return err
 	}

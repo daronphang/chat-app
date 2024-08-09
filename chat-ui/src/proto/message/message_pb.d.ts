@@ -28,10 +28,10 @@ export namespace PrevMessageRequest {
 }
 
 export class Messages extends jspb.Message {
-  getMessagesList(): Array<Messages.Message>;
-  setMessagesList(value: Array<Messages.Message>): Messages;
+  getMessagesList(): Array<proto_common_common_pb.Message>;
+  setMessagesList(value: Array<proto_common_common_pb.Message>): Messages;
   clearMessagesList(): Messages;
-  addMessages(value?: Messages.Message, index?: number): Messages.Message;
+  addMessages(value?: proto_common_common_pb.Message, index?: number): proto_common_common_pb.Message;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Messages.AsObject;
@@ -43,50 +43,7 @@ export class Messages extends jspb.Message {
 
 export namespace Messages {
   export type AsObject = {
-    messagesList: Array<Messages.Message.AsObject>,
+    messagesList: Array<proto_common_common_pb.Message.AsObject>,
   }
-
-  export class Message extends jspb.Message {
-    getMessageid(): number;
-    setMessageid(value: number): Message;
-
-    getChannelid(): string;
-    setChannelid(value: string): Message;
-
-    getSenderid(): string;
-    setSenderid(value: string): Message;
-
-    getMessagetype(): string;
-    setMessagetype(value: string): Message;
-
-    getContent(): string;
-    setContent(value: string): Message;
-
-    getCreatedat(): string;
-    setCreatedat(value: string): Message;
-
-    getMessagestatus(): string;
-    setMessagestatus(value: string): Message;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): Message.AsObject;
-    static toObject(includeInstance: boolean, msg: Message): Message.AsObject;
-    static serializeBinaryToWriter(message: Message, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): Message;
-    static deserializeBinaryFromReader(message: Message, reader: jspb.BinaryReader): Message;
-  }
-
-  export namespace Message {
-    export type AsObject = {
-      messageid: number,
-      channelid: string,
-      senderid: string,
-      messagetype: string,
-      content: string,
-      createdat: string,
-      messagestatus: string,
-    }
-  }
-
 }
 

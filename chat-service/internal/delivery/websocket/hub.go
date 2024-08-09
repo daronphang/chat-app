@@ -83,7 +83,11 @@ func (h *Hub) handleReceiveMessage(ctx context.Context, msg []byte) {
 	}
 
 	// Send acknowledgement back to client.
-	if err := h.usecase.SendEventToClient(ctx, rv.SenderID, domain.NewMessage, rv); err != nil {
+	event := domain.BaseEvent{
+		Event: domain.EventMessage,
+		Data: rv,
+	}
+	if err := h.usecase.SendEventToClient(ctx, rv.SenderID, event); err != nil {
 		logger.Error(
 			"failed to ack inbound message to sender",
 			zap.String("payload", string(msg)),
@@ -116,12 +120,7 @@ func (h *Hub) Run(ctx context.Context, brokers []string) {
 			// Take note of Kafka dependency in this layer.
 			// Each device will consume from the user topic at different 
 			// offset values. Hence, a new reader is required.
-			cfg := kafka.KafkaConsumerConfig{
-				Brokers: 			brokers,
-				ConsumerGroupID: 	device.deviceID,
-				Topic: 				device.clientID,
-			}
-			device.consumer = kafka.NewConsumer(cfg)
+			device.consumer = kafka.NewConsumer(brokers, device.deviceID, device.clientID)
 			go device.consumer.ConsumeFromUserTopic(ctx, h.usecase)
 		case device := <-h.unregisterDevice:
 			client, ok := h.clients[device.clientID]

@@ -7,15 +7,13 @@ import (
 	"message-service/internal/config"
 	g "message-service/internal/delivery/grpc"
 	k "message-service/internal/delivery/kafka"
-	rmq "message-service/internal/delivery/rabbitmq"
-	"message-service/internal/domain"
 	"message-service/internal/repository"
 	"message-service/internal/usecase"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
-	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 )
 
@@ -36,52 +34,47 @@ func main() {
 		logger.Fatal("error setting up logger", zap.String("trace", err.Error()))
     }
 
-	// Create gRPC client.
-	client, err := g.NewClient(cfg)
-	if err != nil {
-		logger.Fatal("error setting up grpc user client", zap.String("trace", err.Error()))
+	// Create Kafka topics.
+	if err := k.CreateKafkaTopics(cfg); err != nil {
+		logger.Fatal("error creating kafka topics", zap.String("trace", err.Error()))
 	}
-
-	// Create Kafka topic.
-	if err := k.CreateKafkaTopic(cfg, domain.MessageTopicConfig); err != nil {
-		logger.Fatal("error creating kafka topic", zap.String("trace", err.Error()))
-	}
-
-	// Create Kafka writer.
-	// Safe to use across goroutines.
-	kw := k.NewWriter(cfg)
-
-	// Create hub for rabbitmq.
-	hub := rmq.NewHub(logger)
 
 	// Setup DB.
 	if err := repository.SetupDB(ctx, cfg); err != nil {
 		logger.Fatal("error setting up DB", zap.String("trace", err.Error()))
 	}
 
-	// Create db instance.
+	// Create kafka dependency.
+	kc := k.New(cfg)
+
+	// Create db dependency.
 	db, err := repository.New(cfg)
 	if err != nil {
 		logger.Fatal("error setting up DB instance", zap.String("trace", err.Error()))
 	}
 
+	// Create gRPC client dependency.
+	client, err := g.NewClient(cfg)
+	if err != nil {
+		logger.Fatal("error setting up grpc user client", zap.String("trace", err.Error()))
+	}	
+
+	// Create usecase.
+	uc := usecase.NewUseCaseService(kc, db, client)
+
 	// Spin up goroutines equivalent to the number of partitions per topic.
+	// All goroutines share the same consumer group.
 	// One consumer per goroutine.
-	fmt.Println("running goroutines for reading Kafka topics...")
-	for range domain.MessageTopicConfig.Partitions {
-		// For each goroutine, will have separate RabbitMQ channel and Kafka reader.
-		kr := k.NewReader(cfg, domain.MessageTopicConfig.ConsumerGroupID, domain.MessageTopicConfig.Topic)
-		k := k.New(kr, kw)
-
-		mb := rmq.NewClient(logger)
-		hub.AddClient(mb)
-		uc := usecase.NewUseCaseService(mb, k, db, client)
-
-		go k.ConsumeMsgFromMessageTopic(ctx, uc)
+	fmt.Println("running goroutines for reading Kafka message partitions...")
+	consumers := make([]*k.KafkaConsumer, 0)
+	brokers := strings.Split(cfg.Kafka.BrokerAddresses, ",")
+	consumerGroup := "messageConsumer"
+	for range k.MessagePartitions {
+		// For each goroutine, will have a separate Kafka consumer.
+		c := k.NewConsumer(brokers, consumerGroup, k.MessageTopic)
+		consumers = append(consumers, c)
+		go c.ConsumeFromMessageTopic(ctx, uc)
 	}
-
-	// Create a single TCP rabbitmq connection for all goroutines to use.
-	go hub.Run(cfg)
 
 	// Create ctx for listening to SIGINT and SIGTERM
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -91,20 +84,15 @@ func main() {
 	<-ctx.Done()
 	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	gracefulShutdown(hub, kw, db)
+	gracefulShutdown(kc, consumers, db)
 }
 
-func gracefulShutdown(hub *rmq.RabbitMQHub, kw *kafka.Writer, db *repository.Querier) {
+func gracefulShutdown(kc *k.KafkaClient, consumers []*k.KafkaConsumer, db *repository.Querier) {
 	fmt.Println("performing graceful shutdown...")
-
-	hub.Close()
-
-	if err := kw.Close(); err != nil {
-		logger.Error(
-			"unable to close kafka writer",
-			zap.String("trace", err.Error()),
-		)
-	}
-
+	kc.Close()
 	db.Close()
+
+	for _, c := range consumers {
+		c.Close()
+	}	
 }

@@ -40,16 +40,22 @@ func main() {
 		logger.Fatal("error setting up DB", zap.String("trace", err.Error()))
 	}
 
-	// Create usecase with dependencies.
+	// Create db dependency.
 	db, err := repository.New(ctx, cfg)
 	if err != nil {
 		logger.Fatal("error creating db", zap.String("trace", err.Error()))
 	}
+
+	// Create etcd dependency.
 	sd, err := svcdis.New(cfg)
 	if err != nil {
 		logger.Fatal("error connecting to etcd", zap.String("trace", err.Error()))
 	}
+
+	// Create kafka dependency.
 	kc := k.New(cfg)
+
+	// Create usecase with dependencies.
 	uc := usecase.NewUseCaseService(db, sd, kc)
 
 	// Listen to protocol and port.

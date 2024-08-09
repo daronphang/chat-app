@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"message-service/internal"
 	"message-service/internal/domain"
-	"message-service/internal/util"
-	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 var (
@@ -39,83 +36,29 @@ func (uc *UseCaseService) UpdateMessageStatus(ctx context.Context, arg domain.Me
 	return nil
 }
 
-func (uc *UseCaseService) SaveAndDeliverMessageToRecipients(ctx context.Context, arg domain.Message) error {
+func (uc *UseCaseService) SaveMessageAndNotifyRecipients(ctx context.Context, arg domain.Message) error {
 	// Save message in db.
 	arg.MessageStatus = domain.Received
 	if err := uc.Repository.CreateMessage(ctx, arg); err != nil {
 		return err
 	}
 
-	// Get userIds associated to channel.
-	users, err := uc.UserClient.GetUsersAssociatedToChannel(ctx, &wrapperspb.StringValue{Value: arg.ChannelID})
-	if err != nil {
-		return err
-	}
+	// Broadcast message event.
 
-	// Get offline users.
-	offlineUsers, err := 
 
-	// Push message to the queues of all users in the channel.
-	// TODO: Assumption made that the topic is already created.
-	// Pushing to queue must be guaranteed.
-	maxGoroutines := 10
-	guard := make(chan bool, maxGoroutines)
-	for _, userID := range users.UserIds {
-		if userID == arg.SenderID {
-			continue
-		}
-		guard <- true
-		go func(userID string) {
-			errMsg := fmt.Sprintf("failed to push message %v to user %v queue", arg.MessageID, userID)
-			err := util.ExpBackoff(
-				500 * time.Millisecond,
-				2,
-				3,
-				errMsg,
-				func() error {
-					return uc.EventBroker.PublishMessage(ctx, userID, userID, arg)
-				},
-			)
-			if err != nil {
-				logger.Error(
-					errMsg,
-					zap.String("trace", err.Error()),
-				)
-				<- guard
-				return
-			}
-
-			// If user is offline, to send push notification via queue.
-			// Delivery is not guaranteed.
-			// resp = fetch()
-			if err := uc.MessageBroker.PublishMessage(
-				ctx, 
-				domain.NotificationQueueConfig.Queue,
-				domain.NotificationQueueConfig.RoutingKeys[0],
-				arg,
-			); err != nil {
-				logger.Error(
-					fmt.Sprintf("failed to notify user %v for message %v", userID, arg.MessageID),
-					zap.String("trace", err.Error()),
-				)
-			}
-			<- guard
-		}(userID)
-	}
-
-	// Update status of message in db.
+	// Update status of delivered message in db and notify sender.
 	arg.MessageStatus = domain.Delivered
 	if err := uc.UpdateMessageStatus(ctx, arg); err != nil {
 		return err
 	}
 
-	// Instead of sending messages directly to the sender's devices (need to keep record),
-	// to push messages into sender's queue.
-	// Tradeoff between storing duplicated messages vs maintaining chat server sessions of
-	// sender's devices.
-	if err := uc.EventBroker.PublishMessage(ctx, arg.SenderID, arg.SenderID, arg); err != nil {
+	event := domain.BaseEvent{
+		Event: domain.EventMessage,
+		Data: arg,
+	}
+	if err := uc.EventBroker.PublishEventToUserQueue(ctx, arg.SenderID, event); err != nil {
 		logger.Error(
-			fmt.Sprintf("failed to broadcast delivered status to sender %v for message %v", arg.SenderID, arg.MessageID),
+			fmt.Sprintf("failed to notify delivery to sender %v for message %v", arg.SenderID, arg.MessageID),
 			zap.String("trace", err.Error()),
 		)
 	}

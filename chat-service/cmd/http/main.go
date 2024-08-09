@@ -42,9 +42,13 @@ func main() {
 	}
 	defer sd.Close()
 
-	// Create UseCase with dependencies.
+	// Create kafka dependency.
 	eb := kafka.New(cfg)
+
+	// Create websocket dependency.
 	sc := ws.New()
+
+	// Create usecase.
 	uc := uc.NewUseCaseService(eb, sc)
 
 	// Init websocket hub.

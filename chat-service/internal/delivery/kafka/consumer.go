@@ -5,6 +5,7 @@ import (
 	"chat-service/internal/usecase"
 	cv "chat-service/internal/validator"
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"time"
@@ -12,16 +13,15 @@ import (
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 )
-
-type KafkaConsumerConfig struct {
-	Brokers 		[]string
-	ConsumerGroupID string
-	Topic 			string
-}
 type KafkaConsumer struct {
 	reader *kafka.Reader
 	client string 
 }
+
+var (
+	errInvalidInterface = errors.New("interface is invalid")
+	errInvalidEvent = errors.New("invalid event")
+)
 
 // Consumer group ID for each user's topic should not be changed
 // as this would affect what messages would be pushed to the client upon
@@ -30,16 +30,16 @@ type KafkaConsumer struct {
 // Important to call Close() on a Reader when a process exits
 // as Kafka server needs a graceful disconnect to stop it from
 // continuing to attempt to send messages on connected clients.
-func NewConsumer(cfg KafkaConsumerConfig) *KafkaConsumer {
+func NewConsumer(brokers []string, consumerGroupID string, topic string) *KafkaConsumer {
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: cfg.Brokers,
+		Brokers: brokers,
 		// Consumers in the same consumer group will always read a unique partition.
 		// Different consumer groups can read from the same partition.
-		GroupID: cfg.ConsumerGroupID, 
-		Topic: cfg.Topic,
+		GroupID: consumerGroupID, 
+		Topic: topic,
 		MaxWait: 1 * time.Second,
 	})
-	return &KafkaConsumer{reader: r, client: cfg.Topic}
+	return &KafkaConsumer{reader: r, client: topic}
 }
 
 func (c *KafkaConsumer) Close() {
@@ -57,7 +57,7 @@ func (c *KafkaConsumer) Close() {
 
 func (c *KafkaConsumer) ConsumeFromUserTopic(ctx context.Context, uc *usecase.UseCaseService) {
 	for {
-		// To consume both messages and channel events.
+		// To consume events for messages, channels, etc.
 		m, err := c.reader.ReadMessage(ctx)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
@@ -70,28 +70,46 @@ func (c *KafkaConsumer) ConsumeFromUserTopic(ctx context.Context, uc *usecase.Us
 			continue
 		}
 
-		// Validate dynamic struct.
-		msg := new(domain.Message)
-		newChEvent := new(domain.NewChannelEvent)
-		var v interface{}
-		var event domain.Event
-
-		if err := cv.UnmarshalAndValidate(m.Value, msg); err == nil {
-			v = *msg
-			event = domain.NewMessage
-		} else if err := cv.UnmarshalAndValidate(m.Value, newChEvent); err == nil {
-			v = *newChEvent
-			event = domain.NewChannel
-		} else {
+		// Unmarshal bytes.
+		event := new(domain.BaseEvent)
+		if err := json.Unmarshal(m.Value, event); err != nil {
 			logger.Error(
-				"error validating message from user topic",
+				"error unmarshaling payload from user topic",
 				zap.String("payload", string(m.Value)),
 				zap.String("trace", err.Error()),
 			)
 			continue
 		}
-	
-		if err := uc.SendEventToClient(ctx, c.client, event, v); err != nil {
+
+		// Validate data.
+		validator := cv.ProvideValidator()
+		if (event.Event == domain.EventMessage) {
+			v, ok := event.Data.(domain.Message)
+			if !ok {
+				err = errInvalidInterface
+			} else {
+				err = validator.Validate(v)
+			}
+		} else if (event.Event == domain.EventNewChannel) {
+			v, ok := event.Data.(domain.NewChannelEvent)
+			if !ok {
+				err = errInvalidInterface
+			} else {
+				err = validator.Validate(v)
+			}
+		} else {
+			err = errInvalidEvent
+		}
+
+		if err != nil {
+			logger.Error(
+				"error validating message event from user topic",
+				zap.String("payload", string(m.Value)),
+				zap.String("trace", err.Error()),
+			)
+		}
+			
+		if err := uc.SendEventToClient(ctx, c.client, *event); err != nil {
 			logger.Error(
 				"error sending inbound data to client",
 				zap.String("payload", string(m.Value)),

@@ -6,7 +6,6 @@ const (
 	Received 		MessageStatus 	= "received"
 	Delivered		MessageStatus 	= "delivered"
 	Read		 	MessageStatus 	= "read"
-	MessageTopic 	string 			= "message"
 )
 type Message struct {
 	MessageID 			uint64 			`json:"messageId"`
@@ -18,7 +17,4 @@ type Message struct {
 	CreatedAt 			string 			`json:"createdAt" validate:"required"`
 }
 
-type ReceiverMessage struct {
-	ReceiverID 	string 	`json:"receiverId" validate:"required"`
-	Message 	Message `json:"message" validate:"required"`
-}
+type MediaMessage struct {}

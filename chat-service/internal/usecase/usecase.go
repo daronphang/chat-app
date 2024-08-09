@@ -6,11 +6,11 @@ import (
 )
 
 type EventBroker interface {
-	PublishMessage(ctx context.Context, partitionKey string, topic string, arg interface{}) error
+	PublishNewMessageToQueue(ctx context.Context, channelID string, arg domain.Message) error 
 }
 
 type ServerClienter interface {
-	SendEventToClient(ctx context.Context, clientID string, event domain.Event, payload interface{}) error 
+	SendEventToClient(ctx context.Context, clientID string, event domain.BaseEvent) error 
 }
 
 type UseCaseService struct {

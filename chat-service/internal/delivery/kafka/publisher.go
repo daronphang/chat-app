@@ -2,12 +2,17 @@ package kafka
 
 import (
 	"chat-service/internal/config"
+	"chat-service/internal/domain"
 	"context"
 	"encoding/json"
 	"strings"
 	"time"
 
 	"github.com/segmentio/kafka-go"
+)
+
+const (
+	MessageTopic string = "message"
 )
 
 /*
@@ -33,7 +38,7 @@ func newWriter(cfg *config.Config) *kafka.Writer {
 	return w
 }
 
-func (k *KafkaClient) PublishMessage(ctx context.Context, partitionKey string, topic string, arg interface{}) error {
+func (k *KafkaClient) publishMessage(ctx context.Context, partitionKey string, topic string, arg interface{}) error {
 	v, err := json.Marshal(arg)
 	if err != nil {
 		return err
@@ -47,4 +52,8 @@ func (k *KafkaClient) PublishMessage(ctx context.Context, partitionKey string, t
 		return err
 	}
 	return nil
+}
+
+func (k *KafkaClient) PublishNewMessageToQueue(ctx context.Context, channelID string, arg domain.Message) error {
+	return k.publishMessage(ctx, channelID, MessageTopic, arg)
 }
