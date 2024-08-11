@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"message-service/internal"
 	"message-service/internal/domain"
+	"protobuf/proto/common"
 
 	"go.uber.org/zap"
 )
@@ -44,7 +45,19 @@ func (uc *UseCaseService) SaveMessageAndNotifyRecipients(ctx context.Context, ar
 	}
 
 	// Broadcast message event.
-
+	msg := &common.Message{
+		MessageId: arg.MessageID,
+		ChannelId: arg.ChannelID,
+		SenderId: arg.SenderID,
+		Content: arg.Content,
+		CreatedAt: arg.CreatedAt,
+		MessageType: arg.MessageType,
+		MessageStatus: string(arg.MessageStatus),
+	}
+	_, err := uc.NotificationClient.BroadcastMessageEvent(ctx, msg)
+	if err != nil {
+		return err
+	}
 
 	// Update status of delivered message in db and notify sender.
 	arg.MessageStatus = domain.Delivered

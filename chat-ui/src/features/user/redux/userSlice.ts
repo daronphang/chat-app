@@ -1,17 +1,34 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+type Status = 'online' | 'offline';
 export interface UserMetadata {
   userId: string;
   email: string;
   displayName: String;
-  contacts: UserMetadata[];
+  friends: FriendHash;
+}
+
+export interface Friend {
+  userId: string;
+  email: string;
+  displayName: string;
+  isOnline: boolean;
+}
+
+export interface FriendHash {
+  [key: string]: Friend;
+}
+
+export interface UserPresence {
+  userId: string;
+  status: Status;
 }
 
 const initialState: UserMetadata = {
   userId: '',
   email: '',
   displayName: '',
-  contacts: [],
+  friends: {},
 };
 
 export const userSlice = createSlice({
@@ -22,21 +39,41 @@ export const userSlice = createSlice({
       state.userId = action.payload.userId;
       state.email = action.payload.email;
       state.displayName = action.payload.displayName;
+      state.friends = action.payload.friends;
       return state;
     },
-    removeUser: (state, action) => {
+    removeUser: state => {
       state.userId = '';
       state.email = '';
       state.displayName = '';
-      state.contacts = [];
+      state.friends = {};
       return state;
     },
-    addContacts: (state, action: PayloadAction<UserMetadata[]>) => {
-      state.contacts = action.payload;
+    addFriend: (state, action: PayloadAction<Friend>) => {
+      state.friends[action.payload.userId] = action.payload;
+      return state;
+    },
+    updateOnlineFriends: (state, action: PayloadAction<string[]>) => {
+      const friends = Object.values(state.friends);
+      for (let i = 0; i < friends.length; i++) {
+        const friend = friends[i];
+        if (action.payload.includes(friend.userId)) {
+          friend.isOnline = true;
+        } else {
+          friend.isOnline = false;
+        }
+      }
+      return state;
+    },
+    updateFriendPresence: (state, action: PayloadAction<UserPresence>) => {
+      if (action.payload.userId in state.friends) {
+        const friend = state.friends[action.payload.userId];
+        friend.isOnline = action.payload.status === 'online' ? true : false;
+      }
       return state;
     },
   },
 });
 
-export const { setUser, removeUser, addContacts } = userSlice.actions;
+export const { setUser, removeUser, addFriend, updateOnlineFriends, updateFriendPresence } = userSlice.actions;
 export default userSlice.reducer;

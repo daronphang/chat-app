@@ -54,6 +54,6 @@ func (k *KafkaClient) publishMessage(ctx context.Context, partitionKey string, t
 	return nil
 }
 
-func (k *KafkaClient) PublishNewMessageToQueue(ctx context.Context, channelID string, arg domain.Message) error {
-	return k.publishMessage(ctx, channelID, MessageTopic, arg)
+func (k *KafkaClient) PublishNewMessageToQueue(ctx context.Context, partitionKey string, arg domain.Message) error {
+	return k.publishMessage(ctx, partitionKey, MessageTopic, arg)
 }

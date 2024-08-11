@@ -300,90 +300,90 @@ export class UserClient {
     this.methodDescriptorlogout);
   }
 
-  methodDescriptorcreateContact = new grpcWeb.MethodDescriptor(
-    '/user.User/createContact',
+  methodDescriptoraddFriend = new grpcWeb.MethodDescriptor(
+    '/user.User/addFriend',
     grpcWeb.MethodType.UNARY,
-    proto_user_user_pb.NewContact,
-    proto_user_user_pb.Contact,
-    (request: proto_user_user_pb.NewContact) => {
+    proto_user_user_pb.NewFriend,
+    proto_user_user_pb.Friend,
+    (request: proto_user_user_pb.NewFriend) => {
       return request.serializeBinary();
     },
-    proto_user_user_pb.Contact.deserializeBinary
+    proto_user_user_pb.Friend.deserializeBinary
   );
 
-  createContact(
-    request: proto_user_user_pb.NewContact,
-    metadata?: grpcWeb.Metadata | null): Promise<proto_user_user_pb.Contact>;
+  addFriend(
+    request: proto_user_user_pb.NewFriend,
+    metadata?: grpcWeb.Metadata | null): Promise<proto_user_user_pb.Friend>;
 
-  createContact(
-    request: proto_user_user_pb.NewContact,
+  addFriend(
+    request: proto_user_user_pb.NewFriend,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: proto_user_user_pb.Contact) => void): grpcWeb.ClientReadableStream<proto_user_user_pb.Contact>;
+               response: proto_user_user_pb.Friend) => void): grpcWeb.ClientReadableStream<proto_user_user_pb.Friend>;
 
-  createContact(
-    request: proto_user_user_pb.NewContact,
+  addFriend(
+    request: proto_user_user_pb.NewFriend,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: proto_user_user_pb.Contact) => void) {
+               response: proto_user_user_pb.Friend) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/user.User/createContact',
+          '/user.User/addFriend',
         request,
         metadata || {},
-        this.methodDescriptorcreateContact,
+        this.methodDescriptoraddFriend,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/user.User/createContact',
+      '/user.User/addFriend',
     request,
     metadata || {},
-    this.methodDescriptorcreateContact);
+    this.methodDescriptoraddFriend);
   }
 
-  methodDescriptorgetContacts = new grpcWeb.MethodDescriptor(
-    '/user.User/getContacts',
+  methodDescriptorgetFriends = new grpcWeb.MethodDescriptor(
+    '/user.User/getFriends',
     grpcWeb.MethodType.UNARY,
     google_protobuf_wrappers_pb.StringValue,
-    proto_user_user_pb.Contacts,
+    proto_user_user_pb.Friends,
     (request: google_protobuf_wrappers_pb.StringValue) => {
       return request.serializeBinary();
     },
-    proto_user_user_pb.Contacts.deserializeBinary
+    proto_user_user_pb.Friends.deserializeBinary
   );
 
-  getContacts(
+  getFriends(
     request: google_protobuf_wrappers_pb.StringValue,
-    metadata?: grpcWeb.Metadata | null): Promise<proto_user_user_pb.Contacts>;
+    metadata?: grpcWeb.Metadata | null): Promise<proto_user_user_pb.Friends>;
 
-  getContacts(
+  getFriends(
     request: google_protobuf_wrappers_pb.StringValue,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: proto_user_user_pb.Contacts) => void): grpcWeb.ClientReadableStream<proto_user_user_pb.Contacts>;
+               response: proto_user_user_pb.Friends) => void): grpcWeb.ClientReadableStream<proto_user_user_pb.Friends>;
 
-  getContacts(
+  getFriends(
     request: google_protobuf_wrappers_pb.StringValue,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: proto_user_user_pb.Contacts) => void) {
+               response: proto_user_user_pb.Friends) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/user.User/getContacts',
+          '/user.User/getFriends',
         request,
         metadata || {},
-        this.methodDescriptorgetContacts,
+        this.methodDescriptorgetFriends,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/user.User/getContacts',
+      '/user.User/getFriends',
     request,
     metadata || {},
-    this.methodDescriptorgetContacts);
+    this.methodDescriptorgetFriends);
   }
 
   methodDescriptorcreateChannel = new grpcWeb.MethodDescriptor(
@@ -433,28 +433,28 @@ export class UserClient {
     '/user.User/getUsersAssociatedToChannel',
     grpcWeb.MethodType.UNARY,
     google_protobuf_wrappers_pb.StringValue,
-    proto_user_user_pb.Users,
+    proto_user_user_pb.UserContacts,
     (request: google_protobuf_wrappers_pb.StringValue) => {
       return request.serializeBinary();
     },
-    proto_user_user_pb.Users.deserializeBinary
+    proto_user_user_pb.UserContacts.deserializeBinary
   );
 
   getUsersAssociatedToChannel(
     request: google_protobuf_wrappers_pb.StringValue,
-    metadata?: grpcWeb.Metadata | null): Promise<proto_user_user_pb.Users>;
+    metadata?: grpcWeb.Metadata | null): Promise<proto_user_user_pb.UserContacts>;
 
   getUsersAssociatedToChannel(
     request: google_protobuf_wrappers_pb.StringValue,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: proto_user_user_pb.Users) => void): grpcWeb.ClientReadableStream<proto_user_user_pb.Users>;
+               response: proto_user_user_pb.UserContacts) => void): grpcWeb.ClientReadableStream<proto_user_user_pb.UserContacts>;
 
   getUsersAssociatedToChannel(
     request: google_protobuf_wrappers_pb.StringValue,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: proto_user_user_pb.Users) => void) {
+               response: proto_user_user_pb.UserContacts) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +

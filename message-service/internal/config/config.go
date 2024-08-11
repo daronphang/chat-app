@@ -38,7 +38,7 @@ type CassandraConfig struct {
 	HostAddresses string `yaml:"hostAddresses"` // localhost:9042,localhost:9043
 }
 
-type SessionClient struct {
+type BroadcastClient struct {
 	HostAddress string `yaml:"hostAddress"` // localhost:5672
 }
 
@@ -48,7 +48,7 @@ type Config struct {
 	LogDir 			string 			`yaml:"logDir"`
 	Kafka 			KafkaConfig 	`yaml:"kafka"`
 	Cassandra 		CassandraConfig `yaml:"cassandra"`
-	SessionClient	SessionClient	`yaml:"sessionClient"`
+	BroadcastClient	BroadcastClient	`yaml:"broadcastClient"`
 }
 
 var syncOnceConfig sync.Once

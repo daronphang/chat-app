@@ -58,10 +58,10 @@ export class UserMetadata extends jspb.Message {
   getCreatedat(): string;
   setCreatedat(value: string): UserMetadata;
 
-  getContactsList(): Array<Contact>;
-  setContactsList(value: Array<Contact>): UserMetadata;
-  clearContactsList(): UserMetadata;
-  addContacts(value?: Contact, index?: number): Contact;
+  getFriendsList(): Array<Friend>;
+  setFriendsList(value: Array<Friend>): UserMetadata;
+  clearFriendsList(): UserMetadata;
+  addFriends(value?: Friend, index?: number): Friend;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UserMetadata.AsObject;
@@ -77,29 +77,71 @@ export namespace UserMetadata {
     email: string,
     displayname: string,
     createdat: string,
-    contactsList: Array<Contact.AsObject>,
+    friendsList: Array<Friend.AsObject>,
   }
 }
 
-export class NewContact extends jspb.Message {
+export class UserContact extends jspb.Message {
   getUserid(): string;
-  setUserid(value: string): NewContact;
+  setUserid(value: string): UserContact;
 
-  getFriendemail(): string;
-  setFriendemail(value: string): NewContact;
-
-  getDisplayname(): string;
-  setDisplayname(value: string): NewContact;
+  getEmail(): string;
+  setEmail(value: string): UserContact;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): NewContact.AsObject;
-  static toObject(includeInstance: boolean, msg: NewContact): NewContact.AsObject;
-  static serializeBinaryToWriter(message: NewContact, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): NewContact;
-  static deserializeBinaryFromReader(message: NewContact, reader: jspb.BinaryReader): NewContact;
+  toObject(includeInstance?: boolean): UserContact.AsObject;
+  static toObject(includeInstance: boolean, msg: UserContact): UserContact.AsObject;
+  static serializeBinaryToWriter(message: UserContact, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UserContact;
+  static deserializeBinaryFromReader(message: UserContact, reader: jspb.BinaryReader): UserContact;
 }
 
-export namespace NewContact {
+export namespace UserContact {
+  export type AsObject = {
+    userid: string,
+    email: string,
+  }
+}
+
+export class UserContacts extends jspb.Message {
+  getUsercontactsList(): Array<UserContact>;
+  setUsercontactsList(value: Array<UserContact>): UserContacts;
+  clearUsercontactsList(): UserContacts;
+  addUsercontacts(value?: UserContact, index?: number): UserContact;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UserContacts.AsObject;
+  static toObject(includeInstance: boolean, msg: UserContacts): UserContacts.AsObject;
+  static serializeBinaryToWriter(message: UserContacts, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UserContacts;
+  static deserializeBinaryFromReader(message: UserContacts, reader: jspb.BinaryReader): UserContacts;
+}
+
+export namespace UserContacts {
+  export type AsObject = {
+    usercontactsList: Array<UserContact.AsObject>,
+  }
+}
+
+export class NewFriend extends jspb.Message {
+  getUserid(): string;
+  setUserid(value: string): NewFriend;
+
+  getFriendemail(): string;
+  setFriendemail(value: string): NewFriend;
+
+  getDisplayname(): string;
+  setDisplayname(value: string): NewFriend;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): NewFriend.AsObject;
+  static toObject(includeInstance: boolean, msg: NewFriend): NewFriend.AsObject;
+  static serializeBinaryToWriter(message: NewFriend, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): NewFriend;
+  static deserializeBinaryFromReader(message: NewFriend, reader: jspb.BinaryReader): NewFriend;
+}
+
+export namespace NewFriend {
   export type AsObject = {
     userid: string,
     friendemail: string,
@@ -107,25 +149,25 @@ export namespace NewContact {
   }
 }
 
-export class Contact extends jspb.Message {
+export class Friend extends jspb.Message {
   getUserid(): string;
-  setUserid(value: string): Contact;
+  setUserid(value: string): Friend;
 
   getEmail(): string;
-  setEmail(value: string): Contact;
+  setEmail(value: string): Friend;
 
   getDisplayname(): string;
-  setDisplayname(value: string): Contact;
+  setDisplayname(value: string): Friend;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): Contact.AsObject;
-  static toObject(includeInstance: boolean, msg: Contact): Contact.AsObject;
-  static serializeBinaryToWriter(message: Contact, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): Contact;
-  static deserializeBinaryFromReader(message: Contact, reader: jspb.BinaryReader): Contact;
+  toObject(includeInstance?: boolean): Friend.AsObject;
+  static toObject(includeInstance: boolean, msg: Friend): Friend.AsObject;
+  static serializeBinaryToWriter(message: Friend, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): Friend;
+  static deserializeBinaryFromReader(message: Friend, reader: jspb.BinaryReader): Friend;
 }
 
-export namespace Contact {
+export namespace Friend {
   export type AsObject = {
     userid: string,
     email: string,
@@ -133,23 +175,23 @@ export namespace Contact {
   }
 }
 
-export class Contacts extends jspb.Message {
-  getContactsList(): Array<Contact>;
-  setContactsList(value: Array<Contact>): Contacts;
-  clearContactsList(): Contacts;
-  addContacts(value?: Contact, index?: number): Contact;
+export class Friends extends jspb.Message {
+  getFriendsList(): Array<Friend>;
+  setFriendsList(value: Array<Friend>): Friends;
+  clearFriendsList(): Friends;
+  addFriends(value?: Friend, index?: number): Friend;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): Contacts.AsObject;
-  static toObject(includeInstance: boolean, msg: Contacts): Contacts.AsObject;
-  static serializeBinaryToWriter(message: Contacts, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): Contacts;
-  static deserializeBinaryFromReader(message: Contacts, reader: jspb.BinaryReader): Contacts;
+  toObject(includeInstance?: boolean): Friends.AsObject;
+  static toObject(includeInstance: boolean, msg: Friends): Friends.AsObject;
+  static serializeBinaryToWriter(message: Friends, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): Friends;
+  static deserializeBinaryFromReader(message: Friends, reader: jspb.BinaryReader): Friends;
 }
 
-export namespace Contacts {
+export namespace Friends {
   export type AsObject = {
-    contactsList: Array<Contact.AsObject>,
+    friendsList: Array<Friend.AsObject>,
   }
 }
 

@@ -1,67 +1,50 @@
-import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { Channel } from 'features/chat/redux/chatSlice';
-import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
-import { addAppListener } from 'core/redux/listenerMiddleware';
-import DrawerCard from '../drawerCard/drawerCard';
 import styles from './drawer.module.scss';
+import { useEffect, useState } from 'react';
+import { FriendHash } from 'features/user/redux/userSlice';
+import { Channel } from 'features/chat/redux/chatSlice';
+import { useAppSelector } from 'core/redux/reduxHooks';
 
-export default function Drawer() {
-  const [channels, setChannels] = useState<JSX.Element[]>([]);
-  const dispatch = useAppDispatch();
-  const head = useAppSelector(state => state.chat.channelHead);
+interface DrawerProps {
+  title: string;
+  text: string;
+  data: any;
+  friends?: FriendHash;
+  handleClickDrawer: (data: any) => void;
+}
+
+export default function Drawer({ title, text, data, friends, handleClickDrawer }: DrawerProps) {
+  const [isOnline, setIsOnline] = useState<boolean>(false);
+  const user = useAppSelector(state => state.user);
 
   useEffect(() => {
-    if (head) {
-      updateChannelsFromHead(head);
-    }
-  }, []);
+    updateOnlineStatus();
+  }, [friends]);
 
-  useEffect(() => {
-    dispatch(
-      addAppListener({
-        predicate: action => {
-          if (['chat/setHead', 'chat/addNewMessage', 'chat/addNewChannel'].includes(action.type)) {
-            return true;
-          }
-          return false;
-        },
-        effect: (action, listenerApi) => {
-          const head = listenerApi.getState().chat.channelHead;
-          if (head) {
-            updateChannelsFromHead(head);
-          }
-        },
-      })
-    );
-  }, []);
+  const isInstanceOfChannel = (v: any): v is Channel => {
+    return 'channelName' in v;
+  };
 
-  const updateChannelsFromHead = (head: Channel) => {
-    // Need to iterate through linked list of channels for DOM update.
-    // This is because the linked list will be reordered and not just appended.
-    let cur: Channel | null = head;
-    const channels: JSX.Element[] = [];
-    while (cur) {
-      channels.push(<DrawerCard key={cur.channelId} props={cur} />);
-      cur = cur.prev;
+  const updateOnlineStatus = () => {
+    if (!friends || !isInstanceOfChannel(data) || data.userIds.length !== 2) {
+      return;
     }
-    setChannels(channels);
+
+    const friendId = data.userIds.filter(row => row !== user.userId)[0];
+    if (friendId in friends) {
+      const friend = friends[friendId];
+      setIsOnline(friend.isOnline ? true : false);
+    }
   };
 
   return (
-    <div className={`${styles.drawer} p-3`}>
-      <div className={`${styles.header} mb-4`}>
-        <h3 className={styles.heading}>Chats</h3>
-        <div className="flex-spacer"></div>
-        <button className="btn-icon ms-3">
-          <FontAwesomeIcon size="lg" icon={['fas', 'chalkboard-user']} />
-        </button>
-        <button className="btn-icon ms-3">
-          <FontAwesomeIcon size="lg" icon={['fas', 'users-rectangle']} />
-        </button>
+    <div onClick={() => handleClickDrawer(data)} className={`${styles.drawer} gap-3`}>
+      <FontAwesomeIcon className={styles.iconWrapper} size="3x" icon={['fas', 'circle-user']} />
+      <div className={`${styles.bodyWrapper}`}>
+        <div className={styles.header}>{title}</div>
+        <div className="truncated">{text}</div>
       </div>
-      {channels}
     </div>
   );
 }

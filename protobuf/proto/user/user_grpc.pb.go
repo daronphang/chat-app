@@ -31,10 +31,10 @@ type UserClient interface {
 	UpdateUser(ctx context.Context, in *UserMetadata, opts ...grpc.CallOption) (*common.MessageResponse, error)
 	Login(ctx context.Context, in *UserCredentials, opts ...grpc.CallOption) (*UserMetadata, error)
 	Logout(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*common.MessageResponse, error)
-	CreateContact(ctx context.Context, in *NewContact, opts ...grpc.CallOption) (*Contact, error)
-	GetContacts(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Contacts, error)
+	AddFriend(ctx context.Context, in *NewFriend, opts ...grpc.CallOption) (*Friend, error)
+	GetFriends(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Friends, error)
 	CreateChannel(ctx context.Context, in *NewChannel, opts ...grpc.CallOption) (*Channel, error)
-	GetUsersAssociatedToChannel(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Users, error)
+	GetUsersAssociatedToChannel(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*UserContacts, error)
 	GetChannelsAssociatedToUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Channels, error)
 	GetUsersAssociatedToTargetUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Users, error)
 }
@@ -101,18 +101,18 @@ func (c *userClient) Logout(ctx context.Context, in *wrapperspb.StringValue, opt
 	return out, nil
 }
 
-func (c *userClient) CreateContact(ctx context.Context, in *NewContact, opts ...grpc.CallOption) (*Contact, error) {
-	out := new(Contact)
-	err := c.cc.Invoke(ctx, "/user.User/createContact", in, out, opts...)
+func (c *userClient) AddFriend(ctx context.Context, in *NewFriend, opts ...grpc.CallOption) (*Friend, error) {
+	out := new(Friend)
+	err := c.cc.Invoke(ctx, "/user.User/addFriend", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *userClient) GetContacts(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Contacts, error) {
-	out := new(Contacts)
-	err := c.cc.Invoke(ctx, "/user.User/getContacts", in, out, opts...)
+func (c *userClient) GetFriends(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Friends, error) {
+	out := new(Friends)
+	err := c.cc.Invoke(ctx, "/user.User/getFriends", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -128,8 +128,8 @@ func (c *userClient) CreateChannel(ctx context.Context, in *NewChannel, opts ...
 	return out, nil
 }
 
-func (c *userClient) GetUsersAssociatedToChannel(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Users, error) {
-	out := new(Users)
+func (c *userClient) GetUsersAssociatedToChannel(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*UserContacts, error) {
+	out := new(UserContacts)
 	err := c.cc.Invoke(ctx, "/user.User/getUsersAssociatedToChannel", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -165,10 +165,10 @@ type UserServer interface {
 	UpdateUser(context.Context, *UserMetadata) (*common.MessageResponse, error)
 	Login(context.Context, *UserCredentials) (*UserMetadata, error)
 	Logout(context.Context, *wrapperspb.StringValue) (*common.MessageResponse, error)
-	CreateContact(context.Context, *NewContact) (*Contact, error)
-	GetContacts(context.Context, *wrapperspb.StringValue) (*Contacts, error)
+	AddFriend(context.Context, *NewFriend) (*Friend, error)
+	GetFriends(context.Context, *wrapperspb.StringValue) (*Friends, error)
 	CreateChannel(context.Context, *NewChannel) (*Channel, error)
-	GetUsersAssociatedToChannel(context.Context, *wrapperspb.StringValue) (*Users, error)
+	GetUsersAssociatedToChannel(context.Context, *wrapperspb.StringValue) (*UserContacts, error)
 	GetChannelsAssociatedToUser(context.Context, *wrapperspb.StringValue) (*Channels, error)
 	GetUsersAssociatedToTargetUser(context.Context, *wrapperspb.StringValue) (*Users, error)
 	mustEmbedUnimplementedUserServer()
@@ -196,16 +196,16 @@ func (UnimplementedUserServer) Login(context.Context, *UserCredentials) (*UserMe
 func (UnimplementedUserServer) Logout(context.Context, *wrapperspb.StringValue) (*common.MessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Logout not implemented")
 }
-func (UnimplementedUserServer) CreateContact(context.Context, *NewContact) (*Contact, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateContact not implemented")
+func (UnimplementedUserServer) AddFriend(context.Context, *NewFriend) (*Friend, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddFriend not implemented")
 }
-func (UnimplementedUserServer) GetContacts(context.Context, *wrapperspb.StringValue) (*Contacts, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetContacts not implemented")
+func (UnimplementedUserServer) GetFriends(context.Context, *wrapperspb.StringValue) (*Friends, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFriends not implemented")
 }
 func (UnimplementedUserServer) CreateChannel(context.Context, *NewChannel) (*Channel, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateChannel not implemented")
 }
-func (UnimplementedUserServer) GetUsersAssociatedToChannel(context.Context, *wrapperspb.StringValue) (*Users, error) {
+func (UnimplementedUserServer) GetUsersAssociatedToChannel(context.Context, *wrapperspb.StringValue) (*UserContacts, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsersAssociatedToChannel not implemented")
 }
 func (UnimplementedUserServer) GetChannelsAssociatedToUser(context.Context, *wrapperspb.StringValue) (*Channels, error) {
@@ -335,38 +335,38 @@ func _User_Logout_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
-func _User_CreateContact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NewContact)
+func _User_AddFriend_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NewFriend)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServer).CreateContact(ctx, in)
+		return srv.(UserServer).AddFriend(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/user.User/createContact",
+		FullMethod: "/user.User/addFriend",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServer).CreateContact(ctx, req.(*NewContact))
+		return srv.(UserServer).AddFriend(ctx, req.(*NewFriend))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _User_GetContacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _User_GetFriends_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(wrapperspb.StringValue)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServer).GetContacts(ctx, in)
+		return srv.(UserServer).GetFriends(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/user.User/getContacts",
+		FullMethod: "/user.User/getFriends",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServer).GetContacts(ctx, req.(*wrapperspb.StringValue))
+		return srv.(UserServer).GetFriends(ctx, req.(*wrapperspb.StringValue))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -475,12 +475,12 @@ var User_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _User_Logout_Handler,
 		},
 		{
-			MethodName: "createContact",
-			Handler:    _User_CreateContact_Handler,
+			MethodName: "addFriend",
+			Handler:    _User_AddFriend_Handler,
 		},
 		{
-			MethodName: "getContacts",
-			Handler:    _User_GetContacts_Handler,
+			MethodName: "getFriends",
+			Handler:    _User_GetFriends_Handler,
 		},
 		{
 			MethodName: "createChannel",

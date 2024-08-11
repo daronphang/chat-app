@@ -28,6 +28,10 @@ static_resources:
                           route:
                             cluster: message_service
                             timeout: 0s
+                        - match: { prefix: "/notification" }
+                          route:
+                            cluster: notification_service
+                            timeout: 0s
                       cors:
                         allow_origin_string_match:
                           - prefix: "*"
@@ -60,7 +64,7 @@ static_resources:
                   address:
                     socket_address:
                       address: 127.0.0.1
-                      port_value: 9090
+                      port_value: 50051
     - name: message_service
       connect_timeout: 5s
       type: logical_dns
@@ -75,19 +79,19 @@ static_resources:
                   address:
                     socket_address:
                       address: 127.0.0.1
-                      port_value: 9091
-    - name: presence_service
+                      port_value: 50052
+    - name: notification_service
       connect_timeout: 5s
       type: logical_dns
       # HTTP/2 support
       http2_protocol_options: {}
       lb_policy: round_robin
       load_assignment:
-        cluster_name: presence_cluster
+        cluster_name: notification_cluster
         endpoints:
           - lb_endpoints:
               - endpoint:
                   address:
                     socket_address:
                       address: 127.0.0.1
-                      port_value: 9092
+                      port_value: 50053

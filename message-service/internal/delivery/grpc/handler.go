@@ -34,13 +34,14 @@ func (s *GRPCServer) GetLatestMessages(ctx context.Context, arg *wrappers.String
 	}
 	rv := &pb.Messages{}
 	for _, msg := range msgs {
-		rv.Messages = append(rv.Messages, &pb.Messages_Message{
+		rv.Messages = append(rv.Messages, &common.Message{
 			MessageId: msg.MessageID,
 			ChannelId: msg.ChannelID,
 			SenderId: msg.SenderID,
 			MessageType: msg.MessageType,
 			Content: msg.Content,
 			CreatedAt: msg.CreatedAt,
+			MessageStatus: string(msg.MessageStatus),
 		})
 	}
 
@@ -63,13 +64,14 @@ func (s *GRPCServer) GetPreviousMessages(ctx context.Context, arg *pb.PrevMessag
 	}
 	rv := &pb.Messages{}
 	for _, msg := range msgs {
-		rv.Messages = append(rv.Messages, &pb.Messages_Message{
+		rv.Messages = append(rv.Messages, &common.Message{
 			MessageId: msg.MessageID,
 			ChannelId: msg.ChannelID,
 			SenderId: msg.SenderID,
 			MessageType: msg.MessageType,
 			Content: msg.Content,
 			CreatedAt: msg.CreatedAt,
+			MessageStatus: string(msg.MessageStatus),
 		})
 	}
 

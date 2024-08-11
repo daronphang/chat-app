@@ -4,12 +4,14 @@ import (
 	"context"
 	"slices"
 	"strings"
+	"time"
 	"user-service/internal/domain"
 
 	"github.com/google/uuid"
 )
 
 func (uc *UseCaseService) CreateChannel(ctx context.Context, arg domain.NewChannel) (domain.Channel, error) {
+	arg.CreatedAt = time.Now().UTC().Format(time.RFC3339)
 	if len(arg.UserIDs) == 2 {
 		slices.Sort(arg.UserIDs)
 		arg.ChannelID = strings.Join(arg.UserIDs, "")
@@ -43,6 +45,7 @@ func (uc *UseCaseService) CreateChannel(ctx context.Context, arg domain.NewChann
 	return domain.Channel{
 		ChannelID: arg.ChannelID,
 		ChannelName: arg.ChannelName,
+		CreatedAt: arg.CreatedAt,
 	}, nil
 }
 
@@ -54,7 +57,7 @@ func (uc *UseCaseService) GetChannelsAssociatedToUser(ctx context.Context, arg s
 	return rv, nil
 }
 
-func (uc *UseCaseService) GetUsersAssociatedToChannel(ctx context.Context, arg string) ([]string, error) {
+func (uc *UseCaseService) GetUsersAssociatedToChannel(ctx context.Context, arg string) ([]domain.UserContact, error) {
 	rv, err := uc.Repository.GetUsersAssociatedToChannel(ctx, arg)
 	if err != nil {
 		return nil, err

@@ -75,6 +75,7 @@ func (d *Device) readPump() {
 			logger.Error(
 				"unable to compact inbound message in JSON",
 				zap.String("payload", string(msg)),
+				zap.String("trace", err.Error()),
 			)
 			continue
 		}

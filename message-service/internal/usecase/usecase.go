@@ -4,7 +4,7 @@ import (
 	"context"
 	"message-service/internal/domain"
 
-	pb "protobuf/proto/user"
+	pb "protobuf/proto/notification"
 )
 
 type EventBroker interface {
@@ -12,11 +12,11 @@ type EventBroker interface {
 }
 
 type UseCaseService struct {
-	Repository 		domain.Repository
-	EventBroker		EventBroker
-	UserClient   	pb.UserClient
+	Repository 				domain.Repository
+	EventBroker				EventBroker
+	NotificationClient   	pb.NotificationClient
 }
 
-func NewUseCaseService(eb EventBroker, repo domain.Repository, uc pb.UserClient) *UseCaseService {
-	return &UseCaseService{EventBroker: eb, Repository: repo, UserClient: uc}
+func NewUseCaseService(eb EventBroker, repo domain.Repository, nc pb.NotificationClient) *UseCaseService {
+	return &UseCaseService{EventBroker: eb, Repository: repo, NotificationClient: nc}
 }

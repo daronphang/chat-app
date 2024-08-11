@@ -16,9 +16,15 @@ export default function Content({ props }: ContentProps) {
       {props.content}
       <div className={styles.metadata}>
         <span className="me-2">{moment(props.createdAt).format('MM/DD/YY hh:mm')}</span>
-        {props.delivery && props.delivery == 1 && <FontAwesomeIcon size="lg" icon={['fas', 'clock']} />}
-        {props.delivery && props.delivery == 2 && <FontAwesomeIcon size="lg" icon={['fas', 'check']} />}
-        {props.delivery && props.delivery == 3 && <FontAwesomeIcon size="lg" icon={['fas', 'check-double']} />}
+        {props.messageStatus === 'pending' && (
+          <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'clock']} />
+        )}
+        {props.messageStatus === 'received' && (
+          <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'check']} />
+        )}
+        {props.messageStatus === 'delivered' && (
+          <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'check-double']} />
+        )}
       </div>
     </div>
   );

@@ -13,10 +13,10 @@ service User {
     rpc updateUser(UserMetadata) returns (common.MessageResponse) {}
     rpc login(UserCredentials) returns (UserMetadata) {}
     rpc logout(google.protobuf.StringValue) returns (common.MessageResponse) {}
-    rpc createContact(NewContact) returns (Contact) {}
-    rpc getContacts(google.protobuf.StringValue) returns (Contacts) {}
+    rpc addFriend(NewFriend) returns (Friend) {}
+    rpc getFriends(google.protobuf.StringValue) returns (Friends) {}
     rpc createChannel(NewChannel) returns (Channel) {}
-    rpc getUsersAssociatedToChannel(google.protobuf.StringValue) returns (Users) {}
+    rpc getUsersAssociatedToChannel(google.protobuf.StringValue) returns (UserContacts) {}
     rpc getChannelsAssociatedToUser(google.protobuf.StringValue) returns (Channels) {}
     rpc getUsersAssociatedToTargetUser(google.protobuf.StringValue) returns (Users) {}
 }
@@ -35,23 +35,32 @@ message UserMetadata {
     string email = 2;
     string displayName = 3;
     string createdAt = 4;
-    repeated Contact contacts = 5;
+    repeated Friend friends = 5;
 } 
 
-message NewContact {
+message UserContact {
+    string userId = 1;
+    string email = 2;
+}
+
+message UserContacts {
+    repeated UserContact userContacts = 1;
+}
+
+message NewFriend {
     string userId = 1;
     string friendEmail = 2;
     string displayName = 3;
 }
 
-message Contact {
+message Friend {
     string userId = 1;
     string email = 2;
     string displayName = 3;
 }
 
-message Contacts {
-    repeated Contact contacts = 1;
+message Friends {
+    repeated Friend friends = 1;
 }
 
 message NewChannel {

@@ -6,7 +6,7 @@ import (
 )
 
 type EventBroker interface {
-	PublishNewMessageToQueue(ctx context.Context, channelID string, arg domain.Message) error 
+	PublishNewMessageToQueue(ctx context.Context, partitionKey string, arg domain.Message) error 
 }
 
 type ServerClienter interface {

@@ -68,9 +68,9 @@ func (q *Querier) UpdateUser(ctx context.Context, arg domain.UserMetadata) error
 	return nil
 }
 
-func (q *Querier) CreateContact(ctx context.Context, arg domain.NewContact) error {
+func (q *Querier) AddFriend(ctx context.Context, arg domain.NewFriend) error {
 	stmt := `
-	INSERT INTO user_contact (
+	INSERT INTO friendship (
 	user_id, friend_id, display_name
 	) VALUES (
 	 $1, $2, $3
@@ -84,15 +84,15 @@ func (q *Querier) CreateContact(ctx context.Context, arg domain.NewContact) erro
 	return nil
 }
 
-func (q *Querier) GetContacts(ctx context.Context, arg string) ([]domain.Contact, error) {
+func (q *Querier) GetFriends(ctx context.Context, arg string) ([]domain.Friend, error) {
 	stmt := `
 	SELECT 
-	UC.friend_id AS friend_id,
+	FS.friend_id AS friend_id,
 	UM.email AS email,
-	UC.display_name AS display_name
-	FROM user_contact AS UC
-	INNER JOIN user_metadata AS UM ON UC.friend_id = UM.user_id
-	WHERE UC.user_id = $1
+	FS.display_name AS display_name
+	FROM friendship AS FS
+	INNER JOIN user_metadata AS UM ON FS.friend_id = UM.user_id
+	WHERE FS.user_id = $1
 	`
 
 	rows, err := q.db.Query(ctx, stmt, arg)
@@ -101,9 +101,9 @@ func (q *Querier) GetContacts(ctx context.Context, arg string) ([]domain.Contact
 	}
 
 	defer rows.Close()
-	var items []domain.Contact
+	var items []domain.Friend
 	for rows.Next() {
-		var i domain.Contact
+		var i domain.Friend
 		if err := rows.Scan(
 			&i.UserID,
 			&i.Email,
@@ -119,13 +119,13 @@ func (q *Querier) GetContacts(ctx context.Context, arg string) ([]domain.Contact
 func (q *Querier) CreateUserToChannelAssociation(ctx context.Context, arg domain.NewChannel) error {
 	var rows [][]interface{}
 	for _, userID := range arg.UserIDs {
-		rows = append(rows, []interface{}{userID, arg.ChannelID})
+		rows = append(rows, []interface{}{userID, arg.ChannelID, arg.CreatedAt})
 	}
 
 	_, err := q.db.CopyFrom(
 		ctx,
 		pgx.Identifier{"user_to_channel"},
-		[]string{"user_id", "channel_id"},
+		[]string{"user_id", "channel_id", "created_at"},
 		pgx.CopyFromRows(rows),
 	)
 	if err != nil {
@@ -150,10 +150,14 @@ func (q *Querier) CreateGroupChannel(ctx context.Context, arg domain.NewChannel)
 	return nil
 }
 
-func (q *Querier) GetUsersAssociatedToChannel(ctx context.Context, arg string) ([]string, error) {
+func (q *Querier) GetUsersAssociatedToChannel(ctx context.Context, arg string) ([]domain.UserContact, error) {
 	stmt := `
-	SELECT user_id FROM user_to_channel
-	WHERE channel_id = $1
+	SELECT 
+	UTC.user_id AS user_id,
+	UM.email AS email
+	FROM user_to_channel AS UTC
+	INNER JOIN user_metadata AS UM ON UM.user_id = UTC.user_id
+	WHERE UTC.channel_id = $1
 	`
 
 	rows, err := q.db.Query(ctx, stmt, arg)
@@ -162,10 +166,10 @@ func (q *Querier) GetUsersAssociatedToChannel(ctx context.Context, arg string) (
 	}
 
 	defer rows.Close()
-	var items []string
+	var items []domain.UserContact
 	for rows.Next() {
-		var i string
-		if err := rows.Scan(&i); err != nil {
+		var i domain.UserContact
+		if err := rows.Scan(&i.UserID, &i.Email); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -177,12 +181,12 @@ func (q *Querier) GetChannelsAssociatedToUser(ctx context.Context, arg string) (
 	stmt := `
 	SELECT 
 	UTC.channel_id AS channel_id,
-	CASE WHEN GC.group_name IS NOT NULL THEN GC.group_NAME WHEN uc.display_name IS NOT NULL THEN uc.display_name ELSE UM.email END AS channel_name,
+	CASE WHEN GC.group_name IS NOT NULL THEN GC.group_NAME WHEN FS.display_name IS NOT NULL THEN FS.display_name ELSE UM.email END AS channel_name,
 	UTC.created_at as created_at	
 	FROM
 	user_to_channel AS UTC
 	LEFT JOIN group_channel AS GC ON GC.channel_id = UTC.channel_id
-	LEFT JOIN user_contact AS UC ON UC.user_id = UTC.user_id AND POSITION(UC.friend_id IN UTC.channel_id) > 0
+	LEFT JOIN friendship AS FS ON FS.user_id = UTC.user_id AND POSITION(FS.friend_id IN UTC.channel_id) > 0
 	LEFT JOIN user_metadata AS UM ON UM.user_id != UTC.user_id AND POSITION(UM.user_id IN UTC.channel_id) > 0
 	WHERE UTC.user_id = $1
 	`

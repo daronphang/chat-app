@@ -58,12 +58,12 @@ func (s *GRPCServer) Login(ctx context.Context, arg *pb.UserCredentials) (*pb.Us
 		return nil, status.Error(16, err.Error())
 	}
 
-	contacts := make([]*pb.Contact, 0)
-	for _, contact := range rv.Contacts {
-		contacts = append(contacts, &pb.Contact{
-			UserId: contact.UserID,
-			Email: contact.Email,
-			DisplayName: contact.DisplayName,
+	friends := make([]*pb.Friend, 0)
+	for _, friend := range rv.Friends {
+		friends = append(friends, &pb.Friend{
+			UserId: friend.UserID,
+			Email: friend.Email,
+			DisplayName: friend.DisplayName,
 		})
 	}
 	return &pb.UserMetadata{
@@ -71,7 +71,7 @@ func (s *GRPCServer) Login(ctx context.Context, arg *pb.UserCredentials) (*pb.Us
 		Email: rv.Email,
 		DisplayName: rv.DisplayName,
 		CreatedAt: rv.CreatedAt,
-		Contacts: contacts,
+		Friends: friends,
 	}, nil
 }
 
@@ -101,8 +101,8 @@ func (s *GRPCServer) GetBestServer(ctx context.Context,  _ *emptypb.Empty) (*com
 	return &common.MessageResponse{Message: server}, nil
 }
 
-func (s *GRPCServer) CreateContact(ctx context.Context, arg *pb.NewContact) (*pb.Contact, error) {	
-	p := domain.NewContact{
+func (s *GRPCServer) AddFriend(ctx context.Context, arg *pb.NewFriend) (*pb.Friend, error) {	
+	p := domain.NewFriend{
 		UserID: arg.UserId,
 		FriendEmail: arg.FriendEmail,
 		DisplayName: arg.DisplayName,
@@ -112,37 +112,37 @@ func (s *GRPCServer) CreateContact(ctx context.Context, arg *pb.NewContact) (*pb
 		return nil, status.Errorf(9, "validation error: %v", err)
 	}
 	
-	rv, err := s.uc.CreateContact(ctx, p)
+	rv, err := s.uc.AddFriend(ctx, p)
 	if err != nil {
 		return nil, status.Error(10, err.Error())
 	}
-	return &pb.Contact{
+	return &pb.Friend{
 		UserId: rv.UserID,
 		Email: rv.Email,
 		DisplayName: rv.DisplayName,
 	}, nil
 }
 
-func (s *GRPCServer) GetContacts(ctx context.Context, arg *wrappers.StringValue) (*pb.Contacts, error) {	
+func (s *GRPCServer) GetFriends(ctx context.Context, arg *wrappers.StringValue) (*pb.Friends, error) {	
 	if (arg.Value == "") {
 		return nil, status.Errorf(9, "user id is missing")
 	}
 	
-	rv, err := s.uc.GetContacts(ctx, arg.Value)
+	rv, err := s.uc.GetFriends(ctx, arg.Value)
 	if err != nil {
 		return nil, status.Error(10, err.Error())
 	}
 
-	var contacts []*pb.Contact
+	var friends []*pb.Friend
 	for _, x := range rv {
-		contacts = append(contacts, &pb.Contact{
+		friends = append(friends, &pb.Friend{
 			UserId: x.UserID,
 			Email: x.Email,
 			DisplayName: x.DisplayName,
 		})
 	}
 
-	return &pb.Contacts{Contacts: contacts}, nil
+	return &pb.Friends{Friends: friends}, nil
 }
 
 func (s *GRPCServer) CreateChannel(ctx context.Context, arg *pb.NewChannel) (*pb.Channel, error) {	
@@ -165,7 +165,7 @@ func (s *GRPCServer) CreateChannel(ctx context.Context, arg *pb.NewChannel) (*pb
 	}, nil
 }
 
-func (s *GRPCServer) GetUsersAssociatedToChannel(ctx context.Context, arg *wrappers.StringValue) (*pb.Users, error) {	
+func (s *GRPCServer) GetUsersAssociatedToChannel(ctx context.Context, arg *wrappers.StringValue) (*pb.UserContacts, error) {	
 	if (arg.Value == "") {
 		return nil, status.Errorf(9, "channel id is missing")
 	}
@@ -174,7 +174,16 @@ func (s *GRPCServer) GetUsersAssociatedToChannel(ctx context.Context, arg *wrapp
 	if err != nil {
 		return nil, status.Error(10, err.Error())
 	}
-	return &pb.Users{UserIds: rv}, nil
+
+	var userContacts []*pb.UserContact
+	for _, x := range rv {
+		userContacts = append(userContacts, &pb.UserContact{
+			UserId: x.UserID,
+			Email: x.Email,
+		})
+	}
+
+	return &pb.UserContacts{UserContacts: userContacts}, nil
 }
 
 func (s *GRPCServer) GetChannelsAssociatedToUser(ctx context.Context, arg *wrappers.StringValue) (*pb.Channels, error) {	

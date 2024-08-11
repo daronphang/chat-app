@@ -5,17 +5,16 @@ import { RpcError } from 'grpc-web';
 import { useSnackbar } from 'notistack';
 
 import { UserCredentials } from 'proto/user/user_pb';
-import { setUser } from 'features/user/redux/userSlice';
-import { RoutePaths } from 'core/config/route.constant';
+import { Friend, FriendHash, setUser } from 'features/user/redux/userSlice';
+import { RoutePath } from 'core/config/route.constant';
 import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
-import { ApiErrors } from 'core/config/api.constant';
 import styles from './login.module.scss';
 
 export default function Login() {
   const [loading, isLoading] = useState<boolean>(false);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
-  const api = useAppSelector(state => state.config.api);
+  const config = useAppSelector(state => state.config);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -26,21 +25,32 @@ export default function Login() {
     try {
       const payload = new UserCredentials();
       payload.setEmail('daronphang@gmail.com');
-      const resp = await api.USER_SERVICE.login(payload);
+      const resp = await config.api.USER_SERVICE.login(payload);
+      const friends: FriendHash = {};
+      resp.getFriendsList().forEach(row => {
+        const friend: Friend = {
+          userId: row.getUserid(),
+          email: row.getEmail(),
+          displayName: row.getDisplayname(),
+          isOnline: false,
+        };
+        friends[friend.userId] = friend;
+      });
+
       dispatch(
         setUser({
           userId: resp.getUserid(),
           email: resp.getEmail(),
           displayName: resp.getDisplayname(),
-          contacts: [],
+          friends: friends,
         })
       );
-      navigate(RoutePaths.CHAT);
+      navigate(RoutePath.CHAT);
     } catch (e) {
       const err = e as RpcError;
 
       if (err.code === 14) {
-        enqueueSnackbar(ApiErrors.NETWORK_ERROR, {
+        enqueueSnackbar(config.apiError.NETWORK_ERROR, {
           ...defaultSnackbarOptions,
           variant: 'error',
         });

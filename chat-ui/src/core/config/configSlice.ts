@@ -1,12 +1,13 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { Config, Environment } from './config.constant';
-import { BaseApi, DevApi, ProdApi } from './api.constant';
-import { WebSocketHook } from 'react-use-websocket/dist/lib/types';
+import { ApiError, BaseApi, DevApi, ProdApi } from './api.constant';
 
 interface ConfigState {
   config: Config;
   api: BaseApi;
-  wsUrl: string;
+  chatServerWsUrl: string;
+  apiError: ApiError;
+  deviceId: string;
 }
 
 const initializeState = (): ConfigState => {
@@ -24,7 +25,9 @@ const initializeState = (): ConfigState => {
   return {
     config,
     api,
-    wsUrl: '',
+    chatServerWsUrl: '',
+    apiError: ApiError,
+    deviceId: '',
   };
 };
 
@@ -32,12 +35,15 @@ export const configSlice = createSlice({
   name: 'config',
   initialState: initializeState(),
   reducers: {
-    setWsUrl: (state, action: PayloadAction<string>) => {
-      state.wsUrl = action.payload;
+    setChatServerWsUrl: (state, action: PayloadAction<string>) => {
+      state.chatServerWsUrl = action.payload;
       return state;
+    },
+    setDeviceId: (state, action: PayloadAction<string>) => {
+      state.deviceId = action.payload;
     },
   },
 });
 
-export const { setWsUrl } = configSlice.actions;
+export const { setChatServerWsUrl, setDeviceId } = configSlice.actions;
 export default configSlice.reducer;

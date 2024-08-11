@@ -6,18 +6,18 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	pb "protobuf/proto/user"
+	pb "protobuf/proto/notification"
 )
 
-func NewClient(cfg *config.Config) (pb.UserClient, error) {
+func NewClient(cfg *config.Config) (pb.NotificationClient, error) {
 	conn, err := grpc.NewClient(
-		cfg.UserClient.HostAddress,
+		cfg.BroadcastClient.HostAddress,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
 		return nil, err
 	}
 	
-	client := pb.NewUserClient(conn)
+	client := pb.NewNotificationClient(conn)
 	return client, nil
 }

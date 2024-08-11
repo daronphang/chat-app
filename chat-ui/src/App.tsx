@@ -15,11 +15,15 @@ import {
   faCheck,
   faCheckDouble,
   faClock,
+  faUserPlus,
+  faArrowLeft,
 } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { ProtectedRoutes } from 'core/guards/authGuard';
 import Login from 'features/auth/components/login/login';
-import { RoutePaths } from 'core/config/route.constant';
+import { RoutePath } from 'core/config/route.constant';
+import { useAppDispatch } from 'core/redux/reduxHooks';
+import { setDeviceId } from 'core/config/configSlice';
 library.add(
   faCircleUser,
   faUsers,
@@ -30,12 +34,15 @@ library.add(
   faPaperPlane,
   faCheck,
   faCheckDouble,
-  faClock
+  faClock,
+  faUserPlus,
+  faArrowLeft
 );
 
 function App() {
+  const dispatch = useAppDispatch();
   useEffect(() => {
-    getDeviceIdFromCookie();
+    dispatch(setDeviceId(getDeviceIdFromCookie()));
   }, []);
 
   const getDeviceIdFromCookie = (): string => {
@@ -54,10 +61,10 @@ function App() {
     <div className="App">
       <Routes>
         <Route element={<ProtectedRoutes />}>
-          <Route path={RoutePaths.CHAT} element={<Chat />} />
+          <Route path={RoutePath.CHAT} element={<Chat />} />
         </Route>
-        <Route path={RoutePaths.LOGIN} element={<Login />} />
-        <Route path="*" element={<Navigate to={RoutePaths.CHAT} />} />
+        <Route path={RoutePath.LOGIN} element={<Login />} />
+        <Route path="*" element={<Navigate to={RoutePath.CHAT} />} />
       </Routes>
     </div>
   );

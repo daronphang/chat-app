@@ -5,5 +5,4 @@ export const defaultWsOptions: Options = {
   share: true,
   reconnectAttempts: 15,
   reconnectInterval: attemptNumber => attemptNumber * 2 * 1000,
-  heartbeat: true,
 };

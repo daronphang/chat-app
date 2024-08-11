@@ -1,4 +1,4 @@
-export const RoutePaths = {
+export const RoutePath = {
   CHAT: '/',
   LOGIN: '/login',
 };

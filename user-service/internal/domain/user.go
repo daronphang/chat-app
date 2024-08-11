@@ -11,22 +11,28 @@ type UserMetadata struct {
 	Email		string 		`json:"email" validate:"required"`
 	DisplayName	string		`json:"displayName" validate:"required"`
 	CreatedAt	string		`json:"createdAt"`
-	Contacts	[]Contact	`json:"contacts"`
+	Friends		[]Friend	`json:"friends"`
+}
+
+type UserContact struct {
+	UserID 		string 		`json:"userId" validate:"required"`
+	Email		string 		`json:"email" validate:"required"`
 }
 
 type UserCredentials struct {
 	Email		string 	`json:"email" validate:"required"`
 }
 
-type NewContact struct {
+type NewFriend struct {
 	UserID		string 	`json:"userId" validate:"required"`
 	FriendEmail string	`json:"friendEmail" validate:"required"`
-	FriendID 	string	
+	FriendID 	string	`json:"friendId"`
 	DisplayName string	`json:"displayName" validate:"required"`
 }
 
-type Contact struct {
+type Friend struct {
 	UserID		string 	`json:"userId" validate:"required"`
 	Email 		string	`json:"email" validate:"required"`
 	DisplayName string	`json:"displayName" validate:"required"`
 }
+
