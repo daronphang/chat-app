@@ -17,6 +17,7 @@ import {
   faClock,
   faUserPlus,
   faArrowLeft,
+  faCircle,
 } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { ProtectedRoutes } from 'core/guards/authGuard';
@@ -36,7 +37,8 @@ library.add(
   faCheckDouble,
   faClock,
   faUserPlus,
-  faArrowLeft
+  faArrowLeft,
+  faCircle
 );
 
 function App() {

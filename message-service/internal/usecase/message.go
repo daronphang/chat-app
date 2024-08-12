@@ -6,6 +6,7 @@ import (
 	"message-service/internal"
 	"message-service/internal/domain"
 	"protobuf/proto/common"
+	"slices"
 
 	"go.uber.org/zap"
 )
@@ -14,11 +15,15 @@ var (
 	logger, _ = internal.WireLogger()
 )
 
-func (uc *UseCaseService) GetLatestMessages(ctx context.Context, arg string) ([]domain.Message, error) {
-	rv, err := uc.Repository.GetLatestMessages(ctx, arg)
+func (uc *UseCaseService) GetLatestMessages(ctx context.Context, channelID string) ([]domain.Message, error) {
+	// Very rarely users fetch old messages.
+	// to return messages in ascending order.
+	rv, err := uc.Repository.GetLatestMessages(ctx, channelID)
 	if err != nil {
 		return nil, err
 	}
+	// Messages are returned in descending order, to reverse.
+	slices.Reverse(rv)
 	return rv, nil
 }
 
@@ -52,7 +57,7 @@ func (uc *UseCaseService) SaveMessageAndNotifyRecipients(ctx context.Context, ar
 		Content: arg.Content,
 		CreatedAt: arg.CreatedAt,
 		MessageType: arg.MessageType,
-		MessageStatus: string(arg.MessageStatus),
+		MessageStatus: int32(arg.MessageStatus),
 	}
 	_, err := uc.NotificationClient.BroadcastMessageEvent(ctx, msg)
 	if err != nil {

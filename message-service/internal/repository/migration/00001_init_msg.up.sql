@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS message (
     senderId text,
     messageType text,
     content text,
-    messageStatus text,
+    messageStatus int,
     createdAt timestamp,
     PRIMARY KEY (channelId, messageId)
 ) WITH CLUSTERING ORDER BY (messageId DESC);

@@ -5,7 +5,8 @@ import { RpcError } from 'grpc-web';
 import { useSnackbar } from 'notistack';
 
 import { UserCredentials } from 'proto/user/user_pb';
-import { Friend, FriendHash, setUser } from 'features/user/redux/userSlice';
+import { setUser } from 'features/user/redux/userSlice';
+import { Friend, FriendHash } from 'features/user/redux/user.interface';
 import { RoutePath } from 'core/config/route.constant';
 import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
 import styles from './login.module.scss';

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 	"user-service/internal/domain"
 
 	"github.com/jackc/pgx/v5"
@@ -118,8 +119,9 @@ func (q *Querier) GetFriends(ctx context.Context, arg string) ([]domain.Friend, 
 
 func (q *Querier) CreateUserToChannelAssociation(ctx context.Context, arg domain.NewChannel) error {
 	var rows [][]interface{}
+	createdAt, _ := time.Parse("2006-01-02T15:04:05Z07:00", arg.CreatedAt)
 	for _, userID := range arg.UserIDs {
-		rows = append(rows, []interface{}{userID, arg.ChannelID, arg.CreatedAt})
+		rows = append(rows, []interface{}{userID, arg.ChannelID, createdAt})
 	}
 
 	_, err := q.db.CopyFrom(
@@ -139,11 +141,11 @@ func (q *Querier) CreateGroupChannel(ctx context.Context, arg domain.NewChannel)
 	INSERT INTO group_channel (
 	channel_id, group_name
 	) VALUES (
-	 $1, $2
+	 $1, $2, $3
 	)
 	`
-
-	_, err := q.db.Exec(ctx, stmt, arg.ChannelID, arg.ChannelName)
+	createdAt, _ := time.Parse("2006-01-02T15:04:05Z07:00", arg.CreatedAt)
+	_, err := q.db.Exec(ctx, stmt, arg.ChannelID, arg.ChannelName, createdAt)
 	if err != nil {
 		return err
 	}

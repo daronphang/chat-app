@@ -7,7 +7,7 @@
 
 .dialogue {
   width: 100%;
-  height: calc(100vh - 7rem);
+  height: calc(100vh - 10rem);
   background-color: variables.$bg-dialogue;
   display: flex;
   flex-direction: column;
@@ -53,4 +53,8 @@
 textarea {
   resize: none !important;
   padding: 14px 10px 10px 10px !important;
+}
+
+.icon {
+  color: variables.$secondary;
 }

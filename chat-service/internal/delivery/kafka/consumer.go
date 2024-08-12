@@ -19,7 +19,6 @@ type KafkaConsumer struct {
 }
 
 var (
-	errInvalidInterface = errors.New("interface is invalid")
 	errInvalidEvent = errors.New("invalid event")
 )
 
@@ -82,21 +81,14 @@ func (c *KafkaConsumer) ConsumeFromUserTopic(ctx context.Context, uc *usecase.Us
 		}
 
 		// Validate data.
-		validator := cv.ProvideValidator()
 		if (event.Event == domain.EventMessage) {
-			v, ok := event.Data.(domain.Message)
-			if !ok {
-				err = errInvalidInterface
-			} else {
-				err = validator.Validate(v)
-			}
+			p, _ := json.Marshal(event.Data)
+			v := new(domain.Message)
+			err = cv.UnmarshalAndValidate(p, v)
 		} else if (event.Event == domain.EventNewChannel) {
-			v, ok := event.Data.(domain.NewChannelEvent)
-			if !ok {
-				err = errInvalidInterface
-			} else {
-				err = validator.Validate(v)
-			}
+			p, _ := json.Marshal(event.Data)
+			v := new(domain.NewChannelEvent)
+			err = cv.UnmarshalAndValidate(p, v)
 		} else {
 			err = errInvalidEvent
 		}
@@ -107,6 +99,7 @@ func (c *KafkaConsumer) ConsumeFromUserTopic(ctx context.Context, uc *usecase.Us
 				zap.String("payload", string(m.Value)),
 				zap.String("trace", err.Error()),
 			)
+			continue
 		}
 			
 		if err := uc.SendEventToClient(ctx, c.client, *event); err != nil {

@@ -1,25 +1,6 @@
 import { createSlice, Draft, PayloadAction } from '@reduxjs/toolkit';
-
-// 1 = sending, 2 = sent, 3 = delivered
-export type MessageStatus = 'pending' | 'received' | 'delivered' | 'read';
-
-export interface Message {
-  messageId: number;
-  channelId: string;
-  senderId: string;
-  messageType: string;
-  content: string;
-  createdAt: string;
-  messageStatus: MessageStatus;
-}
-
-export interface Channel {
-  channelId: string;
-  channelName: string;
-  createdAt: string;
-  messages: Message[];
-  userIds: string[];
-}
+import { Channel, Message } from './chat.interface';
+import { Friend } from 'features/user/redux/user.interface';
 
 interface UnreadChannelHash {
   [key: string]: boolean;
@@ -29,11 +10,6 @@ interface ChatState {
   channels: Channel[];
   curChannelId: string;
   unreadChannels: UnreadChannelHash;
-}
-
-export interface WebSocketEvent {
-  event: string;
-  data: any;
 }
 
 const initialState: ChatState = {
@@ -149,10 +125,23 @@ export const chatSlice = createSlice({
       channel.channelId = action.payload.channelId;
       channel.channelName = action.payload.channelName;
       channel.createdAt = action.payload.createdAt;
+      if (action.payload.isDraft) {
+        channel.isDraft = action.payload.isDraft;
+      }
 
       // Move to front.
       state.channels.splice(idx, 1);
       state.channels.push(channel);
+      return state;
+    },
+    updateChannelDisplayName: (state, action: PayloadAction<Friend>) => {
+      // Triggered when a friend is added.
+      const idx = state.channels.findIndex(row => row.channelId.includes(action.payload.userId));
+      if (idx === -1) {
+        return state;
+      }
+      const channel = state.channels[idx];
+      channel.channelName = action.payload.displayName;
       return state;
     },
   },
@@ -166,5 +155,6 @@ export const {
   setCurChannelId,
   addUnreadChannel,
   removeReadChannel,
+  updateChannelDisplayName,
 } = chatSlice.actions;
 export default chatSlice.reducer;

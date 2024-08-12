@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import styles from './toolbar.module.scss';
 
-export type Display = 'channel' | 'newChat' | 'newGroup' | 'newFriend';
+export type Display = 'channel' | 'newChat' | 'newGroup' | 'newUser';
 
 interface ToolbarProps {
   handleClickToolbarButton: (v: Display) => void;
@@ -15,7 +15,7 @@ export default function Toolbar({ handleClickToolbarButton }: ToolbarProps) {
       <h3 className={styles.heading}>Chats</h3>
       <div className="flex-spacer"></div>
       <Tooltip title="New Friend" placement="bottom">
-        <button className="btn-icon ms-3" onClick={() => handleClickToolbarButton('newFriend')}>
+        <button className="btn-icon ms-3" onClick={() => handleClickToolbarButton('newUser')}>
           <FontAwesomeIcon size="lg" icon={['fas', 'user-plus']} />
         </button>
       </Tooltip>

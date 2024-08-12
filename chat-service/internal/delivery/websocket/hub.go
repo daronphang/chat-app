@@ -94,6 +94,11 @@ func (h *Hub) handleReceiveMessage(ctx context.Context, msg []byte) {
 			zap.String("trace", err.Error()),
 		)
 	}
+
+	logger.Info(
+		"websocket message received", 
+		zap.String("payload", string(msg)),
+	)
 }
 
 func (h *Hub) createNewClient(device *Device) {

@@ -24,7 +24,7 @@ type UserCredentials struct {
 }
 
 type NewFriend struct {
-	UserID		string 	`json:"userId" validate:"required"`
+	UserID		string 	`json:"userId"`
 	FriendEmail string	`json:"friendEmail" validate:"required"`
 	FriendID 	string	`json:"friendId"`
 	DisplayName string	`json:"displayName" validate:"required"`

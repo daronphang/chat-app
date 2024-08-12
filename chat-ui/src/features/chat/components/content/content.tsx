@@ -1,4 +1,4 @@
-import { Message } from 'features/chat/redux/chatSlice';
+import { Message } from 'features/chat/redux/chat.interface';
 import styles from './content.module.scss';
 import { useAppSelector } from 'core/redux/reduxHooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -16,13 +16,9 @@ export default function Content({ props }: ContentProps) {
       {props.content}
       <div className={styles.metadata}>
         <span className="me-2">{moment(props.createdAt).format('MM/DD/YY hh:mm')}</span>
-        {props.messageStatus === 'pending' && (
-          <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'clock']} />
-        )}
-        {props.messageStatus === 'received' && (
-          <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'check']} />
-        )}
-        {props.messageStatus === 'delivered' && (
+        {props.messageStatus === 0 && <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'clock']} />}
+        {props.messageStatus === 1 && <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'check']} />}
+        {props.messageStatus === 2 && (
           <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'check-double']} />
         )}
       </div>

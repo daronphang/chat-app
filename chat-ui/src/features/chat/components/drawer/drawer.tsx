@@ -2,19 +2,20 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import styles from './drawer.module.scss';
 import { useEffect, useState } from 'react';
-import { FriendHash } from 'features/user/redux/userSlice';
-import { Channel } from 'features/chat/redux/chatSlice';
+import { FriendHash } from 'features/user/redux/user.interface';
+import { Channel } from 'features/chat/redux/chat.interface';
 import { useAppSelector } from 'core/redux/reduxHooks';
 
 interface DrawerProps {
   title: string;
+  subtitle?: string;
   text: string;
   data: any;
   friends?: FriendHash;
   handleClickDrawer: (data: any) => void;
 }
 
-export default function Drawer({ title, text, data, friends, handleClickDrawer }: DrawerProps) {
+export default function Drawer({ title, subtitle, text, data, friends, handleClickDrawer }: DrawerProps) {
   const [isOnline, setIsOnline] = useState<boolean>(false);
   const user = useAppSelector(state => state.user);
 
@@ -40,9 +41,16 @@ export default function Drawer({ title, text, data, friends, handleClickDrawer }
 
   return (
     <div onClick={() => handleClickDrawer(data)} className={`${styles.drawer} gap-3`}>
-      <FontAwesomeIcon className={styles.iconWrapper} size="3x" icon={['fas', 'circle-user']} />
+      <div className={styles.iconWrapper}>
+        {isOnline && <FontAwesomeIcon className={styles.status} size="2xs" icon={['fas', 'circle']} />}
+        <FontAwesomeIcon size="3x" icon={['fas', 'circle-user']} />
+      </div>
       <div className={`${styles.bodyWrapper}`}>
-        <div className={styles.header}>{title}</div>
+        <div className={styles.headingWrapper}>
+          <div className={`${styles.title} truncated`}>{title}</div>
+          <div className="flex-spacer"></div>
+          {subtitle && <div className={`${styles.subtitle} me-3`}>{subtitle}</div>}
+        </div>
         <div className="truncated">{text}</div>
       </div>
     </div>

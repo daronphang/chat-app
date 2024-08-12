@@ -41,7 +41,7 @@ func (s *GRPCServer) GetLatestMessages(ctx context.Context, arg *wrappers.String
 			MessageType: msg.MessageType,
 			Content: msg.Content,
 			CreatedAt: msg.CreatedAt,
-			MessageStatus: string(msg.MessageStatus),
+			MessageStatus: int32(msg.MessageStatus),
 		})
 	}
 
@@ -71,7 +71,7 @@ func (s *GRPCServer) GetPreviousMessages(ctx context.Context, arg *pb.PrevMessag
 			MessageType: msg.MessageType,
 			Content: msg.Content,
 			CreatedAt: msg.CreatedAt,
-			MessageStatus: string(msg.MessageStatus),
+			MessageStatus: int32(msg.MessageStatus),
 		})
 	}
 

@@ -22,7 +22,7 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 
 	// Maximum message size allowed from peer.
-	maxMessageSize = 512
+	maxMessageSize = 65536
 )
 
 var (
@@ -68,7 +68,7 @@ func (d *Device) readPump() {
 			}
 			return
 		} 
-		
+
 		msg = bytes.TrimSpace(bytes.Replace(msg, newline, space, -1))
 		buffer := new(bytes.Buffer)
 		if err := json.Compact(buffer, msg); err != nil {

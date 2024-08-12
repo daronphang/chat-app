@@ -1,11 +1,9 @@
 package domain
 
-type MessageStatus string
-
 const (
-	Received 		MessageStatus 	= "received"
-	Delivered 		MessageStatus 	= "delivered"
-	Read 			MessageStatus 	= "read"
+	Received = iota + 1
+	Delivered 
+	Read
 )
 
 type Message struct {
@@ -15,7 +13,7 @@ type Message struct {
 	MessageType 		string 			`json:"messageType" validate:"required"`
 	Content 			string 			`json:"content" validate:"required"`
 	CreatedAt 			string 			`json:"createdAt"`
-	MessageStatus		MessageStatus	`json:"messageStatus"` 
+	MessageStatus		int				`json:"messageStatus"` 
 }
 
 type UserChannelRequest struct {

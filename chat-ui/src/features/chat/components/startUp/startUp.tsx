@@ -7,7 +7,8 @@ import { RpcError } from 'grpc-web';
 
 import { setChatServerWsUrl } from 'core/config/configSlice';
 import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
-import { Channel, Message, MessageStatus, initChannels } from 'features/chat/redux/chatSlice';
+import { Channel, Message } from 'features/chat/redux/chat.interface';
+import { initChannels } from 'features/chat/redux/chatSlice';
 import { chunk } from 'shared/utils/formatters';
 import styles from './startUp.module.scss';
 
@@ -95,21 +96,18 @@ export default function StartUp({ handleLoading, handleAlert }: StartUpProps) {
       payload.setValue(channelId);
       const resp = await config.api.MESSAGE_SERVICE.getLatestMessages(payload);
 
-      // Messages returned are in descending order.
-      // Need to sort by ascending i.e. latest message last.
-      const messages: Message[] = [];
-      const temp = resp.getMessagesList();
-      for (let i = temp.length - 1; i >= 0; i--) {
-        messages.push({
-          messageId: temp[i].getMessageid(),
-          channelId: temp[i].getChannelid(),
-          senderId: temp[i].getSenderid(),
-          messageType: temp[i].getMessagetype(),
-          content: temp[i].getContent(),
-          createdAt: temp[i].getCreatedat(),
-          messageStatus: temp[i].getMessagestatus() as MessageStatus,
-        });
-      }
+      // Messages are fetched in ascending order.
+      const messages: Message[] = resp.getMessagesList().map(row => {
+        return {
+          messageId: row.getMessageid(),
+          channelId: row.getChannelid(),
+          senderId: row.getSenderid(),
+          messageType: row.getMessagetype(),
+          content: row.getContent(),
+          createdAt: row.getCreatedat(),
+          messageStatus: row.getMessagestatus(),
+        };
+      });
       return new Promise(resolve => resolve(messages));
     } catch (e) {
       const err = e as RpcError;

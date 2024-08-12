@@ -76,7 +76,7 @@ func (s *GRPCServer) BroadcastMessageEvent(ctx context.Context, arg *common.Mess
 		SenderID: arg.SenderId,
 		MessageType: arg.MessageType,
 		Content: arg.Content,
-		MessageStatus: domain.MessageStatus(arg.MessageStatus),
+		MessageStatus: int(arg.MessageStatus),
 		CreatedAt: arg.CreatedAt,
 	}
 	if err := cv.ValidateStruct(p); err != nil {

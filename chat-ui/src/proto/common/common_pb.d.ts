@@ -39,8 +39,8 @@ export class Message extends jspb.Message {
   getCreatedat(): string;
   setCreatedat(value: string): Message;
 
-  getMessagestatus(): string;
-  setMessagestatus(value: string): Message;
+  getMessagestatus(): number;
+  setMessagestatus(value: number): Message;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Message.AsObject;
@@ -58,7 +58,7 @@ export namespace Message {
     messagetype: string,
     content: string,
     createdat: string,
-    messagestatus: string,
+    messagestatus: number,
   }
 }
 

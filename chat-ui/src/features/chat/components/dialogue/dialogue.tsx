@@ -7,8 +7,9 @@ import AppLogo from 'assets/images/chatLogo.png';
 import { addAppListener } from 'core/redux/listenerMiddleware';
 import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
 import { defaultWsOptions } from 'core/config/ws.constant';
-import { FriendHash } from 'features/user/redux/userSlice';
-import { Channel, Message, WebSocketEvent, addNewMessage, setCurChannelId } from 'features/chat/redux/chatSlice';
+import { FriendHash } from 'features/user/redux/user.interface';
+import { addNewMessage, setCurChannelId } from 'features/chat/redux/chatSlice';
+import { Channel, Message, WebSocketEvent } from 'features/chat/redux/chat.interface';
 import Content from '../content/content';
 import styles from './dialogue.module.scss';
 
@@ -37,6 +38,9 @@ export default function Dialogue() {
     onMessage: event => {
       const data = JSON.parse(event.data) as WebSocketEvent;
       dispatch(addNewMessage(data.data));
+    },
+    onError: error => {
+      console.error(error);
     },
   });
   const dispatch = useAppDispatch();
@@ -121,7 +125,7 @@ export default function Dialogue() {
     }
   };
 
-  const onSubmit = (data: FormInput) => {
+  const onSubmit = async (data: FormInput) => {
     const message: Message = {
       messageId: 0,
       channelId: curChannel.current?.channelId as string,
@@ -129,7 +133,7 @@ export default function Dialogue() {
       messageType: 'string',
       content: data.content,
       createdAt: new Date().toISOString(),
-      messageStatus: 'pending',
+      messageStatus: 0,
     };
     dispatch(addNewMessage(message));
     reset();
@@ -157,7 +161,7 @@ export default function Dialogue() {
       {curChannel.current && (
         <div className={styles.dialogueWrapper}>
           <div className={`${styles.header} p-3`}>
-            <FontAwesomeIcon size="3x" icon={['fas', 'circle-user']} />
+            <FontAwesomeIcon className={styles.icon} size="3x" icon={['fas', 'circle-user']} />
             <div className="ms-3">
               <div className={`${styles.heading}`}>{curChannel.current.channelName}</div>
               {isOnline && <div>Online</div>}
@@ -175,7 +179,7 @@ export default function Dialogue() {
                 wrap="hard"
                 rows={1}
                 autoComplete="on"
-                className="input-field"
+                className="base-input"
                 placeholder="Type a message"
                 onKeyDown={handleKeyDown}></textarea>
             </form>

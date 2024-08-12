@@ -4,6 +4,7 @@ import NewChat from '../newChat/newChat';
 import Toolbar, { Display } from '../toolbar/toolbar';
 import ChannelPanel from '../channelPanel/channelPanel';
 import styles from './drawerChest.module.scss';
+import NewUser from '../newUser/newUser';
 
 export default function DrawerChest() {
   const [display, setDisplay] = useState<Display>('channel');
@@ -26,6 +27,7 @@ export default function DrawerChest() {
         </div>
       )}
       {display === 'newChat' && <NewChat handleClickBack={handleClickBack} />}
+      {display === 'newUser' && <NewUser handleClickBack={handleClickBack} />}
     </div>
   );
 }

@@ -1,28 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
-type Status = 'online' | 'offline';
-export interface UserMetadata {
-  userId: string;
-  email: string;
-  displayName: String;
-  friends: FriendHash;
-}
-
-export interface Friend {
-  userId: string;
-  email: string;
-  displayName: string;
-  isOnline: boolean;
-}
-
-export interface FriendHash {
-  [key: string]: Friend;
-}
-
-export interface UserPresence {
-  userId: string;
-  status: Status;
-}
+import { UserMetadata, Friend, UserPresence } from './user.interface';
 
 const initialState: UserMetadata = {
   userId: '',

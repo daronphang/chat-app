@@ -97,7 +97,7 @@ func calculateMemUsage() (float32, error) {
 }
 
 func getServerMetadata(uuid string) (domain.ServerMetadata, error) {
-	ip, err := getOutboundIP()
+	_, err := getOutboundIP()
 	if err != nil {
 		return domain.ServerMetadata{}, err
 	}
@@ -111,8 +111,6 @@ func getServerMetadata(uuid string) (domain.ServerMetadata, error) {
 	// if err != nil {
 	// 	return domain.ServerMetadata{}, err
 	// }
-
-	fmt.Println(ip)
 
 	api := url.URL{
 		Scheme: "ws",
@@ -163,8 +161,6 @@ func (sdc *ServiceDiscoveryClient) ServiceDiscoveryHeartbeat(ctx context.Context
 				"unable to update service discovery with server metadata",
 				zap.String("trace", err.Error()),
 			)
-		} else {
-			logger.Info("service discovery heartbeat success")
 		}
 	}
 }

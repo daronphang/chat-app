@@ -2,9 +2,14 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"user-service/internal/domain"
 
 	"github.com/google/uuid"
+)
+
+var (
+	errUserNotExist = errors.New("user does not exist")
 )
 
 func (uc *UseCaseService) Signup(ctx context.Context, arg domain.NewUser) (domain.UserMetadata, error) {
@@ -46,10 +51,11 @@ func (uc *UseCaseService) AddFriend(ctx context.Context, arg domain.NewFriend) (
 	friend, err := uc.Repository.GetUser(ctx, arg.FriendEmail)
 	if err != nil {
 		return domain.Friend{}, err
+	} else if friend.UserID == "" {
+		return domain.Friend{}, errUserNotExist
 	}
 
 	arg.FriendID = friend.UserID
-
 	if err := uc.Repository.AddFriend(ctx, arg); err != nil {
 		return domain.Friend{}, err
 	}
