@@ -1,24 +1,22 @@
 import { Tooltip } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useState } from 'react';
-import { enqueueSnackbar } from 'notistack';
-import { RpcError } from 'grpc-web';
 
-import { NewChannel } from 'proto/user/user_pb';
 import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
-import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
 import { Friend } from 'features/user/redux/user.interface';
 import { Channel } from 'features/chat/redux/chat.interface';
-import { addNewChannel, setCurChannelId, updateChannel } from 'features/chat/redux/chatSlice';
+import { addChannel, setCurChannelId } from 'features/chat/redux/chatSlice';
 import Search from 'shared/components/search/search';
 import Drawer from '../drawer/drawer';
 import styles from './newChat.module.scss';
 
 interface NewChatProps {
   handleClickBack: () => void;
+  createNewChannel: (arg: Channel) => Promise<Channel | null>;
+  broadcastChannelEvent: (arg: Channel) => void;
 }
 
-export default function NewChat({ handleClickBack }: NewChatProps) {
+export default function NewChat({ handleClickBack, createNewChannel, broadcastChannelEvent }: NewChatProps) {
   const [drawers, setDrawers] = useState<JSX.Element[]>([]);
   const user = useAppSelector(state => state.user);
   const chat = useAppSelector(state => state.chat);
@@ -31,73 +29,46 @@ export default function NewChat({ handleClickBack }: NewChatProps) {
   }, []);
 
   const handleClickDrawer = async (v: Friend) => {
+    // If channel exists, to route to that channel.
+    // Else, create a new channel.
     let key = [v.userId, user.userId].sort().join('');
     const idx = chat.channels.findIndex(row => row.channelId === key);
 
     if (idx === -1) {
       const newChannel: Channel = {
         channelId: key,
-        channelName: v.displayName,
-        createdAt: new Date().toISOString(),
+        channelName: user.displayName, // For the benefit of the recipient.
         messages: [],
         userIds: [v.userId, user.userId],
         isDraft: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
       const resp = await createNewChannel(newChannel);
       if (!resp) return;
+
+      await broadcastChannelEvent(resp);
+
+      resp.channelName = v.displayName;
+      dispatch(addChannel(resp));
     } else {
       const channel = chat.channels[idx];
       key = channel.channelId;
 
+      // For existing 1-on-1 chats with no messages, to set isDraft to true
+      // and move channel to the front.
       if (channel.messages.length === 0 && channel.userIds.length == 2) {
         const updatedChannel: Channel = {
-          channelId: channel.channelId,
-          channelName: channel.channelName,
+          ...channel,
           createdAt: new Date().toISOString(),
-          messages: channel.messages,
-          userIds: channel.userIds,
+          updatedAt: new Date().toISOString(),
           isDraft: true,
         };
-        dispatch(updateChannel(updatedChannel));
+        dispatch(addChannel(updatedChannel));
       }
     }
     dispatch(setCurChannelId(key));
     handleClickBack();
-  };
-
-  const createNewChannel = async (newChannel: Channel): Promise<boolean> => {
-    try {
-      const payload = new NewChannel();
-      payload.setChannelid(newChannel.channelId);
-      payload.setChannelname(user.displayName); // For benefit of recipient.
-      payload.setUseridsList(newChannel.userIds);
-      const resp = await config.api.USER_SERVICE.createChannel(payload);
-
-      // Update required metadata.
-      newChannel.channelId = resp.getChannelid();
-      newChannel.createdAt = resp.getCreatedat();
-      dispatch(addNewChannel(newChannel));
-      enqueueSnackbar('New chat created', {
-        ...defaultSnackbarOptions,
-        variant: 'success',
-      });
-      return new Promise(resolve => resolve(true));
-    } catch (e) {
-      const err = e as RpcError;
-      if (err.code === 14) {
-        enqueueSnackbar(config.apiError.NETWORK_ERROR, {
-          ...defaultSnackbarOptions,
-          variant: 'error',
-        });
-      } else {
-        enqueueSnackbar('Failed to create new chat', {
-          ...defaultSnackbarOptions,
-          variant: 'error',
-        });
-        console.error(err.message);
-      }
-      return new Promise(resolve => resolve(false));
-    }
   };
 
   const displayFriends = (friends: Friend[]) => {

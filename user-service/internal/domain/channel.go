@@ -1,9 +1,10 @@
 package domain
 
 type Channel struct {
-	ChannelID 	string	`json:"channelId"` 
-	ChannelName string	`json:"channelName"`
-	CreatedAt 	string 	`json:"createdAt"`
+	ChannelID 	string		`json:"channelId"` 
+	ChannelName string		`json:"channelName"`
+	CreatedAt 	string 		`json:"createdAt"`
+	UserIDs 	[]string	`json:"userIds"`
 }
 
 type NewChannel struct {

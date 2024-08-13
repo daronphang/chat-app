@@ -7,6 +7,7 @@ import (
 	"message-service/internal/domain"
 	"protobuf/proto/common"
 	"slices"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -72,6 +73,7 @@ func (uc *UseCaseService) SaveMessageAndNotifyRecipients(ctx context.Context, ar
 
 	event := domain.BaseEvent{
 		Event: domain.EventMessage,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
 		Data: arg,
 	}
 	if err := uc.EventBroker.PublishEventToUserQueue(ctx, arg.SenderID, event); err != nil {

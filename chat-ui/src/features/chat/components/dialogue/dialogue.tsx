@@ -1,15 +1,14 @@
 import { KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useForm } from 'react-hook-form';
-import useWebSocket from 'react-use-websocket';
+import { SendJsonMessage } from 'react-use-websocket/dist/lib/types';
 
 import AppLogo from 'assets/images/chatLogo.png';
 import { addAppListener } from 'core/redux/listenerMiddleware';
 import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
-import { defaultWsOptions } from 'core/config/ws.constant';
 import { FriendHash } from 'features/user/redux/user.interface';
-import { addNewMessage, setCurChannelId } from 'features/chat/redux/chatSlice';
-import { Channel, Message, WebSocketEvent } from 'features/chat/redux/chat.interface';
+import { addMessage, setCurChannelId } from 'features/chat/redux/chatSlice';
+import { Channel, Message } from 'features/chat/redux/chat.interface';
 import Content from '../content/content';
 import styles from './dialogue.module.scss';
 
@@ -17,32 +16,16 @@ interface FormInput {
   content: string;
 }
 
-export default function Dialogue() {
+interface DialogueProps {
+  sendJsonMessage: SendJsonMessage;
+}
+
+export default function Dialogue({ sendJsonMessage }: DialogueProps) {
   const [content, setContent] = useState<JSX.Element[]>([]);
   const [isOnline, setIsOnline] = useState<boolean>(false);
   const curChannel = useRef<Channel | null>(null);
   const dialogueEndRef = useRef<null | HTMLDivElement>(null);
   const user = useAppSelector(state => state.user);
-  const wsUrl = useAppSelector(state => {
-    return `${state.config.chatServerWsUrl}?client=${user.userId}&device=${state.config.deviceId}`;
-  });
-  const { sendJsonMessage } = useWebSocket(wsUrl, {
-    ...defaultWsOptions,
-    filter: event => {
-      const temp = JSON.parse(event.data) as WebSocketEvent;
-      if (temp.event === 'event/message') {
-        return true;
-      }
-      return false;
-    },
-    onMessage: event => {
-      const data = JSON.parse(event.data) as WebSocketEvent;
-      dispatch(addNewMessage(data.data));
-    },
-    onError: error => {
-      console.error(error);
-    },
-  });
   const dispatch = useAppDispatch();
   const {
     register,
@@ -76,7 +59,7 @@ export default function Dialogue() {
     );
     dispatch(
       addAppListener({
-        actionCreator: addNewMessage,
+        actionCreator: addMessage,
         effect: (action, listenerApi) => {
           const curChannelId = listenerApi.getState().chat.curChannelId;
           if (curChannelId === curChannel.current?.channelId) {
@@ -134,8 +117,9 @@ export default function Dialogue() {
       content: data.content,
       createdAt: new Date().toISOString(),
       messageStatus: 0,
+      updatedAt: new Date().toISOString(),
     };
-    dispatch(addNewMessage(message));
+    dispatch(addMessage(message));
     reset();
     sendJsonMessage(message);
   };

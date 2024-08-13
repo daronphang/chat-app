@@ -1,24 +1,49 @@
 import { useEffect, useState } from 'react';
 import { Alert } from '@mui/material';
+import { RpcError } from 'grpc-web';
+import useWebSocket from 'react-use-websocket';
 
+import { UserIds, UserSession } from 'proto/notification/notification_pb';
+import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
+import { defaultWsOptions } from 'core/config/ws.constant';
+import { updateOnlineFriends } from 'features/user/redux/userSlice';
+import { Channel, Message, WebSocketEvent } from 'features/chat/redux/chat.interface';
+import { addChannel, addMessage } from 'features/chat/redux/chatSlice';
 import Dialogue from '../dialogue/dialogue';
 import Drawer from '../drawerChest/drawerChest';
 import Navbar from '../navbar/navbar';
 import styles from './chat.module.scss';
 import StartUp from '../startUp/startUp';
-import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
-import { UserIds, UserSession } from 'proto/notification/notification_pb';
-import { RpcError } from 'grpc-web';
-import { enqueueSnackbar } from 'notistack';
-import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
-import { updateOnlineFriends } from 'features/user/redux/userSlice';
 
 export default function Chat() {
   const [loading, setLoading] = useState<boolean>(true);
   const [alert, setAlert] = useState<string>('');
   const config = useAppSelector(state => state.config);
   const user = useAppSelector(state => state.user);
+  const chat = useAppSelector(state => state.chat);
   const dispatch = useAppDispatch();
+  const { sendJsonMessage } = useWebSocket(config.chatServerWsUrl, {
+    ...defaultWsOptions,
+    filter: event => {
+      const data = JSON.parse(event.data) as WebSocketEvent;
+      if (['event/message', 'event/channel/new'].includes(data.event)) {
+        return true;
+      }
+      return false;
+    },
+    onMessage: event => {
+      const data = JSON.parse(event.data) as WebSocketEvent;
+
+      if (data.event === 'event/message') {
+        handleMessageEvent(data.data, data.timestamp);
+      } else {
+        handleChannelEvent(data.data, data.timestamp);
+      }
+    },
+    onError: error => {
+      console.error(error);
+    },
+  });
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -42,24 +67,39 @@ export default function Chat() {
     setAlert(v);
   };
 
-  const sendClientHeartbeat = async () => {
-    if (config.chatServerWsUrl && user.userId) {
-      try {
-        const payload = new UserSession();
-        payload.setUserid(user.userId);
-        payload.setServer(config.chatServerWsUrl);
-        await config.api.NOTIFICATION_SERVICE.clientHeartbeat(payload);
-      } catch (e) {
-        const err = e as RpcError;
-        if (err.code === 14) {
-          enqueueSnackbar(config.apiError.NETWORK_ERROR, {
-            ...defaultSnackbarOptions,
-            variant: 'error',
-          });
-        } else {
-          console.error('failed to send client heartbeat', err.message);
-        }
+  const handleMessageEvent = (msg: Message, updatedAt: string) => {
+    msg.updatedAt = updatedAt;
+
+    const idx = chat.channels.findIndex(row => row.channelId === msg.channelId);
+    if (idx === -1) {
+      // Get channel details and add.
+    }
+    dispatch(addMessage(msg));
+  };
+
+  const handleChannelEvent = (channel: Channel, updatedAt: string) => {
+    channel.updatedAt = updatedAt;
+
+    // For 1-on-1 chats, check if the channelName can be replaced by friend's display name.
+    if (channel.userIds.length === 2) {
+      const friendId = channel.userIds.filter(row => row !== user.userId)[0];
+      if (friendId in user.friends) {
+        const friend = user.friends[friendId];
+        channel.channelName = friend.displayName;
       }
+    }
+    dispatch(addChannel(channel));
+  };
+
+  const sendClientHeartbeat = async () => {
+    try {
+      const payload = new UserSession();
+      payload.setUserid(user.userId);
+      payload.setServer(config.chatServerWsUrl);
+      await config.api.NOTIFICATION_SERVICE.clientHeartbeat(payload);
+    } catch (e) {
+      const err = e as RpcError;
+      console.error('failed to send client heartbeat', err.message);
     }
   };
 
@@ -72,14 +112,7 @@ export default function Chat() {
       dispatch(updateOnlineFriends(resp.getUseridsList()));
     } catch (e) {
       const err = e as RpcError;
-      if (err.code === 14) {
-        enqueueSnackbar(config.apiError.NETWORK_ERROR, {
-          ...defaultSnackbarOptions,
-          variant: 'error',
-        });
-      } else {
-        console.error('failed to fetch online status of friends', err.message);
-      }
+      console.error('failed to fetch online status of friends', err.message);
     }
   };
 
@@ -91,7 +124,7 @@ export default function Chat() {
         <div className={styles.chat}>
           <Navbar />
           <Drawer />
-          <Dialogue />
+          <Dialogue sendJsonMessage={sendJsonMessage} />
         </div>
       )}
     </>

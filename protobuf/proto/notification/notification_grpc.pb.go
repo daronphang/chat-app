@@ -28,6 +28,7 @@ type NotificationClient interface {
 	ClientHeartbeat(ctx context.Context, in *UserSession, opts ...grpc.CallOption) (*common.MessageResponse, error)
 	BroadcastUserPresenceEvent(ctx context.Context, in *UserPresence, opts ...grpc.CallOption) (*common.MessageResponse, error)
 	BroadcastMessageEvent(ctx context.Context, in *common.Message, opts ...grpc.CallOption) (*common.MessageResponse, error)
+	BroadcastChannelEvent(ctx context.Context, in *common.Channel, opts ...grpc.CallOption) (*common.MessageResponse, error)
 	GetOnlineUsers(ctx context.Context, in *UserIds, opts ...grpc.CallOption) (*UserIds, error)
 }
 
@@ -75,6 +76,15 @@ func (c *notificationClient) BroadcastMessageEvent(ctx context.Context, in *comm
 	return out, nil
 }
 
+func (c *notificationClient) BroadcastChannelEvent(ctx context.Context, in *common.Channel, opts ...grpc.CallOption) (*common.MessageResponse, error) {
+	out := new(common.MessageResponse)
+	err := c.cc.Invoke(ctx, "/notification.Notification/broadcastChannelEvent", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *notificationClient) GetOnlineUsers(ctx context.Context, in *UserIds, opts ...grpc.CallOption) (*UserIds, error) {
 	out := new(UserIds)
 	err := c.cc.Invoke(ctx, "/notification.Notification/getOnlineUsers", in, out, opts...)
@@ -92,6 +102,7 @@ type NotificationServer interface {
 	ClientHeartbeat(context.Context, *UserSession) (*common.MessageResponse, error)
 	BroadcastUserPresenceEvent(context.Context, *UserPresence) (*common.MessageResponse, error)
 	BroadcastMessageEvent(context.Context, *common.Message) (*common.MessageResponse, error)
+	BroadcastChannelEvent(context.Context, *common.Channel) (*common.MessageResponse, error)
 	GetOnlineUsers(context.Context, *UserIds) (*UserIds, error)
 	mustEmbedUnimplementedNotificationServer()
 }
@@ -111,6 +122,9 @@ func (UnimplementedNotificationServer) BroadcastUserPresenceEvent(context.Contex
 }
 func (UnimplementedNotificationServer) BroadcastMessageEvent(context.Context, *common.Message) (*common.MessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BroadcastMessageEvent not implemented")
+}
+func (UnimplementedNotificationServer) BroadcastChannelEvent(context.Context, *common.Channel) (*common.MessageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BroadcastChannelEvent not implemented")
 }
 func (UnimplementedNotificationServer) GetOnlineUsers(context.Context, *UserIds) (*UserIds, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOnlineUsers not implemented")
@@ -200,6 +214,24 @@ func _Notification_BroadcastMessageEvent_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Notification_BroadcastChannelEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(common.Channel)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NotificationServer).BroadcastChannelEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/notification.Notification/broadcastChannelEvent",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NotificationServer).BroadcastChannelEvent(ctx, req.(*common.Channel))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Notification_GetOnlineUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UserIds)
 	if err := dec(in); err != nil {
@@ -240,6 +272,10 @@ var Notification_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "broadcastMessageEvent",
 			Handler:    _Notification_BroadcastMessageEvent_Handler,
+		},
+		{
+			MethodName: "broadcastChannelEvent",
+			Handler:    _Notification_BroadcastChannelEvent_Handler,
 		},
 		{
 			MethodName: "getOnlineUsers",

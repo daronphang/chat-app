@@ -390,28 +390,28 @@ export class UserClient {
     '/user.User/createChannel',
     grpcWeb.MethodType.UNARY,
     proto_user_user_pb.NewChannel,
-    proto_user_user_pb.Channel,
+    proto_common_common_pb.Channel,
     (request: proto_user_user_pb.NewChannel) => {
       return request.serializeBinary();
     },
-    proto_user_user_pb.Channel.deserializeBinary
+    proto_common_common_pb.Channel.deserializeBinary
   );
 
   createChannel(
     request: proto_user_user_pb.NewChannel,
-    metadata?: grpcWeb.Metadata | null): Promise<proto_user_user_pb.Channel>;
+    metadata?: grpcWeb.Metadata | null): Promise<proto_common_common_pb.Channel>;
 
   createChannel(
     request: proto_user_user_pb.NewChannel,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: proto_user_user_pb.Channel) => void): grpcWeb.ClientReadableStream<proto_user_user_pb.Channel>;
+               response: proto_common_common_pb.Channel) => void): grpcWeb.ClientReadableStream<proto_common_common_pb.Channel>;
 
   createChannel(
     request: proto_user_user_pb.NewChannel,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: proto_user_user_pb.Channel) => void) {
+               response: proto_common_common_pb.Channel) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
@@ -556,6 +556,49 @@ export class UserClient {
     request,
     metadata || {},
     this.methodDescriptorgetUsersAssociatedToTargetUser);
+  }
+
+  methodDescriptorgetUsersContactsMetadata = new grpcWeb.MethodDescriptor(
+    '/user.User/getUsersContactsMetadata',
+    grpcWeb.MethodType.UNARY,
+    proto_user_user_pb.Users,
+    proto_user_user_pb.UserContacts,
+    (request: proto_user_user_pb.Users) => {
+      return request.serializeBinary();
+    },
+    proto_user_user_pb.UserContacts.deserializeBinary
+  );
+
+  getUsersContactsMetadata(
+    request: proto_user_user_pb.Users,
+    metadata?: grpcWeb.Metadata | null): Promise<proto_user_user_pb.UserContacts>;
+
+  getUsersContactsMetadata(
+    request: proto_user_user_pb.Users,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: proto_user_user_pb.UserContacts) => void): grpcWeb.ClientReadableStream<proto_user_user_pb.UserContacts>;
+
+  getUsersContactsMetadata(
+    request: proto_user_user_pb.Users,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: proto_user_user_pb.UserContacts) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/user.User/getUsersContactsMetadata',
+        request,
+        metadata || {},
+        this.methodDescriptorgetUsersContactsMetadata,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/user.User/getUsersContactsMetadata',
+    request,
+    metadata || {},
+    this.methodDescriptorgetUsersContactsMetadata);
   }
 
 }

@@ -213,6 +213,49 @@ export class NotificationClient {
     this.methodDescriptorbroadcastMessageEvent);
   }
 
+  methodDescriptorbroadcastChannelEvent = new grpcWeb.MethodDescriptor(
+    '/notification.Notification/broadcastChannelEvent',
+    grpcWeb.MethodType.UNARY,
+    proto_common_common_pb.Channel,
+    proto_common_common_pb.MessageResponse,
+    (request: proto_common_common_pb.Channel) => {
+      return request.serializeBinary();
+    },
+    proto_common_common_pb.MessageResponse.deserializeBinary
+  );
+
+  broadcastChannelEvent(
+    request: proto_common_common_pb.Channel,
+    metadata?: grpcWeb.Metadata | null): Promise<proto_common_common_pb.MessageResponse>;
+
+  broadcastChannelEvent(
+    request: proto_common_common_pb.Channel,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: proto_common_common_pb.MessageResponse) => void): grpcWeb.ClientReadableStream<proto_common_common_pb.MessageResponse>;
+
+  broadcastChannelEvent(
+    request: proto_common_common_pb.Channel,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: proto_common_common_pb.MessageResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/notification.Notification/broadcastChannelEvent',
+        request,
+        metadata || {},
+        this.methodDescriptorbroadcastChannelEvent,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/notification.Notification/broadcastChannelEvent',
+    request,
+    metadata || {},
+    this.methodDescriptorbroadcastChannelEvent);
+  }
+
   methodDescriptorgetOnlineUsers = new grpcWeb.MethodDescriptor(
     '/notification.Notification/getOnlineUsers',
     grpcWeb.MethodType.UNARY,

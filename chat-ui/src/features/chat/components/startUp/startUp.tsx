@@ -9,7 +9,7 @@ import { setChatServerWsUrl } from 'core/config/configSlice';
 import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
 import { Channel, Message } from 'features/chat/redux/chat.interface';
 import { initChannels } from 'features/chat/redux/chatSlice';
-import { chunk } from 'shared/utils/formatters';
+import { chunk } from 'core/utils/formatters';
 import styles from './startUp.module.scss';
 
 interface StartUpProps {
@@ -28,7 +28,15 @@ export default function StartUp({ handleLoading, handleAlert }: StartUpProps) {
       const promise = await Promise.all([fetchChannelsAssociatedToUser(user.userId), fetchChatServerWsUrl()]);
 
       const channels = promise[0];
-      if (channels.length === 0) return;
+      const wsUrl = promise[1];
+      if (channels.length === 0) {
+        return;
+      } else if (!wsUrl) {
+        handleAlert('Failed to connect to chat server');
+        return;
+      }
+
+      dispatch(setChatServerWsUrl(wsUrl));
       await loadMessagesInChannels(channels);
     }
     handleStartUp();
@@ -42,7 +50,7 @@ export default function StartUp({ handleLoading, handleAlert }: StartUpProps) {
     const chunks: Channel[][] = chunk(channels, 5);
 
     for (let chunk of chunks) {
-      const promise = await Promise.all(chunk.map(row => fetchLatestMessagesForChannel(row.channelId)));
+      const promise = await Promise.all(chunk.map(row => fetchLatestChannelMessages(row.channelId)));
       // Update messages for each channel.
       for (let i = 0; i < chunk.length; i++) {
         chunk[i].messages = promise[i];
@@ -57,40 +65,28 @@ export default function StartUp({ handleLoading, handleAlert }: StartUpProps) {
       payload.setValue(userId);
       const resp = await config.api.USER_SERVICE.getChannelsAssociatedToUser(payload);
       const channels: Channel[] = resp.getChannelsList().map(row => {
-        // Warning: implementation detail required to extract friend id.
-        const userIds: string[] = [user.userId];
-        if (row.getChannelid().includes(user.userId)) {
-          userIds.push(row.getChannelid().replace(user.userId, ''));
-        }
-
         return {
           channelId: row.getChannelid(),
           channelName: row.getChannelname(),
           createdAt: row.getCreatedat(),
           messages: [],
-          userIds,
+          userIds: row.getUseridsList(),
+          updatedAt: new Date().toISOString(),
         };
       });
       return new Promise(resolve => resolve(channels));
     } catch (e) {
       const err = e as RpcError;
-      if (err.code === 14) {
-        enqueueSnackbar(config.apiError.NETWORK_ERROR, {
-          ...defaultSnackbarOptions,
-          variant: 'error',
-        });
-      } else {
-        console.error(err.message);
-        enqueueSnackbar('Unable to retrieve user chats, please refresh the page', {
-          ...defaultSnackbarOptions,
-          variant: 'error',
-        });
-      }
+      const errMsg = err.code === 14 ? config.apiError.NETWORK_ERROR : 'Failed to retrieve user chats';
+      enqueueSnackbar(errMsg, {
+        ...defaultSnackbarOptions,
+        variant: 'error',
+      });
       return new Promise(resolve => resolve([]));
     }
   };
 
-  const fetchLatestMessagesForChannel = async (channelId: string): Promise<Message[]> => {
+  const fetchLatestChannelMessages = async (channelId: string): Promise<Message[]> => {
     try {
       const payload = new wrappers.StringValue();
       payload.setValue(channelId);
@@ -106,47 +102,35 @@ export default function StartUp({ handleLoading, handleAlert }: StartUpProps) {
           content: row.getContent(),
           createdAt: row.getCreatedat(),
           messageStatus: row.getMessagestatus(),
+          updatedAt: new Date().toISOString(),
         };
       });
       return new Promise(resolve => resolve(messages));
     } catch (e) {
       const err = e as RpcError;
-      if (err.code === 14) {
-        enqueueSnackbar(config.apiError.NETWORK_ERROR, {
-          ...defaultSnackbarOptions,
-          variant: 'error',
-        });
-      } else {
-        console.error(err.message);
-        enqueueSnackbar('Some messages from chats could not be retrieved, please refresh the page', {
-          ...defaultSnackbarOptions,
-          variant: 'error',
-        });
-      }
+      const errMsg = err.code === 14 ? config.apiError.NETWORK_ERROR : 'Failed to retrieve messages from chat';
+      enqueueSnackbar(errMsg, {
+        ...defaultSnackbarOptions,
+        variant: 'error',
+      });
       return new Promise(resolve => resolve([]));
     }
   };
 
-  const fetchChatServerWsUrl = async () => {
+  const fetchChatServerWsUrl = async (): Promise<string | null> => {
     try {
       const payload = new empty.Empty();
       const resp = await config.api.USER_SERVICE.getBestServer(payload);
-      dispatch(setChatServerWsUrl(resp.getMessage()));
+      const wsUrl = `${resp.getMessage()}?client=${user.userId}&device=${config.deviceId}`;
+      return new Promise(resolve => resolve(wsUrl));
     } catch (e) {
       const err = e as RpcError;
-      if (err.code === 14) {
-        enqueueSnackbar(config.apiError.NETWORK_ERROR, {
-          ...defaultSnackbarOptions,
-          variant: 'error',
-        });
-      } else {
-        console.error(err.message);
-        enqueueSnackbar('Could not connect to chat server, please refresh the page', {
-          ...defaultSnackbarOptions,
-          variant: 'error',
-        });
-        handleAlert('Could not connect to chat server, please refresh the page');
-      }
+      const errMsg = err.code === 14 ? config.apiError.NETWORK_ERROR : 'Failed to connect to chat server';
+      enqueueSnackbar(errMsg, {
+        ...defaultSnackbarOptions,
+        variant: 'error',
+      });
+      return new Promise(resolve => resolve(null));
     }
   };
 

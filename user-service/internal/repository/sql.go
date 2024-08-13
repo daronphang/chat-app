@@ -2,11 +2,13 @@ package repository
 
 import (
 	"context"
+	"strings"
 	"time"
 	"user-service/internal/domain"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/lib/pq"
 )
 
 func (q *Querier) CreateUser(ctx context.Context, arg domain.NewUser) (domain.UserMetadata, error) {
@@ -211,6 +213,13 @@ func (q *Querier) GetChannelsAssociatedToUser(ctx context.Context, arg string) (
 			return nil, err
 		}
 		i.CreatedAt = ts.Time.String()
+
+		if strings.Contains(i.ChannelID, arg) {
+			i.UserIDs = []string{arg, strings.Replace(i.ChannelID, arg, "", 1)}
+		} else {
+			i.UserIDs = []string{arg}
+		}
+
 		items = append(items, i)
 	}
 	return items, err
@@ -234,6 +243,33 @@ func (q *Querier) GetUsersAssociatedToTargetUser(ctx context.Context, arg string
 	for rows.Next() {
 		var i string
 		if err := rows.Scan(&i); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	return items, err
+}
+
+func (q *Querier) GetUsersContactsMetadata(ctx context.Context, arg []string) ([]domain.UserContact, error) {
+	stmt := `
+	SELECT user_id, email
+	FROM user_metadata
+	WHERE user_id = ANY($1::varchar[]);
+	`
+
+	rows, err := q.db.Query(ctx, stmt, pq.Array(arg))
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	var items []domain.UserContact
+	for rows.Next() {
+		var i domain.UserContact
+		if err := rows.Scan(
+			&i.UserID,
+			&i.Email,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

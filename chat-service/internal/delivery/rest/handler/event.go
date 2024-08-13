@@ -3,6 +3,7 @@ package handler
 import (
 	"chat-service/internal/domain"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -18,6 +19,7 @@ func (h *RestHandler) HandleUserPresenceEvent(c echo.Context) error {
 
 	event := domain.BaseEvent{
 		Event: domain.EventUserPresence,
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
 		Data: *p,
 	}
 

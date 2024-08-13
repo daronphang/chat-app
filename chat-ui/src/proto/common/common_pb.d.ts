@@ -62,3 +62,35 @@ export namespace Message {
   }
 }
 
+export class Channel extends jspb.Message {
+  getChannelid(): string;
+  setChannelid(value: string): Channel;
+
+  getChannelname(): string;
+  setChannelname(value: string): Channel;
+
+  getCreatedat(): string;
+  setCreatedat(value: string): Channel;
+
+  getUseridsList(): Array<string>;
+  setUseridsList(value: Array<string>): Channel;
+  clearUseridsList(): Channel;
+  addUserids(value: string, index?: number): Channel;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): Channel.AsObject;
+  static toObject(includeInstance: boolean, msg: Channel): Channel.AsObject;
+  static serializeBinaryToWriter(message: Channel, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): Channel;
+  static deserializeBinaryFromReader(message: Channel, reader: jspb.BinaryReader): Channel;
+}
+
+export namespace Channel {
+  export type AsObject = {
+    channelid: string,
+    channelname: string,
+    createdat: string,
+    useridsList: Array<string>,
+  }
+}
+

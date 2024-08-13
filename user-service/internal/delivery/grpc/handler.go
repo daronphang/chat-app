@@ -145,7 +145,7 @@ func (s *GRPCServer) GetFriends(ctx context.Context, arg *wrappers.StringValue) 
 	return &pb.Friends{Friends: friends}, nil
 }
 
-func (s *GRPCServer) CreateChannel(ctx context.Context, arg *pb.NewChannel) (*pb.Channel, error) {	
+func (s *GRPCServer) CreateChannel(ctx context.Context, arg *pb.NewChannel) (*common.Channel, error) {	
 	p := domain.NewChannel{
 		ChannelName: arg.ChannelName,
 		UserIDs: arg.UserIds,
@@ -159,7 +159,7 @@ func (s *GRPCServer) CreateChannel(ctx context.Context, arg *pb.NewChannel) (*pb
 	if err != nil {
 		return nil, status.Error(10, err.Error())
 	}
-	return &pb.Channel{
+	return &common.Channel{
 		ChannelId: rv.ChannelID,
 		ChannelName: rv.ChannelName,
 	}, nil
@@ -196,12 +196,13 @@ func (s *GRPCServer) GetChannelsAssociatedToUser(ctx context.Context, arg *wrapp
 		return nil, status.Error(10, err.Error())
 	}
 
-	var channels []*pb.Channel
+	var channels []*common.Channel
 	for _, x := range rv {
-		channels = append(channels, &pb.Channel{
+		channels = append(channels, &common.Channel{
 			ChannelId: x.ChannelID,
 			ChannelName: x.ChannelName,
 			CreatedAt: x.CreatedAt,
+			UserIds: x.UserIDs,
 		})
 	}
 
@@ -218,4 +219,21 @@ func (s *GRPCServer) GetUsersAssociatedToTargetUser(ctx context.Context, arg *wr
 		return nil, status.Error(10, err.Error())
 	}
 	return &pb.Users{UserIds: rv}, nil
+}
+
+func (s *GRPCServer) GetUsersContactsMetadata(ctx context.Context, arg *pb.Users) (*pb.UserContacts, error) {
+	rv, err := s.uc.GetUsersContactsMetadata(ctx, arg.UserIds)
+	if err != nil {
+		return nil, status.Error(10, err.Error())
+	}
+
+	var userContacts []*pb.UserContact
+	for _, x := range rv {
+		userContacts = append(userContacts, &pb.UserContact{
+			UserId: x.UserID,
+			Email: x.Email,
+		})
+	}
+
+	return &pb.UserContacts{UserContacts: userContacts}, nil
 }

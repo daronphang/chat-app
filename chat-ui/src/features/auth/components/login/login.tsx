@@ -4,12 +4,16 @@ import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
 import { RpcError } from 'grpc-web';
 import { useSnackbar } from 'notistack';
 
-import { UserCredentials } from 'proto/user/user_pb';
+import userPb from 'proto/user/user_pb';
 import { setUser } from 'features/user/redux/userSlice';
-import { Friend, FriendHash } from 'features/user/redux/user.interface';
+import { Friend, FriendHash, UserMetadata } from 'features/user/redux/user.interface';
 import { RoutePath } from 'core/config/route.constant';
 import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
 import styles from './login.module.scss';
+
+interface FormInput {
+  email: string;
+}
 
 export default function Login() {
   const [loading, isLoading] = useState<boolean>(false);
@@ -19,48 +23,48 @@ export default function Login() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    login();
+    onSubmit({ email: 'daronphang@gmail.com' });
   }, []);
 
-  const login = async () => {
-    try {
-      const payload = new UserCredentials();
-      payload.setEmail('daronphang@gmail.com');
-      const resp = await config.api.USER_SERVICE.login(payload);
-      const friends: FriendHash = {};
-      resp.getFriendsList().forEach(row => {
-        const friend: Friend = {
-          userId: row.getUserid(),
-          email: row.getEmail(),
-          displayName: row.getDisplayname(),
-          isOnline: false,
-        };
-        friends[friend.userId] = friend;
-      });
+  const onSubmit = async (data: FormInput) => {
+    const resp = await login(data);
+    if (!resp) return;
 
-      dispatch(
-        setUser({
-          userId: resp.getUserid(),
-          email: resp.getEmail(),
-          displayName: resp.getDisplayname(),
-          friends: friends,
-        })
-      );
-      navigate(RoutePath.CHAT);
+    const user: UserMetadata = {
+      userId: resp.getUserid(),
+      email: resp.getEmail(),
+      displayName: resp.getDisplayname(),
+      friends: {},
+    };
+
+    resp.getFriendsList().forEach(row => {
+      const friend: Friend = {
+        userId: row.getUserid(),
+        email: row.getEmail(),
+        displayName: row.getDisplayname(),
+        isOnline: false,
+      };
+      user.friends[friend.userId] = friend;
+    });
+
+    dispatch(setUser(user));
+    navigate(RoutePath.CHAT);
+  };
+
+  const login = async (data: FormInput): Promise<userPb.UserMetadata | null> => {
+    try {
+      const payload = new userPb.UserCredentials();
+      payload.setEmail(data.email);
+      const resp = await config.api.USER_SERVICE.login(payload);
+      return new Promise(resolve => resolve(resp));
     } catch (e) {
       const err = e as RpcError;
-
-      if (err.code === 14) {
-        enqueueSnackbar(config.apiError.NETWORK_ERROR, {
-          ...defaultSnackbarOptions,
-          variant: 'error',
-        });
-      } else {
-        enqueueSnackbar('Invalid credentials', {
-          ...defaultSnackbarOptions,
-          variant: 'error',
-        });
-      }
+      const errMsg = err.code === 14 ? config.apiError.NETWORK_ERROR : 'Invalid credentials';
+      enqueueSnackbar(errMsg, {
+        ...defaultSnackbarOptions,
+        variant: 'error',
+      });
+      return new Promise(resolve => resolve(null));
     }
   };
 

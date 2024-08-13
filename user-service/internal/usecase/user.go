@@ -73,3 +73,11 @@ func (uc *UseCaseService) GetFriends(ctx context.Context, arg string) ([]domain.
 	}
 	return rv, nil
 }
+
+func (uc *UseCaseService) GetUsersContactsMetadata(ctx context.Context, arg []string) ([]domain.UserContact, error) {
+	rv, err := uc.Repository.GetUsersContactsMetadata(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	return rv, nil
+}

@@ -3,24 +3,20 @@ package usecase
 import (
 	"context"
 	"notification-service/internal/domain"
+	pb "protobuf/proto/user"
 	"sync"
 	"time"
-
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-
-func (uc * UseCaseService) BroadcastMessageEvent(ctx context.Context, arg domain.Message) error {
-	// Get all users associated to channel.
-	resp, err := uc.UserClient.GetUsersAssociatedToChannel(ctx, &wrapperspb.StringValue{Value: arg.ChannelID})
+func (uc * UseCaseService) BroadcastChannelEvent(ctx context.Context, arg domain.Channel) error {
+	// Get contacts of all users in the channel.
+	resp, err := uc.UserClient.GetUsersContactsMetadata(ctx, &pb.Users{UserIds: arg.UserIDs})
 	if err != nil {
 		return err
 	}
 
-	// Instead of sending messages directly to the sender's devices, to push messages 
-	// as events into the recipients' queues. This ensures events will never be lost.
 	event := domain.BaseEvent{
-		Event: domain.EventMessage,
+		Event: domain.EventChannel,
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
 		Data: arg,
 	}

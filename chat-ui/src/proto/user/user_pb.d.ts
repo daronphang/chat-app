@@ -243,37 +243,11 @@ export namespace Users {
   }
 }
 
-export class Channel extends jspb.Message {
-  getChannelid(): string;
-  setChannelid(value: string): Channel;
-
-  getChannelname(): string;
-  setChannelname(value: string): Channel;
-
-  getCreatedat(): string;
-  setCreatedat(value: string): Channel;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): Channel.AsObject;
-  static toObject(includeInstance: boolean, msg: Channel): Channel.AsObject;
-  static serializeBinaryToWriter(message: Channel, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): Channel;
-  static deserializeBinaryFromReader(message: Channel, reader: jspb.BinaryReader): Channel;
-}
-
-export namespace Channel {
-  export type AsObject = {
-    channelid: string,
-    channelname: string,
-    createdat: string,
-  }
-}
-
 export class Channels extends jspb.Message {
-  getChannelsList(): Array<Channel>;
-  setChannelsList(value: Array<Channel>): Channels;
+  getChannelsList(): Array<proto_common_common_pb.Channel>;
+  setChannelsList(value: Array<proto_common_common_pb.Channel>): Channels;
   clearChannelsList(): Channels;
-  addChannels(value?: Channel, index?: number): Channel;
+  addChannels(value?: proto_common_common_pb.Channel, index?: number): proto_common_common_pb.Channel;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Channels.AsObject;
@@ -285,7 +259,7 @@ export class Channels extends jspb.Message {
 
 export namespace Channels {
   export type AsObject = {
-    channelsList: Array<Channel.AsObject>,
+    channelsList: Array<proto_common_common_pb.Channel.AsObject>,
   }
 }
 

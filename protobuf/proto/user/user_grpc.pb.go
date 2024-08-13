@@ -33,10 +33,11 @@ type UserClient interface {
 	Logout(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*common.MessageResponse, error)
 	AddFriend(ctx context.Context, in *NewFriend, opts ...grpc.CallOption) (*Friend, error)
 	GetFriends(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Friends, error)
-	CreateChannel(ctx context.Context, in *NewChannel, opts ...grpc.CallOption) (*Channel, error)
+	CreateChannel(ctx context.Context, in *NewChannel, opts ...grpc.CallOption) (*common.Channel, error)
 	GetUsersAssociatedToChannel(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*UserContacts, error)
 	GetChannelsAssociatedToUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Channels, error)
 	GetUsersAssociatedToTargetUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Users, error)
+	GetUsersContactsMetadata(ctx context.Context, in *Users, opts ...grpc.CallOption) (*UserContacts, error)
 }
 
 type userClient struct {
@@ -119,8 +120,8 @@ func (c *userClient) GetFriends(ctx context.Context, in *wrapperspb.StringValue,
 	return out, nil
 }
 
-func (c *userClient) CreateChannel(ctx context.Context, in *NewChannel, opts ...grpc.CallOption) (*Channel, error) {
-	out := new(Channel)
+func (c *userClient) CreateChannel(ctx context.Context, in *NewChannel, opts ...grpc.CallOption) (*common.Channel, error) {
+	out := new(common.Channel)
 	err := c.cc.Invoke(ctx, "/user.User/createChannel", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -155,6 +156,15 @@ func (c *userClient) GetUsersAssociatedToTargetUser(ctx context.Context, in *wra
 	return out, nil
 }
 
+func (c *userClient) GetUsersContactsMetadata(ctx context.Context, in *Users, opts ...grpc.CallOption) (*UserContacts, error) {
+	out := new(UserContacts)
+	err := c.cc.Invoke(ctx, "/user.User/getUsersContactsMetadata", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServer is the server API for User service.
 // All implementations must embed UnimplementedUserServer
 // for forward compatibility
@@ -167,10 +177,11 @@ type UserServer interface {
 	Logout(context.Context, *wrapperspb.StringValue) (*common.MessageResponse, error)
 	AddFriend(context.Context, *NewFriend) (*Friend, error)
 	GetFriends(context.Context, *wrapperspb.StringValue) (*Friends, error)
-	CreateChannel(context.Context, *NewChannel) (*Channel, error)
+	CreateChannel(context.Context, *NewChannel) (*common.Channel, error)
 	GetUsersAssociatedToChannel(context.Context, *wrapperspb.StringValue) (*UserContacts, error)
 	GetChannelsAssociatedToUser(context.Context, *wrapperspb.StringValue) (*Channels, error)
 	GetUsersAssociatedToTargetUser(context.Context, *wrapperspb.StringValue) (*Users, error)
+	GetUsersContactsMetadata(context.Context, *Users) (*UserContacts, error)
 	mustEmbedUnimplementedUserServer()
 }
 
@@ -202,7 +213,7 @@ func (UnimplementedUserServer) AddFriend(context.Context, *NewFriend) (*Friend, 
 func (UnimplementedUserServer) GetFriends(context.Context, *wrapperspb.StringValue) (*Friends, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFriends not implemented")
 }
-func (UnimplementedUserServer) CreateChannel(context.Context, *NewChannel) (*Channel, error) {
+func (UnimplementedUserServer) CreateChannel(context.Context, *NewChannel) (*common.Channel, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateChannel not implemented")
 }
 func (UnimplementedUserServer) GetUsersAssociatedToChannel(context.Context, *wrapperspb.StringValue) (*UserContacts, error) {
@@ -213,6 +224,9 @@ func (UnimplementedUserServer) GetChannelsAssociatedToUser(context.Context, *wra
 }
 func (UnimplementedUserServer) GetUsersAssociatedToTargetUser(context.Context, *wrapperspb.StringValue) (*Users, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsersAssociatedToTargetUser not implemented")
+}
+func (UnimplementedUserServer) GetUsersContactsMetadata(context.Context, *Users) (*UserContacts, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsersContactsMetadata not implemented")
 }
 func (UnimplementedUserServer) mustEmbedUnimplementedUserServer() {}
 
@@ -443,6 +457,24 @@ func _User_GetUsersAssociatedToTargetUser_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _User_GetUsersContactsMetadata_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Users)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).GetUsersContactsMetadata(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.User/getUsersContactsMetadata",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).GetUsersContactsMetadata(ctx, req.(*Users))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // User_ServiceDesc is the grpc.ServiceDesc for User service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -497,6 +529,10 @@ var User_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "getUsersAssociatedToTargetUser",
 			Handler:    _User_GetUsersAssociatedToTargetUser_Handler,
+		},
+		{
+			MethodName: "getUsersContactsMetadata",
+			Handler:    _User_GetUsersContactsMetadata_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -29,6 +29,13 @@ const isSameMessage = (newMsg: Message, cur: Message): boolean => {
   return false;
 };
 
+const isLatestMessage = (newMsg: Message, cur: Message): boolean => {
+  if (new Date(newMsg.updatedAt).getTime() > new Date(cur.updatedAt).getTime()) {
+    return true;
+  }
+  return false;
+};
+
 const isNewMessageBigger = (newMsg: Message, cur: Message): boolean => {
   if (newMsg.messageId && cur.messageId && newMsg.messageId > cur.messageId) {
     return true;
@@ -54,12 +61,6 @@ export const chatSlice = createSlice({
       delete state.unreadChannels[action.payload];
       return state;
     },
-    addNewChannel: (state, action: PayloadAction<Channel>) => {
-      // Redux doesn't allow mutation of action.payload as this mutation
-      // could leak out into any other reducers listening for the same action.
-      state.channels.push(action.payload);
-      return state;
-    },
     initChannels: (state, action: PayloadAction<Channel[]>) => {
       // Sort by latest timestamp.
       action.payload.sort((a, b) => {
@@ -82,7 +83,7 @@ export const chatSlice = createSlice({
       state.channels = action.payload;
       return state;
     },
-    addNewMessage: (state, action: PayloadAction<Message>) => {
+    addMessage: (state, action: PayloadAction<Message>) => {
       // Multiple state updates required.
       // Channel must first be added if it does not exist.
       const idx = state.channels.findIndex(row => row.channelId === action.payload.channelId);
@@ -102,8 +103,10 @@ export const chatSlice = createSlice({
       for (let i = size - 1; i >= 0; i--) {
         const curMsg = channel.messages[i];
         if (isSameMessage(action.payload, curMsg)) {
-          curMsg.messageId = action.payload.messageId;
-          curMsg.messageStatus = action.payload.messageStatus;
+          if (isLatestMessage(action.payload, curMsg)) {
+            curMsg.messageId = action.payload.messageId;
+            curMsg.messageStatus = action.payload.messageStatus;
+          }
           return state;
         } else if (isNewMessageBigger(action.payload, curMsg)) {
           channel.messages.splice(i + 1, 0, action.payload);
@@ -114,14 +117,21 @@ export const chatSlice = createSlice({
       channel.messages.unshift(action.payload);
       return state;
     },
-    updateChannel: (state, action: PayloadAction<Channel>) => {
+    addChannel: (state, action: PayloadAction<Channel>) => {
       // Multiple state updates required.
       const idx = state.channels.findIndex(row => row.channelId === action.payload.channelId);
       if (idx === -1) {
+        // Add new channel.
+        state.channels.push(action.payload);
         return state;
       }
 
+      // Update existing channel if incoming is latest.
       const channel = state.channels[idx];
+      if (new Date(action.payload.updatedAt).getTime() < new Date(channel.updatedAt).getTime()) {
+        return state;
+      }
+
       channel.channelId = action.payload.channelId;
       channel.channelName = action.payload.channelName;
       channel.createdAt = action.payload.createdAt;
@@ -148,10 +158,9 @@ export const chatSlice = createSlice({
 });
 
 export const {
-  addNewChannel,
   initChannels,
-  updateChannel,
-  addNewMessage,
+  addChannel,
+  addMessage,
   setCurChannelId,
   addUnreadChannel,
   removeReadChannel,

@@ -6,6 +6,7 @@ export interface Message {
   content: string;
   createdAt: string;
   messageStatus: number; // 0 = pending, 1 = received, 2 = delivered, 3 = read
+  updatedAt: string;
 }
 
 export interface Channel {
@@ -15,9 +16,11 @@ export interface Channel {
   messages: Message[];
   userIds: string[];
   isDraft?: boolean;
+  updatedAt: string;
 }
 
 export interface WebSocketEvent {
   event: string;
+  timestamp: string;
   data: any;
 }

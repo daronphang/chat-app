@@ -23,11 +23,7 @@ export default function ChannelPanel() {
     dispatch(
       addAppListener({
         predicate: action => {
-          if (
-            ['chat/addNewMessage', 'chat/addNewChannel', 'chat/updateChannel', 'chat/updateDisplayName'].includes(
-              action.type
-            )
-          ) {
+          if (['chat/addMessage', 'chat/addChannel', 'chat/updateDisplayName'].includes(action.type)) {
             return true;
           }
           return false;
@@ -78,7 +74,7 @@ export default function ChannelPanel() {
         const today = new Date();
         const createdAt = channel.messages[channel.messages.length - 1].createdAt;
         if (new Date(createdAt).setHours(0, 0, 0, 0) == today.setHours(0, 0, 0, 0)) {
-          subtitle = moment(createdAt).format('hh:mm');
+          subtitle = moment(createdAt).format('HH:mm');
         } else {
           subtitle = moment(createdAt).format('DD/MM');
         }

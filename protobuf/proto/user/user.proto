@@ -15,10 +15,11 @@ service User {
     rpc logout(google.protobuf.StringValue) returns (common.MessageResponse) {}
     rpc addFriend(NewFriend) returns (Friend) {}
     rpc getFriends(google.protobuf.StringValue) returns (Friends) {}
-    rpc createChannel(NewChannel) returns (Channel) {}
+    rpc createChannel(NewChannel) returns (common.Channel) {}
     rpc getUsersAssociatedToChannel(google.protobuf.StringValue) returns (UserContacts) {}
     rpc getChannelsAssociatedToUser(google.protobuf.StringValue) returns (Channels) {}
     rpc getUsersAssociatedToTargetUser(google.protobuf.StringValue) returns (Users) {}
+    rpc getUsersContactsMetadata(Users) returns (UserContacts) {}
 }
 
 message NewUser {
@@ -73,12 +74,6 @@ message Users {
     repeated string userIds = 1;
 }
 
-message Channel {
-    string channelId = 1;
-    string channelName = 2;
-    string createdAt = 3;
-}
-
 message Channels {
-    repeated Channel channels = 1;
+    repeated common.Channel channels = 1;
 }

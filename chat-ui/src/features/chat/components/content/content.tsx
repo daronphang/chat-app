@@ -15,7 +15,7 @@ export default function Content({ props }: ContentProps) {
     <div className={`${userId === props.senderId ? styles.senderContent : styles.receiverContent} mb-3 p-2`}>
       {props.content}
       <div className={styles.metadata}>
-        <span className="me-2">{moment(props.createdAt).format('MM/DD/YY hh:mm')}</span>
+        <span className="me-2">{moment(props.createdAt).format('MM/DD/YY HH:mm')}</span>
         {props.messageStatus === 0 && <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'clock']} />}
         {props.messageStatus === 1 && <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'check']} />}
         {props.messageStatus === 2 && (

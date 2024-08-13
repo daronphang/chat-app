@@ -38,15 +38,13 @@ func (uc *UseCaseService) CreateChannel(ctx context.Context, arg domain.NewChann
 		return domain.Channel{}, err
 	}
 
-	// Broadcast to all users in channel.
-	// TODO:
-	
-
-	return domain.Channel{
+	channel := domain.Channel{
 		ChannelID: arg.ChannelID,
 		ChannelName: arg.ChannelName,
 		CreatedAt: arg.CreatedAt,
-	}, nil
+		UserIDs: arg.UserIDs,
+	}
+	return channel, nil
 }
 
 func (uc *UseCaseService) GetChannelsAssociatedToUser(ctx context.Context, arg string) ([]domain.Channel, error) {

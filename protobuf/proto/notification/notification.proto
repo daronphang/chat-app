@@ -10,6 +10,7 @@ service Notification {
     rpc clientHeartbeat(UserSession) returns (common.MessageResponse) {}
     rpc broadcastUserPresenceEvent(UserPresence) returns (common.MessageResponse) {}
     rpc broadcastMessageEvent(common.Message) returns (common.MessageResponse) {}
+    rpc broadcastChannelEvent(common.Channel) returns (common.MessageResponse) {}
     rpc getOnlineUsers(UserIds) returns (UserIds) {}
 }
 

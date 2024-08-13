@@ -11,6 +11,7 @@
   padding: 0.7rem;
   border-radius: 0.3rem;
   line-height: 20px !important;
+  min-height: 2.5rem;
 
   &::placeholder {
     transition: 0.5s;
@@ -32,6 +33,15 @@
   &:focus + label svg {
     opacity: 1;
   }
+}
+
+.invalid-input {
+  outline: 1px solid variables.$error;
+}
+
+.input-error-msg {
+  color: variables.$error;
+  font-size: variables.$font-sm;
 }
 
 .flex-spacer {

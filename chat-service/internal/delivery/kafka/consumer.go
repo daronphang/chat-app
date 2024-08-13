@@ -69,18 +69,18 @@ func (c *KafkaConsumer) ConsumeFromUserTopic(ctx context.Context, uc *usecase.Us
 			continue
 		}
 
-		// Unmarshal bytes.
+		// Unmarshal and validate base event.
 		event := new(domain.BaseEvent)
-		if err := json.Unmarshal(m.Value, event); err != nil {
+		if err := cv.UnmarshalAndValidate(m.Value, event); err != nil {
 			logger.Error(
-				"error unmarshaling payload from user topic",
+				"error validating base event from user topic",
 				zap.String("payload", string(m.Value)),
 				zap.String("trace", err.Error()),
 			)
 			continue
 		}
 
-		// Validate data.
+		// Validate nested data.
 		if (event.Event == domain.EventMessage) {
 			p, _ := json.Marshal(event.Data)
 			v := new(domain.Message)

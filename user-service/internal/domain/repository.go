@@ -20,4 +20,5 @@ type Repository interface {
 	GetUsersAssociatedToChannel(ctx context.Context, arg string) ([]UserContact, error)
 	GetChannelsAssociatedToUser(ctx context.Context, arg string) ([]Channel, error)
 	GetUsersAssociatedToTargetUser(ctx context.Context, arg string) ([]string, error)
+	GetUsersContactsMetadata(ctx context.Context, arg []string) ([]UserContact, error)
 }

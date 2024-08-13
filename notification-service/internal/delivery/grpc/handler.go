@@ -59,13 +59,15 @@ func (s *GRPCServer) BroadcastUserPresenceEvent(ctx context.Context, arg *pb.Use
 		return nil, status.Errorf(9, "validation error: %v", err)
 	}
 
-	if err := s.uc.BroadcastUserPresenceEvent(ctx, p); err != nil {
-		logger.Error(
-			fmt.Sprintf("failed to broadcast user %v status for %v", p.UserID, p.Status),
-			zap.String("trace", err.Error()),
-		)
-		return nil, status.Errorf(9, "validation error: %v", err)
-	}
+	// To run the remaining function in a goroutine as response is not important.
+	go func() {
+		if err := s.uc.BroadcastUserPresenceEvent(ctx, p); err != nil {
+			logger.Error(
+				fmt.Sprintf("failed to broadcast user %v status for %v", p.UserID, p.Status),
+				zap.String("trace", err.Error()),
+			)
+		}
+	}()
 	return &common.MessageResponse{Message: "user status broadcasted"}, nil
 }
 
@@ -93,3 +95,27 @@ func (s *GRPCServer) BroadcastMessageEvent(ctx context.Context, arg *common.Mess
 	}
 	return &common.MessageResponse{Message: "user status broadcasted"}, nil
 }
+
+func (s *GRPCServer) BroadcastChannelEvent(ctx context.Context, arg *common.Channel) (*common.MessageResponse, error) {
+	p := domain.Channel{
+		ChannelID: arg.ChannelId,
+		ChannelName: arg.ChannelName,
+		CreatedAt: arg.CreatedAt,
+		UserIDs: arg.UserIds,
+	}
+	if err := cv.ValidateStruct(p); err != nil {
+		logger.Error("validation error", zap.String("trace", err.Error()))
+		return nil, status.Errorf(9, "validation error: %v", err)
+	}
+
+	if err := s.uc.BroadcastChannelEvent(ctx, p); err != nil {
+		logger.Error(
+			fmt.Sprintf("failed to broadcast channel event for %v", p.ChannelID),
+			zap.String("trace", err.Error()),
+		)
+		return nil, status.Errorf(9, "validation error: %v", err)
+	}
+	return &common.MessageResponse{Message: "user status broadcasted"}, nil
+}
+
+
