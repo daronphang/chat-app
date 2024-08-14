@@ -85,7 +85,7 @@ func (c *KafkaConsumer) ConsumeFromUserTopic(ctx context.Context, uc *usecase.Us
 			p, _ := json.Marshal(event.Data)
 			v := new(domain.Message)
 			err = cv.UnmarshalAndValidate(p, v)
-		} else if (event.Event == domain.EventNewChannel) {
+		} else if (event.Event == domain.EventChannel) {
 			p, _ := json.Marshal(event.Data)
 			v := new(domain.NewChannelEvent)
 			err = cv.UnmarshalAndValidate(p, v)

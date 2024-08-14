@@ -60,7 +60,7 @@ func (uc *UseCaseService) SaveMessageAndNotifyRecipients(ctx context.Context, ar
 		MessageType: arg.MessageType,
 		MessageStatus: int32(arg.MessageStatus),
 	}
-	_, err := uc.NotificationClient.BroadcastMessageEvent(ctx, msg)
+	_, err := uc.SessionClient.BroadcastMessageEvent(ctx, msg)
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func (uc *UseCaseService) SaveMessageAndNotifyRecipients(ctx context.Context, ar
 
 	event := domain.BaseEvent{
 		Event: domain.EventMessage,
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		Timestamp: time.Now().Format(time.RFC3339),
 		Data: arg,
 	}
 	if err := uc.EventBroker.PublishEventToUserQueue(ctx, arg.SenderID, event); err != nil {

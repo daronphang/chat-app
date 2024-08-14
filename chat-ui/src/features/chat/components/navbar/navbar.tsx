@@ -3,7 +3,7 @@ import { Badge } from '@mui/material';
 import { RpcError } from 'grpc-web';
 import { enqueueSnackbar } from 'notistack';
 
-import { UserPresence } from 'proto/notification/notification_pb';
+import { UserPresence } from 'proto/session/session_pb';
 import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
 import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
 import styles from './navbar.module.scss';
@@ -37,7 +37,7 @@ export default function Navbar() {
       const payload = new UserPresence();
       payload.setUserid(user.userId);
       payload.setStatus(status);
-      await config.api.NOTIFICATION_SERVICE.broadcastUserPresenceEvent(payload);
+      await config.api.SESSION_SERVICE.broadcastUserPresenceEvent(payload);
     } catch (e) {
       const err = e as RpcError;
       if (err.code === 14) {

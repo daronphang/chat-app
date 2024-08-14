@@ -94,7 +94,7 @@ export default function NewUser({ handleClickBack }: NewFriendProps) {
   };
 
   return (
-    <div>
+    <div className="p-3">
       <div className={styles.headerWrapper}>
         <Tooltip title="Back" placement="bottom">
           <button className="btn-icon ms-3" onClick={() => handleClickBack()}>

@@ -20,6 +20,10 @@ service User {
     rpc getChannelsAssociatedToUser(google.protobuf.StringValue) returns (Channels) {}
     rpc getUsersAssociatedToTargetUser(google.protobuf.StringValue) returns (Users) {}
     rpc getUsersContactsMetadata(Users) returns (UserContacts) {}
+    rpc addGroupMembers(GroupMembers) returns (common.MessageResponse) {}
+    rpc removeGroupMembers(GroupMembers) returns (common.MessageResponse) {}
+    rpc leaveGroup(GroupMembers) returns (common.MessageResponse) {}
+    rpc removeGroup(AdminGroupMember) returns (common.MessageResponse) {}
 }
 
 message NewUser {
@@ -64,16 +68,28 @@ message Friends {
     repeated Friend friends = 1;
 }
 
-message NewChannel {
-    string channelId = 1;
-    repeated string userIds = 2;
-    string channelName = 3;
-}
-
 message Users {
     repeated string userIds = 1;
 }
 
 message Channels {
     repeated common.Channel channels = 1;
+}
+
+message NewChannel {
+    repeated string userIds = 2;
+    string channelName = 3;
+}
+
+message GroupMembers {
+    repeated string userIds = 1;
+    string channelId = 2;
+    string userId = 3;
+    uint64 lastMessageId = 4;
+}
+
+message AdminGroupMember {
+    string userId = 1;
+    string channelId = 2;
+    string channelName = 3;
 }

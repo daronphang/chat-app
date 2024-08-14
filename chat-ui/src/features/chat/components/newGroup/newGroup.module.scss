@@ -29,3 +29,8 @@
   border: 1px solid variables.$secondary !important;
   background-color: variables.$bg-1 !important;
 }
+
+.drawerWrapper {
+  height: calc(100vh - 23rem);
+  overflow: scroll;
+}

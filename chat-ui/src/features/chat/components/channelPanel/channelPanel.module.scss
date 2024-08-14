@@ -1,1 +1,6 @@
 @use 'src/variables.scss';
+
+.drawerWrapper {
+  height: calc(100vh - 9rem);
+  overflow: scroll;
+}

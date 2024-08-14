@@ -6,6 +6,7 @@ import { setCurChannelId } from 'features/chat/redux/chatSlice';
 import { FriendHash } from 'features/user/redux/user.interface';
 import { Channel } from 'features/chat/redux/chat.interface';
 import Drawer from '../drawer/drawer';
+import styles from './channelPanel.module.scss';
 
 export default function ChannelPanel() {
   const [drawers, setDrawers] = useState<JSX.Element[]>([]);
@@ -53,6 +54,14 @@ export default function ChannelPanel() {
     dispatch(setCurChannelId(data.channelId));
   };
 
+  const getSubtitle = (timestamp: string) => {
+    const today = new Date();
+    if (new Date(timestamp).setHours(0, 0, 0, 0) == today.setHours(0, 0, 0, 0)) {
+      return moment(timestamp).format('HH:mm');
+    }
+    return moment(timestamp).format('DD/MM');
+  };
+
   const displayChannels = (channels: Channel[]) => {
     // Channels are sorted in desc order.
     const drawers: JSX.Element[] = [];
@@ -69,15 +78,11 @@ export default function ChannelPanel() {
 
       if (channel.messages.length === 0) {
         text = 'Draft';
+        subtitle = getSubtitle(channel.createdAt);
       } else {
         text = channel.messages[channel.messages.length - 1].content;
-        const today = new Date();
         const createdAt = channel.messages[channel.messages.length - 1].createdAt;
-        if (new Date(createdAt).setHours(0, 0, 0, 0) == today.setHours(0, 0, 0, 0)) {
-          subtitle = moment(createdAt).format('HH:mm');
-        } else {
-          subtitle = moment(createdAt).format('DD/MM');
-        }
+        subtitle = getSubtitle(createdAt);
       }
 
       drawers.push(
@@ -95,5 +100,5 @@ export default function ChannelPanel() {
     setDrawers(drawers);
   };
 
-  return <>{drawers}</>;
+  return <div className={`${styles.drawerWrapper} p-3 pt-0`}>{drawers}</div>;
 }

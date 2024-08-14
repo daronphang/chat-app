@@ -8,13 +8,19 @@ type Channel struct {
 }
 
 type NewChannel struct {
-	ChannelID 		string		`json:"channelId"`
 	UserIDs 		[]string	`json:"userIds" validate:"required"`
-	ChannelName 	string		`json:"channelName"`
-	CreatedAt 		string 		`json:"createdAt"`
+	ChannelName 	string		`json:"channelName" validate:"required"`
 }
 
-type NewGroupMember struct {
+type GroupMembers struct {
+	UserID			string 		`json:"userId" validate:"required"`
+	UserIDs			[]string 	`json:"userIds" validate:"required"`
+	ChannelID 		string		`json:"channelId" validate:"required"`
+	LastMessageID 	uint64		`json:"lastMessageId"`
+}
+
+type AdminGroupMember struct {
 	UserID		string 	`json:"userId" validate:"required"`
 	ChannelID 	string	`json:"channelId" validate:"required"`
+	ChannelName string	`json:"channelName"`
 }

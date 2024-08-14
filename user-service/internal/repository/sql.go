@@ -8,6 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lib/pq"
 )
 
@@ -30,7 +31,9 @@ func (q *Querier) CreateUser(ctx context.Context, arg domain.NewUser) (domain.Us
 		&i.DisplayName,
 		&createdAt,
 	)
-	i.CreatedAt = createdAt.Time.String()
+
+	// Postgres returns timestamp in local timezone format.
+	i.CreatedAt = createdAt.Time.Format(time.RFC3339)
 	return i, err
 }
 
@@ -51,7 +54,7 @@ func (q *Querier) GetUser(ctx context.Context, arg string) (domain.UserMetadata,
 		&i.DisplayName,
 		&createdAt,
 	)
-	i.CreatedAt = createdAt.Time.String()
+	i.CreatedAt = createdAt.Time.Format(time.RFC3339)
 	return i, err
 }
 
@@ -119,9 +122,9 @@ func (q *Querier) GetFriends(ctx context.Context, arg string) ([]domain.Friend, 
 	return items, err
 }
 
-func (q *Querier) CreateUserToChannelAssociation(ctx context.Context, arg domain.NewChannel) error {
+func (q *Querier) CreateUserToChannelAssociation(ctx context.Context, arg domain.Channel) error {
 	var rows [][]interface{}
-	createdAt, _ := time.Parse("2006-01-02T15:04:05Z07:00", arg.CreatedAt)
+	createdAt, _ := time.Parse(time.RFC3339, arg.CreatedAt)
 	for _, userID := range arg.UserIDs {
 		rows = append(rows, []interface{}{userID, arg.ChannelID, createdAt})
 	}
@@ -138,17 +141,83 @@ func (q *Querier) CreateUserToChannelAssociation(ctx context.Context, arg domain
 	return nil
 }
 
-func (q *Querier) CreateGroupChannel(ctx context.Context, arg domain.NewChannel) error {
+func (q *Querier) CreateGroupChannel(ctx context.Context, arg domain.Channel) error {
 	stmt := `
 	INSERT INTO group_channel (
-	channel_id, group_name
+	channel_id, group_name, created_at
 	) VALUES (
 	 $1, $2, $3
 	)
 	`
-	createdAt, _ := time.Parse("2006-01-02T15:04:05Z07:00", arg.CreatedAt)
+	createdAt, _ := time.Parse(time.RFC3339, arg.CreatedAt)
 	_, err := q.db.Exec(ctx, stmt, arg.ChannelID, arg.ChannelName, createdAt)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (q *Querier) GetGroupChannel(ctx context.Context, arg string) (domain.Channel, error) {
+	stmt := `
+	SELECT channel_id, group_name, created_at
+	FROM 
+	group_channel 
+	WHERE channel_id = $1
+	`
+
+	row := q.db.QueryRow(ctx, stmt, arg)
+
+	var i domain.Channel
+	var createdAt pgtype.Timestamp
+	err := row.Scan(
+		&i.ChannelID,
+		&i.ChannelName,
+		&createdAt,
+	)
+	i.CreatedAt = createdAt.Time.Format(time.RFC3339)
+	return i, err
+}
+
+func (q *Querier) RemoveGroupMembers(ctx context.Context, arg domain.GroupMembers) error {
+	stmt := `
+	DELETE FROM user_to_channel
+	WHERE channel_id = $1 AND user_id = ANY($2::varchar[]);
+	`
+
+	_, err := q.db.Exec(ctx, stmt, arg.ChannelID, pq.Array(arg.UserIDs))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (q *Querier) RemoveGroup(ctx context.Context, arg string) error {
+	stmt1 := `
+	DELETE FROM user_to_channel
+	WHERE channel_id = $1;
+	`
+	stmt2 := `
+	DELETE FROM group_channel 
+	WHERE channel_id = $1;
+	`
+	db := q.db.(*pgxpool.Pool)
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = db.Exec(ctx, stmt1, arg)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(ctx, stmt2, arg)
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
 		return err
 	}
 	return nil
@@ -212,7 +281,7 @@ func (q *Querier) GetChannelsAssociatedToUser(ctx context.Context, arg string) (
 		); err != nil {
 			return nil, err
 		}
-		i.CreatedAt = ts.Time.String()
+		i.CreatedAt = ts.Time.Format(time.RFC3339)
 
 		if strings.Contains(i.ChannelID, arg) {
 			i.UserIDs = []string{arg, strings.Replace(i.ChannelID, arg, "", 1)}

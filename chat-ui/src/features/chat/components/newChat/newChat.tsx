@@ -85,23 +85,25 @@ export default function NewChat({ handleClickBack, createNewChannel, broadcastCh
   };
 
   return (
-    <div>
-      <div className={styles.headerWrapper}>
-        <Tooltip title="Back" placement="bottom">
-          <button className="btn-icon ms-3" onClick={() => handleClickBack()}>
-            <FontAwesomeIcon size="lg" icon={['fas', 'arrow-left']} />
-          </button>
-        </Tooltip>
-        <div className={`${styles.heading} ms-3`}>New Chat</div>
+    <>
+      <div className="p-3">
+        <div className={styles.headerWrapper}>
+          <Tooltip title="Back" placement="bottom">
+            <button className="btn-icon ms-3" onClick={() => handleClickBack()}>
+              <FontAwesomeIcon size="lg" icon={['fas', 'arrow-left']} />
+            </button>
+          </Tooltip>
+          <div className={`${styles.heading} ms-3`}>New Chat</div>
+        </div>
+        <div className="mb-4"></div>
+        <Search
+          sourceData={Object.values(user.friends)}
+          excludedFields={['userId', 'email', 'isOnline']}
+          handleSearchResult={handleSearchResult}
+        />
+        <div className="mb-3"></div>
       </div>
-      <div className="mb-4"></div>
-      <Search
-        sourceData={Object.values(user.friends)}
-        excludedFields={['userId', 'email', 'isOnline']}
-        handleSearchResult={handleSearchResult}
-      />
-      <div className="mb-3"></div>
-      {drawers}
-    </div>
+      <div className={`${styles.drawerWrapper} p-3`}>{drawers}</div>
+    </>
   );
 }

@@ -96,7 +96,6 @@ export default function NewGroup({ handleClickBack, createNewChannel, broadcastC
     if (!resp) return;
 
     await broadcastChannelEvent(resp);
-
     dispatch(addChannel(resp));
     reset();
   };
@@ -114,51 +113,56 @@ export default function NewGroup({ handleClickBack, createNewChannel, broadcastC
   };
 
   return (
-    <div>
-      <div className={styles.headerWrapper}>
-        <Tooltip title="Back" placement="bottom">
-          <button className="btn-icon ms-3" onClick={() => handleClickBack()}>
-            <FontAwesomeIcon size="lg" icon={['fas', 'arrow-left']} />
-          </button>
-        </Tooltip>
-        <div className={`${styles.heading} ms-3`}>New Group</div>
-      </div>
-      <div className="mb-4"></div>
-      <form>
-        <input
-          {...register('groupName', { required: true })}
-          id="new-group-group-name-input"
-          autoComplete="on"
-          placeholder="Group Name"
-          className={`base-input mt-3 ${styles.inputField}`}></input>
-        {errors.groupName && <span className="input-error-msg">Field is required</span>}
-        <input {...register('users', { validate: isValidUsersInput })} id="new-group-users-input" hidden={true}></input>
-        <div className={`${styles.chipWrapper} base-input mt-3`}>
-          {users.map(row => (
-            <Chip
-              style={{ borderRadius: '0.3rem' }}
-              variant="outlined"
-              key={row.userId}
-              id={row.userId}
-              label={row.displayName}
-              onDelete={() => handleDeleteChip(row.userId)}
-            />
-          ))}
-          {users.length === 0 ? <span className={styles.placeholder}>Select users</span> : null}
+    <>
+      <div className="p-3">
+        <div className={styles.headerWrapper}>
+          <Tooltip title="Back" placement="bottom">
+            <button className="btn-icon ms-3" onClick={() => handleClickBack()}>
+              <FontAwesomeIcon size="lg" icon={['fas', 'arrow-left']} />
+            </button>
+          </Tooltip>
+          <div className={`${styles.heading} ms-3`}>New Group</div>
         </div>
-        {errors.users && <div className="input-error-msg">Minimum of 2 users</div>}
-        <button className={`btn mt-4 ${styles.button}`} onClick={handleSubmit(onSubmit, onError)}>
-          Create Group
-        </button>
-      </form>
-      <div className="mb-4"></div>
-      <Search
-        sourceData={Object.values(user.friends)}
-        excludedFields={['userId', 'email', 'isOnline']}
-        handleSearchResult={handleSearchResult}
-      />
-      <div className="mb-3"></div>
-      {drawers}
-    </div>
+        <div className="mb-4"></div>
+        <form>
+          <input
+            {...register('groupName', { required: true })}
+            id="new-group-group-name-input"
+            autoComplete="on"
+            placeholder="Group Name"
+            className={`base-input mt-3 ${styles.inputField}`}></input>
+          {errors.groupName && <span className="input-error-msg">Field is required</span>}
+          <input
+            {...register('users', { validate: isValidUsersInput })}
+            id="new-group-users-input"
+            hidden={true}></input>
+          <div className={`${styles.chipWrapper} base-input mt-3`}>
+            {users.map(row => (
+              <Chip
+                style={{ borderRadius: '0.3rem' }}
+                variant="outlined"
+                key={row.userId}
+                id={row.userId}
+                label={row.displayName}
+                onDelete={() => handleDeleteChip(row.userId)}
+              />
+            ))}
+            {users.length === 0 ? <span className={styles.placeholder}>Select users</span> : null}
+          </div>
+          {errors.users && <div className="input-error-msg">Minimum of 2 users</div>}
+          <button className={`btn mt-4 ${styles.button}`} onClick={handleSubmit(onSubmit, onError)}>
+            Create Group
+          </button>
+        </form>
+        <div className="mb-4"></div>
+        <Search
+          sourceData={Object.values(user.friends)}
+          excludedFields={['userId', 'email', 'isOnline']}
+          handleSearchResult={handleSearchResult}
+        />
+        <div className="mb-3"></div>
+      </div>
+      <div className={`${styles.drawerWrapper} p-3`}>{drawers}</div>
+    </>
   );
 }

@@ -601,5 +601,177 @@ export class UserClient {
     this.methodDescriptorgetUsersContactsMetadata);
   }
 
+  methodDescriptoraddGroupMembers = new grpcWeb.MethodDescriptor(
+    '/user.User/addGroupMembers',
+    grpcWeb.MethodType.UNARY,
+    proto_user_user_pb.GroupMembers,
+    proto_common_common_pb.MessageResponse,
+    (request: proto_user_user_pb.GroupMembers) => {
+      return request.serializeBinary();
+    },
+    proto_common_common_pb.MessageResponse.deserializeBinary
+  );
+
+  addGroupMembers(
+    request: proto_user_user_pb.GroupMembers,
+    metadata?: grpcWeb.Metadata | null): Promise<proto_common_common_pb.MessageResponse>;
+
+  addGroupMembers(
+    request: proto_user_user_pb.GroupMembers,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: proto_common_common_pb.MessageResponse) => void): grpcWeb.ClientReadableStream<proto_common_common_pb.MessageResponse>;
+
+  addGroupMembers(
+    request: proto_user_user_pb.GroupMembers,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: proto_common_common_pb.MessageResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/user.User/addGroupMembers',
+        request,
+        metadata || {},
+        this.methodDescriptoraddGroupMembers,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/user.User/addGroupMembers',
+    request,
+    metadata || {},
+    this.methodDescriptoraddGroupMembers);
+  }
+
+  methodDescriptorremoveGroupMembers = new grpcWeb.MethodDescriptor(
+    '/user.User/removeGroupMembers',
+    grpcWeb.MethodType.UNARY,
+    proto_user_user_pb.GroupMembers,
+    proto_common_common_pb.MessageResponse,
+    (request: proto_user_user_pb.GroupMembers) => {
+      return request.serializeBinary();
+    },
+    proto_common_common_pb.MessageResponse.deserializeBinary
+  );
+
+  removeGroupMembers(
+    request: proto_user_user_pb.GroupMembers,
+    metadata?: grpcWeb.Metadata | null): Promise<proto_common_common_pb.MessageResponse>;
+
+  removeGroupMembers(
+    request: proto_user_user_pb.GroupMembers,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: proto_common_common_pb.MessageResponse) => void): grpcWeb.ClientReadableStream<proto_common_common_pb.MessageResponse>;
+
+  removeGroupMembers(
+    request: proto_user_user_pb.GroupMembers,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: proto_common_common_pb.MessageResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/user.User/removeGroupMembers',
+        request,
+        metadata || {},
+        this.methodDescriptorremoveGroupMembers,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/user.User/removeGroupMembers',
+    request,
+    metadata || {},
+    this.methodDescriptorremoveGroupMembers);
+  }
+
+  methodDescriptorleaveGroup = new grpcWeb.MethodDescriptor(
+    '/user.User/leaveGroup',
+    grpcWeb.MethodType.UNARY,
+    proto_user_user_pb.GroupMembers,
+    proto_common_common_pb.MessageResponse,
+    (request: proto_user_user_pb.GroupMembers) => {
+      return request.serializeBinary();
+    },
+    proto_common_common_pb.MessageResponse.deserializeBinary
+  );
+
+  leaveGroup(
+    request: proto_user_user_pb.GroupMembers,
+    metadata?: grpcWeb.Metadata | null): Promise<proto_common_common_pb.MessageResponse>;
+
+  leaveGroup(
+    request: proto_user_user_pb.GroupMembers,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: proto_common_common_pb.MessageResponse) => void): grpcWeb.ClientReadableStream<proto_common_common_pb.MessageResponse>;
+
+  leaveGroup(
+    request: proto_user_user_pb.GroupMembers,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: proto_common_common_pb.MessageResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/user.User/leaveGroup',
+        request,
+        metadata || {},
+        this.methodDescriptorleaveGroup,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/user.User/leaveGroup',
+    request,
+    metadata || {},
+    this.methodDescriptorleaveGroup);
+  }
+
+  methodDescriptorremoveGroup = new grpcWeb.MethodDescriptor(
+    '/user.User/removeGroup',
+    grpcWeb.MethodType.UNARY,
+    proto_user_user_pb.AdminGroupMember,
+    proto_common_common_pb.MessageResponse,
+    (request: proto_user_user_pb.AdminGroupMember) => {
+      return request.serializeBinary();
+    },
+    proto_common_common_pb.MessageResponse.deserializeBinary
+  );
+
+  removeGroup(
+    request: proto_user_user_pb.AdminGroupMember,
+    metadata?: grpcWeb.Metadata | null): Promise<proto_common_common_pb.MessageResponse>;
+
+  removeGroup(
+    request: proto_user_user_pb.AdminGroupMember,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: proto_common_common_pb.MessageResponse) => void): grpcWeb.ClientReadableStream<proto_common_common_pb.MessageResponse>;
+
+  removeGroup(
+    request: proto_user_user_pb.AdminGroupMember,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: proto_common_common_pb.MessageResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/user.User/removeGroup',
+        request,
+        metadata || {},
+        this.methodDescriptorremoveGroup,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/user.User/removeGroup',
+    request,
+    metadata || {},
+    this.methodDescriptorremoveGroup);
+  }
+
 }
 

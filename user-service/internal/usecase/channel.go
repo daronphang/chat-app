@@ -11,16 +11,22 @@ import (
 )
 
 func (uc *UseCaseService) CreateChannel(ctx context.Context, arg domain.NewChannel) (domain.Channel, error) {
-	arg.CreatedAt = time.Now().UTC().Format(time.RFC3339)
-	if len(arg.UserIDs) == 2 {
-		slices.Sort(arg.UserIDs)
-		arg.ChannelID = strings.Join(arg.UserIDs, "")
+	channel := domain.Channel{
+		ChannelID: "",
+		ChannelName: arg.ChannelName,
+		UserIDs: arg.UserIDs,
+		CreatedAt: time.Now().Format(time.RFC3339),
+	}
+
+	if len(channel.UserIDs) == 2 {
+		slices.Sort(channel.UserIDs)
+		channel.ChannelID = strings.Join(arg.UserIDs, "")
 	} else {
-		arg.ChannelID = uuid.NewString()
+		channel.ChannelID = uuid.NewString()
 	}
 
 	closure := uc.Repository.ExecWithTx(ctx, func(qtx domain.Repository) (interface{}, error) {
-		if err := qtx.CreateUserToChannelAssociation(ctx, arg); err != nil {
+		if err := qtx.CreateUserToChannelAssociation(ctx, channel); err != nil {
 			return nil, err
 		}
 
@@ -28,7 +34,7 @@ func (uc *UseCaseService) CreateChannel(ctx context.Context, arg domain.NewChann
 			return nil, nil
 		}
 
-		if err := qtx.CreateGroupChannel(ctx, arg); err != nil {
+		if err := qtx.CreateGroupChannel(ctx, channel); err != nil {
 			return nil, err
 		}
 		return nil, nil
@@ -38,12 +44,6 @@ func (uc *UseCaseService) CreateChannel(ctx context.Context, arg domain.NewChann
 		return domain.Channel{}, err
 	}
 
-	channel := domain.Channel{
-		ChannelID: arg.ChannelID,
-		ChannelName: arg.ChannelName,
-		CreatedAt: arg.CreatedAt,
-		UserIDs: arg.UserIDs,
-	}
 	return channel, nil
 }
 
@@ -63,15 +63,53 @@ func (uc *UseCaseService) GetUsersAssociatedToChannel(ctx context.Context, arg s
 	return rv, nil
 }
 
-func (uc *UseCaseService) BroadcastChannelEventToUsers(ctx context.Context, arg []string) error {
-	
-	return nil
-}
-
 func (uc *UseCaseService) GetUsersAssociatedToTargetUser(ctx context.Context, arg string) ([]string, error) {
 	rv, err := uc.Repository.GetUsersAssociatedToTargetUser(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
 	return rv, nil
+}
+
+func (uc *UseCaseService) AddGroupMembers(ctx context.Context, arg domain.GroupMembers) error {
+	// Check if group exists.
+	group, err := uc.Repository.GetGroupChannel(ctx, arg.ChannelID)
+	if err != nil {
+		return err
+	}
+
+	channel := domain.Channel{
+		ChannelID: arg.ChannelID,
+		ChannelName: group.ChannelName,
+		UserIDs: arg.UserIDs,
+		CreatedAt: time.Now().Format(time.RFC3339),
+	}
+
+	if err := uc.Repository.CreateUserToChannelAssociation(ctx, channel); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (uc *UseCaseService) RemoveGroupMembers(ctx context.Context, arg domain.GroupMembers) error {
+	if err := uc.Repository.RemoveGroupMembers(ctx, arg); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (uc *UseCaseService) LeaveGroup(ctx context.Context, arg domain.GroupMembers) error {
+	if err := uc.Repository.RemoveGroupMembers(ctx, arg); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (uc *UseCaseService) RemoveGroup(ctx context.Context, arg domain.AdminGroupMember) error {
+	// TODO: Validate if admin.
+
+	if err := uc.Repository.RemoveGroup(ctx, arg.ChannelID); err != nil {
+		return err
+	}
+	return nil
 }

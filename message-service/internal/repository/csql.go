@@ -48,7 +48,7 @@ func (q *Querier) GetLatestMessages(ctx context.Context, channelID string) ([]do
 				return nil, err
 			}
 			createdAt /= 1000
-			i.CreatedAt = time.Unix(createdAt, 0).Format("2006-01-02T15:04:05Z07:00")
+			i.CreatedAt = time.Unix(createdAt, 0).Format(time.RFC3339)
 			items = append(items, i)
 		}
 		// scanner.Err() closes the iterator, so scanner nor iter should be used afterwards.
@@ -98,7 +98,7 @@ func (q *Querier) GetPreviousMessages(ctx context.Context, arg domain.PrevMessag
 			return nil, err
 		}
 		createdAt /= 1000
-		i.CreatedAt = time.Unix(createdAt, 0).Format("2006-01-02T15:04:05Z07:00")
+		i.CreatedAt = time.Unix(createdAt, 0).Format(time.RFC3339)
 		items = append(items, i)
 	}
 	// scanner.Err() closes the iterator, so scanner nor iter should be used afterwards.
@@ -115,7 +115,7 @@ func (q *Querier) CreateMessage(ctx context.Context, arg domain.Message) error {
 	(?, ?, ?, ?, ?, ?, ?)
 	`
 
-	createdAt, err := time.Parse("2006-01-02T15:04:05Z07:00", arg.CreatedAt)
+	createdAt, err := time.Parse(time.RFC3339, arg.CreatedAt)
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func (q *Querier) CreateMessage(ctx context.Context, arg domain.Message) error {
 		arg.MessageType,
 		arg.Content,
 		arg.MessageStatus,
-		createdAt,
+		createdAt.UTC(),
 	).WithContext(ctx).Exec(); err != nil {
 		return err
 	}

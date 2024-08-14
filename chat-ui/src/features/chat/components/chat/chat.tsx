@@ -3,7 +3,7 @@ import { Alert } from '@mui/material';
 import { RpcError } from 'grpc-web';
 import useWebSocket from 'react-use-websocket';
 
-import { UserIds, UserSession } from 'proto/notification/notification_pb';
+import { UserIds, UserSession } from 'proto/session/session_pb';
 import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
 import { defaultWsOptions } from 'core/config/ws.constant';
 import { updateOnlineFriends } from 'features/user/redux/userSlice';
@@ -96,7 +96,7 @@ export default function Chat() {
       const payload = new UserSession();
       payload.setUserid(user.userId);
       payload.setServer(config.chatServerWsUrl);
-      await config.api.NOTIFICATION_SERVICE.clientHeartbeat(payload);
+      await config.api.SESSION_SERVICE.clientHeartbeat(payload);
     } catch (e) {
       const err = e as RpcError;
       console.error('failed to send client heartbeat', err.message);
@@ -108,7 +108,7 @@ export default function Chat() {
       const payload = new UserIds();
       const friendIds = Object.keys(user.friends);
       payload.setUseridsList(friendIds);
-      const resp = await config.api.NOTIFICATION_SERVICE.getOnlineUsers(payload);
+      const resp = await config.api.SESSION_SERVICE.getOnlineUsers(payload);
       dispatch(updateOnlineFriends(resp.getUseridsList()));
     } catch (e) {
       const err = e as RpcError;

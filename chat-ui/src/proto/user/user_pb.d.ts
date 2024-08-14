@@ -195,34 +195,6 @@ export namespace Friends {
   }
 }
 
-export class NewChannel extends jspb.Message {
-  getChannelid(): string;
-  setChannelid(value: string): NewChannel;
-
-  getUseridsList(): Array<string>;
-  setUseridsList(value: Array<string>): NewChannel;
-  clearUseridsList(): NewChannel;
-  addUserids(value: string, index?: number): NewChannel;
-
-  getChannelname(): string;
-  setChannelname(value: string): NewChannel;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): NewChannel.AsObject;
-  static toObject(includeInstance: boolean, msg: NewChannel): NewChannel.AsObject;
-  static serializeBinaryToWriter(message: NewChannel, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): NewChannel;
-  static deserializeBinaryFromReader(message: NewChannel, reader: jspb.BinaryReader): NewChannel;
-}
-
-export namespace NewChannel {
-  export type AsObject = {
-    channelid: string,
-    useridsList: Array<string>,
-    channelname: string,
-  }
-}
-
 export class Users extends jspb.Message {
   getUseridsList(): Array<string>;
   setUseridsList(value: Array<string>): Users;
@@ -260,6 +232,88 @@ export class Channels extends jspb.Message {
 export namespace Channels {
   export type AsObject = {
     channelsList: Array<proto_common_common_pb.Channel.AsObject>,
+  }
+}
+
+export class NewChannel extends jspb.Message {
+  getUseridsList(): Array<string>;
+  setUseridsList(value: Array<string>): NewChannel;
+  clearUseridsList(): NewChannel;
+  addUserids(value: string, index?: number): NewChannel;
+
+  getChannelname(): string;
+  setChannelname(value: string): NewChannel;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): NewChannel.AsObject;
+  static toObject(includeInstance: boolean, msg: NewChannel): NewChannel.AsObject;
+  static serializeBinaryToWriter(message: NewChannel, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): NewChannel;
+  static deserializeBinaryFromReader(message: NewChannel, reader: jspb.BinaryReader): NewChannel;
+}
+
+export namespace NewChannel {
+  export type AsObject = {
+    useridsList: Array<string>,
+    channelname: string,
+  }
+}
+
+export class GroupMembers extends jspb.Message {
+  getUseridsList(): Array<string>;
+  setUseridsList(value: Array<string>): GroupMembers;
+  clearUseridsList(): GroupMembers;
+  addUserids(value: string, index?: number): GroupMembers;
+
+  getChannelid(): string;
+  setChannelid(value: string): GroupMembers;
+
+  getUserid(): string;
+  setUserid(value: string): GroupMembers;
+
+  getLastmessageid(): number;
+  setLastmessageid(value: number): GroupMembers;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GroupMembers.AsObject;
+  static toObject(includeInstance: boolean, msg: GroupMembers): GroupMembers.AsObject;
+  static serializeBinaryToWriter(message: GroupMembers, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GroupMembers;
+  static deserializeBinaryFromReader(message: GroupMembers, reader: jspb.BinaryReader): GroupMembers;
+}
+
+export namespace GroupMembers {
+  export type AsObject = {
+    useridsList: Array<string>,
+    channelid: string,
+    userid: string,
+    lastmessageid: number,
+  }
+}
+
+export class AdminGroupMember extends jspb.Message {
+  getUserid(): string;
+  setUserid(value: string): AdminGroupMember;
+
+  getChannelid(): string;
+  setChannelid(value: string): AdminGroupMember;
+
+  getChannelname(): string;
+  setChannelname(value: string): AdminGroupMember;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AdminGroupMember.AsObject;
+  static toObject(includeInstance: boolean, msg: AdminGroupMember): AdminGroupMember.AsObject;
+  static serializeBinaryToWriter(message: AdminGroupMember, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AdminGroupMember;
+  static deserializeBinaryFromReader(message: AdminGroupMember, reader: jspb.BinaryReader): AdminGroupMember;
+}
+
+export namespace AdminGroupMember {
+  export type AsObject = {
+    userid: string,
+    channelid: string,
+    channelname: string,
   }
 }
 

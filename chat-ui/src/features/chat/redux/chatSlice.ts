@@ -78,7 +78,7 @@ export const chatSlice = createSlice({
         } else {
           ts2 = new Date(b.messages[b.messages.length - 1].createdAt);
         }
-        return ts2.getTime() - ts1.getTime();
+        return ts1.getTime() - ts2.getTime();
       });
       state.channels = action.payload;
       return state;
@@ -90,16 +90,21 @@ export const chatSlice = createSlice({
       if (idx === -1) {
         return state;
       }
-
       const channel = state.channels[idx];
 
       // Message received may not come in sequential order.
+      // Need to match messages by messageId or createdAt if former does not exist.
       const size = channel.messages.length;
+
+      // For new messages, to move channel to the front of queue.
       if (size === 0 || isNewMessageBigger(action.payload, channel.messages[size - 1])) {
         channel.messages.push(action.payload);
+        state.channels.splice(idx, 1);
+        state.channels.push(channel);
         return state;
       }
 
+      // Messages that are older or already exist.
       for (let i = size - 1; i >= 0; i--) {
         const curMsg = channel.messages[i];
         if (isSameMessage(action.payload, curMsg)) {
@@ -114,6 +119,7 @@ export const chatSlice = createSlice({
         }
       }
 
+      // Message does not exist and is oldest.
       channel.messages.unshift(action.payload);
       return state;
     },

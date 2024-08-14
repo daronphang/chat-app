@@ -16,6 +16,7 @@ import NewGroup from '../newGroup/newGroup';
 
 export default function DrawerChest() {
   const config = useAppSelector(state => state.config);
+  const user = useAppSelector(state => state.user);
   const [display, setDisplay] = useState<Display>('channel');
 
   const handleClickToolbarButton = (v: Display) => {
@@ -29,7 +30,6 @@ export default function DrawerChest() {
   const createNewChannel = async (arg: Channel): Promise<Channel | null> => {
     try {
       const payload = new userPb.NewChannel();
-      payload.setChannelid(arg.channelId);
       payload.setChannelname(arg.channelName);
       payload.setUseridsList(arg.userIds);
       const resp = await config.api.USER_SERVICE.createChannel(payload);
@@ -56,13 +56,20 @@ export default function DrawerChest() {
   };
 
   const broadcastChannelEvent = async (arg: Channel) => {
+    const userIds = [...arg.userIds];
     try {
+      // Remove current user.
+      const idx = userIds.findIndex(row => row === user.userId);
+      if (idx !== -1) {
+        userIds.splice(idx, 1);
+      }
+
       const payload = new commonPb.Channel();
       payload.setChannelid(arg.channelId);
       payload.setChannelname(arg.channelName);
       payload.setCreatedat(arg.createdAt);
-      payload.setUseridsList(arg.userIds);
-      await config.api.NOTIFICATION_SERVICE.broadcastChannelEvent(payload);
+      payload.setUseridsList(userIds);
+      await config.api.SESSION_SERVICE.broadcastChannelEvent(payload);
     } catch (e) {
       const err = e as RpcError;
       console.error('failed to broadcast channel event', err.message);
@@ -70,7 +77,7 @@ export default function DrawerChest() {
   };
 
   return (
-    <div className={`${styles.drawer} p-3`}>
+    <div className={`${styles.drawer}`}>
       {display === 'channel' && (
         <div>
           <Toolbar handleClickToolbarButton={handleClickToolbarButton} />

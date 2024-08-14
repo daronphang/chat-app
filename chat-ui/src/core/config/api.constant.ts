@@ -1,19 +1,19 @@
 import { Config } from './config.constant';
 import { UserClient } from 'proto/user/UserServiceClientPb';
 import { MessageClient } from 'proto/message/MessageServiceClientPb';
-import { NotificationClient } from 'proto/notification/NotificationServiceClientPb';
+import { SessionClient } from 'proto/session/SessionServiceClientPb';
 
 export class BaseApi {
   public USER_SERVICE: UserClient;
   public MESSAGE_SERVICE: MessageClient;
-  public NOTIFICATION_SERVICE: NotificationClient;
+  public SESSION_SERVICE: SessionClient;
 
   constructor() {}
 
   public initWithConfig(config: Config) {
     this.USER_SERVICE = new UserClient(config.ENVOY_PROXY_ADDRESS);
     this.MESSAGE_SERVICE = new MessageClient(config.ENVOY_PROXY_ADDRESS);
-    this.NOTIFICATION_SERVICE = new NotificationClient(config.ENVOY_PROXY_ADDRESS);
+    this.SESSION_SERVICE = new SessionClient(config.ENVOY_PROXY_ADDRESS);
   }
 }
 

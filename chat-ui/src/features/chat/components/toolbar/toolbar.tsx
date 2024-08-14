@@ -11,7 +11,7 @@ interface ToolbarProps {
 
 export default function Toolbar({ handleClickToolbarButton }: ToolbarProps) {
   return (
-    <div className={`${styles.toolbarWrapper}`}>
+    <div className={`${styles.toolbarWrapper} p-3`}>
       <h3 className={styles.heading}>Chats</h3>
       <div className="flex-spacer"></div>
       <Tooltip title="New Friend" placement="bottom">

@@ -10,3 +10,8 @@
   text-align: left;
   font-size: variables.$font-lg;
 }
+
+.drawerWrapper {
+  height: calc(100vh - 9rem);
+  overflow: scroll;
+}

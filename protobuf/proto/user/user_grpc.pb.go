@@ -38,6 +38,10 @@ type UserClient interface {
 	GetChannelsAssociatedToUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Channels, error)
 	GetUsersAssociatedToTargetUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Users, error)
 	GetUsersContactsMetadata(ctx context.Context, in *Users, opts ...grpc.CallOption) (*UserContacts, error)
+	AddGroupMembers(ctx context.Context, in *GroupMembers, opts ...grpc.CallOption) (*common.MessageResponse, error)
+	RemoveGroupMembers(ctx context.Context, in *GroupMembers, opts ...grpc.CallOption) (*common.MessageResponse, error)
+	LeaveGroup(ctx context.Context, in *GroupMembers, opts ...grpc.CallOption) (*common.MessageResponse, error)
+	RemoveGroup(ctx context.Context, in *AdminGroupMember, opts ...grpc.CallOption) (*common.MessageResponse, error)
 }
 
 type userClient struct {
@@ -165,6 +169,42 @@ func (c *userClient) GetUsersContactsMetadata(ctx context.Context, in *Users, op
 	return out, nil
 }
 
+func (c *userClient) AddGroupMembers(ctx context.Context, in *GroupMembers, opts ...grpc.CallOption) (*common.MessageResponse, error) {
+	out := new(common.MessageResponse)
+	err := c.cc.Invoke(ctx, "/user.User/addGroupMembers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) RemoveGroupMembers(ctx context.Context, in *GroupMembers, opts ...grpc.CallOption) (*common.MessageResponse, error) {
+	out := new(common.MessageResponse)
+	err := c.cc.Invoke(ctx, "/user.User/removeGroupMembers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) LeaveGroup(ctx context.Context, in *GroupMembers, opts ...grpc.CallOption) (*common.MessageResponse, error) {
+	out := new(common.MessageResponse)
+	err := c.cc.Invoke(ctx, "/user.User/leaveGroup", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) RemoveGroup(ctx context.Context, in *AdminGroupMember, opts ...grpc.CallOption) (*common.MessageResponse, error) {
+	out := new(common.MessageResponse)
+	err := c.cc.Invoke(ctx, "/user.User/removeGroup", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServer is the server API for User service.
 // All implementations must embed UnimplementedUserServer
 // for forward compatibility
@@ -182,6 +222,10 @@ type UserServer interface {
 	GetChannelsAssociatedToUser(context.Context, *wrapperspb.StringValue) (*Channels, error)
 	GetUsersAssociatedToTargetUser(context.Context, *wrapperspb.StringValue) (*Users, error)
 	GetUsersContactsMetadata(context.Context, *Users) (*UserContacts, error)
+	AddGroupMembers(context.Context, *GroupMembers) (*common.MessageResponse, error)
+	RemoveGroupMembers(context.Context, *GroupMembers) (*common.MessageResponse, error)
+	LeaveGroup(context.Context, *GroupMembers) (*common.MessageResponse, error)
+	RemoveGroup(context.Context, *AdminGroupMember) (*common.MessageResponse, error)
 	mustEmbedUnimplementedUserServer()
 }
 
@@ -227,6 +271,18 @@ func (UnimplementedUserServer) GetUsersAssociatedToTargetUser(context.Context, *
 }
 func (UnimplementedUserServer) GetUsersContactsMetadata(context.Context, *Users) (*UserContacts, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsersContactsMetadata not implemented")
+}
+func (UnimplementedUserServer) AddGroupMembers(context.Context, *GroupMembers) (*common.MessageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddGroupMembers not implemented")
+}
+func (UnimplementedUserServer) RemoveGroupMembers(context.Context, *GroupMembers) (*common.MessageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveGroupMembers not implemented")
+}
+func (UnimplementedUserServer) LeaveGroup(context.Context, *GroupMembers) (*common.MessageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LeaveGroup not implemented")
+}
+func (UnimplementedUserServer) RemoveGroup(context.Context, *AdminGroupMember) (*common.MessageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveGroup not implemented")
 }
 func (UnimplementedUserServer) mustEmbedUnimplementedUserServer() {}
 
@@ -475,6 +531,78 @@ func _User_GetUsersContactsMetadata_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _User_AddGroupMembers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GroupMembers)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).AddGroupMembers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.User/addGroupMembers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).AddGroupMembers(ctx, req.(*GroupMembers))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_RemoveGroupMembers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GroupMembers)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).RemoveGroupMembers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.User/removeGroupMembers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).RemoveGroupMembers(ctx, req.(*GroupMembers))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_LeaveGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GroupMembers)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).LeaveGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.User/leaveGroup",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).LeaveGroup(ctx, req.(*GroupMembers))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_RemoveGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminGroupMember)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).RemoveGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.User/removeGroup",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).RemoveGroup(ctx, req.(*AdminGroupMember))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // User_ServiceDesc is the grpc.ServiceDesc for User service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -533,6 +661,22 @@ var User_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "getUsersContactsMetadata",
 			Handler:    _User_GetUsersContactsMetadata_Handler,
+		},
+		{
+			MethodName: "addGroupMembers",
+			Handler:    _User_AddGroupMembers_Handler,
+		},
+		{
+			MethodName: "removeGroupMembers",
+			Handler:    _User_RemoveGroupMembers_Handler,
+		},
+		{
+			MethodName: "leaveGroup",
+			Handler:    _User_LeaveGroup_Handler,
+		},
+		{
+			MethodName: "removeGroup",
+			Handler:    _User_RemoveGroup_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
