@@ -86,7 +86,7 @@ func (h *Hub) handleReceiveMessage(ctx context.Context, msg []byte) {
 	// Send acknowledgement back to client.
 	event := domain.BaseEvent{
 		Event: domain.EventMessage,
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		EventTimestamp: time.Now().UTC().Format(time.RFC3339),
 		Data: rv,
 	}
 	if err := h.usecase.SendEventToClient(ctx, rv.SenderID, event); err != nil {

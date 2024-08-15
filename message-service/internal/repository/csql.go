@@ -4,77 +4,54 @@ import (
 	"context"
 	"message-service/internal/domain"
 	"time"
-
-	snowflake "github.com/godruoyi/go-snowflake"
 )
 
-func (q *Querier) GetLatestMessages(ctx context.Context, channelID string) ([]domain.Message, error) {
-	// To retrieve unread and read messages (limit).
-	// All unread messages will appear after read messages.
-	//
-	// In order to retrieve all unread messages, need to perform request by batch due to design of Cassandra.
-	// Secondary index on messageStatus will not work as it will have performance issues when 
-	// querying with inequality.
-	
+func (q *Querier) GetUnreadMessages(ctx context.Context, arg domain.MessageRequest) ([]domain.Message, error) {
 	stmt := `
 	SELECT messageId, channelId, senderId, messageType, content, messageStatus, createdAt 
-	FROM message WHERE channelId = ? AND messageId < ?
+	FROM message WHERE channelId = ? AND messageId >= ?
 	ORDER BY messageId DESC
-	LIMIT 50
 	`
 
-	rv := make([]domain.Message, 0)
-	var maxMessageID uint64 = snowflake.ID()
-	for {
-		scanner := q.session.Query(
-			stmt,
-			channelID,
-			maxMessageID,
-		 ).WithContext(ctx).Iter().Scanner()
+	scanner := q.session.Query(
+		stmt,
+		arg.ChannelID,
+		arg.LastMessageID,
+	 ).WithContext(ctx).Iter().Scanner()
 
-		var items []domain.Message
-		for scanner.Next() {
-			var i domain.Message
-			var createdAt int64
-			if err := scanner.Scan(
-				&i.MessageID,
-				&i.ChannelID,
-				&i.SenderID,
-				&i.MessageType,
-				&i.Content,
-				&i.MessageStatus,
-				&createdAt,
-			); err != nil {
-				return nil, err
-			}
-			createdAt /= 1000
-			i.CreatedAt = time.Unix(createdAt, 0).Format(time.RFC3339)
-			items = append(items, i)
-		}
-		// scanner.Err() closes the iterator, so scanner nor iter should be used afterwards.
-		if err := scanner.Err(); err != nil {
+	var items []domain.Message
+	for scanner.Next() {
+		var i domain.Message
+		var createdAt int64
+		if err := scanner.Scan(
+			&i.MessageID,
+			&i.ChannelID,
+			&i.SenderID,
+			&i.MessageType,
+			&i.Content,
+			&i.MessageStatus,
+			&createdAt,
+		); err != nil {
 			return nil, err
 		}
-
-		rv = append(rv, items...)
-
-		// If last message is unread, to return data
-		if len(items) == 0 || items[len(items) - 1].MessageStatus == domain.Read {
-			break
-		}
-		
-		maxMessageID = items[len(items) - 1].MessageID
+		createdAt /= 1000
+		i.CreatedAt = time.Unix(createdAt, 0).Format(time.RFC3339)
+		items = append(items, i)
+	}
+	// scanner.Err() closes the iterator, so scanner nor iter should be used afterwards.
+	if err := scanner.Err(); err != nil {
+		return nil, err
 	}
 
-	return rv, nil
+	return items, nil
 }
 
-func (q *Querier) GetPreviousMessages(ctx context.Context, arg domain.PrevMessageRequest) ([]domain.Message, error) {
+func (q *Querier) GetPreviousMessages(ctx context.Context, arg domain.MessageRequest) ([]domain.Message, error) {
 	stmt := `
 	SELECT messageId, channelId, senderId, messageType, content, messageStatus, createdAt 
 	FROM message WHERE channelId = ? AND messageId < ?
 	ORDER BY messageId DESC
-	LIMIT 100
+	LIMIT 15
 	`
 	scanner := q.session.Query(
 		stmt,

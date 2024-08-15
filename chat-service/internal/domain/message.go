@@ -3,7 +3,6 @@ package domain
 const (
 	Received = iota + 1
 	Delivered 
-	Read
 )
 
 type Message struct {

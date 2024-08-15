@@ -24,4 +24,5 @@ type Repository interface {
 	GetGroupChannel(ctx context.Context, arg string) (Channel, error)
 	RemoveGroupMembers(ctx context.Context, arg GroupMembers) error
 	RemoveGroup(ctx context.Context, arg string) error
+	UpdateLastReadMessage(ctx context.Context, arg LastReadMessage) error
 }

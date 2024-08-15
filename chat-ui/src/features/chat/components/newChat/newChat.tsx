@@ -7,7 +7,7 @@ import { Friend } from 'features/user/redux/user.interface';
 import { Channel } from 'features/chat/redux/chat.interface';
 import { addChannel, setCurChannelId } from 'features/chat/redux/chatSlice';
 import Search from 'shared/components/search/search';
-import Drawer from '../drawer/drawer';
+import UserDrawer from '../userDrawer/userDrawer';
 import styles from './newChat.module.scss';
 
 interface NewChatProps {
@@ -32,27 +32,25 @@ export default function NewChat({ handleClickBack, createNewChannel, broadcastCh
     // If channel exists, to route to that channel.
     // Else, create a new channel.
     let key = [v.userId, user.userId].sort().join('');
-    const idx = chat.channels.findIndex(row => row.channelId === key);
 
-    if (idx === -1) {
+    if (!(key in chat.channelHash)) {
       const newChannel: Channel = {
         channelId: key,
-        channelName: user.displayName, // For the benefit of the recipient.
+        channelName: '',
         messages: [],
         userIds: [v.userId, user.userId],
         isDraft: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        lastMessageId: 0,
       };
       const resp = await createNewChannel(newChannel);
       if (!resp) return;
 
       await broadcastChannelEvent(resp);
-
-      resp.channelName = v.displayName;
       dispatch(addChannel(resp));
     } else {
-      const channel = chat.channels[idx];
+      const channel = chat.channelHash[key];
       key = channel.channelId;
 
       // For existing 1-on-1 chats with no messages, to set isDraft to true
@@ -75,7 +73,7 @@ export default function NewChat({ handleClickBack, createNewChannel, broadcastCh
     friends.sort((a, b) => a.displayName.localeCompare(b.displayName));
     setDrawers(
       friends.map(row => (
-        <Drawer key={row.userId} data={row} title={row.displayName} text="" handleClickDrawer={handleClickDrawer} />
+        <UserDrawer key={row.userId} data={row} title={row.displayName} text="" handleClickDrawer={handleClickDrawer} />
       ))
     );
   };

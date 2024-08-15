@@ -9,13 +9,13 @@ import "proto/common/common.proto";
 
 service Message {
     rpc heartbeat(google.protobuf.Empty) returns (common.MessageResponse) {}
-    rpc getLatestMessages(google.protobuf.StringValue) returns (Messages) {}
-    rpc getPreviousMessages(PrevMessageRequest) returns (Messages) {}
+    rpc getLatestMessages(MessageRequest) returns (Messages) {}
+    rpc getPreviousMessages(MessageRequest) returns (Messages) {}
 }
 
-message PrevMessageRequest {
+message MessageRequest {
     string channelId = 1;
-    string lastMessageId = 2;
+    uint64 lastMessageId = 2;
 }
 
 message Messages {

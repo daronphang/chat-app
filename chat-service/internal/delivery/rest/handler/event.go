@@ -19,7 +19,7 @@ func (h *RestHandler) HandleUserPresenceEvent(c echo.Context) error {
 
 	event := domain.BaseEvent{
 		Event: domain.EventUserPresence,
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		EventTimestamp: time.Now().UTC().Format(time.RFC3339),
 		Data: *p,
 	}
 

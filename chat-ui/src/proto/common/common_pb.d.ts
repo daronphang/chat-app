@@ -77,6 +77,9 @@ export class Channel extends jspb.Message {
   clearUseridsList(): Channel;
   addUserids(value: string, index?: number): Channel;
 
+  getLastmessageid(): number;
+  setLastmessageid(value: number): Channel;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Channel.AsObject;
   static toObject(includeInstance: boolean, msg: Channel): Channel.AsObject;
@@ -91,6 +94,7 @@ export namespace Channel {
     channelname: string,
     createdat: string,
     useridsList: Array<string>,
+    lastmessageid: number,
   }
 }
 

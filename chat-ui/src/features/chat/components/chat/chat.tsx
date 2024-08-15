@@ -26,18 +26,17 @@ export default function Chat() {
     ...defaultWsOptions,
     filter: event => {
       const data = JSON.parse(event.data) as WebSocketEvent;
-      if (['event/message', 'event/channel/new'].includes(data.event)) {
+      if (['event/message', 'event/channel'].includes(data.event)) {
         return true;
       }
       return false;
     },
     onMessage: event => {
       const data = JSON.parse(event.data) as WebSocketEvent;
-
       if (data.event === 'event/message') {
-        handleMessageEvent(data.data, data.timestamp);
+        handleMessageEvent(data.data, data.eventTimestamp);
       } else {
-        handleChannelEvent(data.data, data.timestamp);
+        handleChannelEvent(data.data, data.eventTimestamp);
       }
     },
     onError: error => {
@@ -48,7 +47,7 @@ export default function Chat() {
   useEffect(() => {
     const interval = setInterval(async () => {
       await Promise.all([sendClientHeartbeat()]);
-    }, 5000);
+    }, 10000);
 
     (async () => {
       await fetchOnlineFriends();
@@ -69,25 +68,11 @@ export default function Chat() {
 
   const handleMessageEvent = (msg: Message, updatedAt: string) => {
     msg.updatedAt = updatedAt;
-
-    const idx = chat.channels.findIndex(row => row.channelId === msg.channelId);
-    if (idx === -1) {
-      // Get channel details and add.
-    }
     dispatch(addMessage(msg));
   };
 
   const handleChannelEvent = (channel: Channel, updatedAt: string) => {
     channel.updatedAt = updatedAt;
-
-    // For 1-on-1 chats, check if the channelName can be replaced by friend's display name.
-    if (channel.userIds.length === 2) {
-      const friendId = channel.userIds.filter(row => row !== user.userId)[0];
-      if (friendId in user.friends) {
-        const friend = user.friends[friendId];
-        channel.channelName = friend.displayName;
-      }
-    }
     dispatch(addChannel(channel));
   };
 

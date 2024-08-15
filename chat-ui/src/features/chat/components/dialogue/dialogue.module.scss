@@ -13,6 +13,7 @@
   flex-direction: column;
   box-sizing: border-box;
   overflow: scroll;
+  overflow-anchor: none !important;
 }
 
 .header {
@@ -57,4 +58,15 @@ textarea {
 
 .icon {
   color: variables.$secondary;
+}
+
+.loader {
+  text-align: center;
+  font-size: variables.$font-sm;
+  background-color: variables.$bg-1;
+  box-sizing: border-box;
+  border-radius: 0.25rem;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
 }

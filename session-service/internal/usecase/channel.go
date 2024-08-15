@@ -17,7 +17,7 @@ func (uc * UseCaseService) BroadcastChannelEvent(ctx context.Context, arg domain
 
 	event := domain.BaseEvent{
 		Event: domain.EventChannel,
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		EventTimestamp: time.Now().UTC().Format(time.RFC3339),
 		Data: arg,
 	}
 	maxGoroutines := 10

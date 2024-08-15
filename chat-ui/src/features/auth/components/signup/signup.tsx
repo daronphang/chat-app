@@ -9,18 +9,18 @@ import userPb from 'proto/user/user_pb';
 import { Friend, UserMetadata } from 'features/user/redux/user.interface';
 import { setUser } from 'features/user/redux/userSlice';
 import { RoutePath } from 'core/config/route.constant';
-import styles from './login.module.scss';
-import { useEffect } from 'react';
+import styles from './signup.module.scss';
 
 interface FormInput {
   email: string;
+  displayName: string;
 }
 
-interface LoginProps {
-  showSignup: () => void;
+interface SignupProps {
+  showLogin: () => void;
 }
 
-export default function Login({ showSignup }: LoginProps) {
+export default function Signup({ showLogin }: SignupProps) {
   const config = useAppSelector(state => state.config);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -34,10 +34,6 @@ export default function Login({ showSignup }: LoginProps) {
     mode: 'onTouched', // default is onSubmit for validation to trigger
   });
 
-  useEffect(() => {
-    onSubmit({ email: 'daronphang@gmail.com' });
-  }, []);
-
   const onError = () => {
     enqueueSnackbar('Missing or invalid fields', {
       ...defaultSnackbarOptions,
@@ -46,7 +42,7 @@ export default function Login({ showSignup }: LoginProps) {
   };
 
   const onSubmit = async (data: FormInput) => {
-    const resp = await login(data);
+    const resp = await signup(data);
     if (!resp) return;
 
     const user: UserMetadata = {
@@ -70,15 +66,16 @@ export default function Login({ showSignup }: LoginProps) {
     navigate(RoutePath.CHAT);
   };
 
-  const login = async (data: FormInput): Promise<userPb.UserMetadata | null> => {
+  const signup = async (data: FormInput): Promise<userPb.UserMetadata | null> => {
     try {
-      const payload = new userPb.UserCredentials();
+      const payload = new userPb.NewUser();
       payload.setEmail(data.email);
-      const resp = await config.api.USER_SERVICE.login(payload);
+      payload.setDisplayname(data.displayName);
+      const resp = await config.api.USER_SERVICE.signup(payload);
       return new Promise(resolve => resolve(resp));
     } catch (e) {
       const err = e as RpcError;
-      const errMsg = err.code === 14 ? config.apiError.NETWORK_ERROR : 'Invalid credentials';
+      const errMsg = err.code === 14 ? config.apiError.NETWORK_ERROR : 'Failed to register';
       enqueueSnackbar(errMsg, {
         ...defaultSnackbarOptions,
         variant: 'error',
@@ -88,8 +85,8 @@ export default function Login({ showSignup }: LoginProps) {
   };
 
   return (
-    <div className={`${styles.loginWrapper} p-4`}>
-      <h2 className="mt-3">Login</h2>
+    <div className={`${styles.signupWrapper} p-4`}>
+      <h2 className="mt-3">Register</h2>
       <div className="mt-5 w-100">
         <form>
           <input
@@ -97,18 +94,27 @@ export default function Login({ showSignup }: LoginProps) {
               required: true,
               pattern: /^[a-zA-Z0-9_.$!%#&*+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
             })}
-            id="login-email-input"
+            id="signup-email-input"
             autoComplete="on"
             placeholder="Enter Email"
             className={`base-input ${styles.inputField}`}></input>
           {errors.email && <span className="input-error-msg">Email is invalid</span>}
+          <input
+            {...register('displayName', {
+              required: true,
+            })}
+            id="signup-display-name-input"
+            autoComplete="on"
+            placeholder="Enter Display Name"
+            className={`base-input ${styles.inputField} mt-3`}></input>
+          {errors.displayName && <span className="input-error-msg">Field is required</span>}
         </form>
       </div>
       <button className={`btn mt-4 ${styles.button}`} onClick={handleSubmit(onSubmit, onError)}>
-        Sign In
+        Register
       </button>
-      <button onClick={showSignup} className={`${styles.footer} mt-5 btn`}>
-        Don't have an account? Register
+      <button onClick={showLogin} className={`${styles.footer} mt-5 btn`}>
+        Have an account? Login
       </button>
     </div>
   );

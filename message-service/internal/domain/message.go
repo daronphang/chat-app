@@ -3,7 +3,6 @@ package domain
 const (
 	Received = iota + 1
 	Delivered 
-	Read
 )
 
 type Message struct {
@@ -21,7 +20,7 @@ type UserChannelRequest struct {
 	UserIDs		[]string 	`validate:"required"`
 }
 
-type PrevMessageRequest struct {
+type MessageRequest struct {
 	ChannelID 		string	`json:"channelId" validate:"required"` 
-	LastMessageID 	string	`json:"lastMessageId" validate:"required"` 
+	LastMessageID 	*uint64	`json:"lastMessageId" validate:"required"` 
 }

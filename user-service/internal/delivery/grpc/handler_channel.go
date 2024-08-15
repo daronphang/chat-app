@@ -72,6 +72,7 @@ func (s *GRPCServer) GetChannelsAssociatedToUser(ctx context.Context, arg *wrapp
 			ChannelName: x.ChannelName,
 			CreatedAt: x.CreatedAt,
 			UserIds: x.UserIDs,
+			LastMessageId: x.LastMessageID,
 		})
 	}
 
@@ -93,4 +94,21 @@ func (s *GRPCServer) RemoveGroup(ctx context.Context, arg *pb.AdminGroupMember) 
 		return nil, status.Error(10, err.Error())
 	}
 	return &common.MessageResponse{Message: "remove group success"}, nil
+}
+
+func (s *GRPCServer) UpdateLastReadMessage(ctx context.Context, arg *pb.LastReadMessage) (*common.MessageResponse, error) {
+	p := domain.LastReadMessage{
+		UserID: arg.UserId,
+		ChannelID: arg.ChannelId,
+		LastMessageID: arg.LastMessageId,
+	}
+	if err := cv.ValidateStruct(p); err != nil {
+		logger.Error("validation error", zap.String("trace", err.Error()))
+		return nil, status.Errorf(9, "validation error: %v", err)
+	}
+	
+	if err := s.uc.UpdateLastReadMessage(ctx, p); err != nil {
+		return nil, status.Error(10, err.Error())
+	}
+	return &common.MessageResponse{Message: "updated last read message"}, nil
 }

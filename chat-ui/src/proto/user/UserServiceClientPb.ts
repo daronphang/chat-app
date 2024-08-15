@@ -773,5 +773,48 @@ export class UserClient {
     this.methodDescriptorremoveGroup);
   }
 
+  methodDescriptorupdateLastReadMessage = new grpcWeb.MethodDescriptor(
+    '/user.User/updateLastReadMessage',
+    grpcWeb.MethodType.UNARY,
+    proto_user_user_pb.LastReadMessage,
+    proto_common_common_pb.MessageResponse,
+    (request: proto_user_user_pb.LastReadMessage) => {
+      return request.serializeBinary();
+    },
+    proto_common_common_pb.MessageResponse.deserializeBinary
+  );
+
+  updateLastReadMessage(
+    request: proto_user_user_pb.LastReadMessage,
+    metadata?: grpcWeb.Metadata | null): Promise<proto_common_common_pb.MessageResponse>;
+
+  updateLastReadMessage(
+    request: proto_user_user_pb.LastReadMessage,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: proto_common_common_pb.MessageResponse) => void): grpcWeb.ClientReadableStream<proto_common_common_pb.MessageResponse>;
+
+  updateLastReadMessage(
+    request: proto_user_user_pb.LastReadMessage,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: proto_common_common_pb.MessageResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/user.User/updateLastReadMessage',
+        request,
+        metadata || {},
+        this.methodDescriptorupdateLastReadMessage,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/user.User/updateLastReadMessage',
+    request,
+    metadata || {},
+    this.methodDescriptorupdateLastReadMessage);
+  }
+
 }
 

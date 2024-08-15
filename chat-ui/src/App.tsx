@@ -21,7 +21,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { ProtectedRoutes } from 'core/guards/authGuard';
-import Login from 'features/auth/components/login/login';
+import Auth from 'features/auth/components/auth/auth';
 import { RoutePath } from 'core/config/route.constant';
 import { useAppDispatch } from 'core/redux/reduxHooks';
 import { setDeviceId } from 'core/config/configSlice';
@@ -65,7 +65,7 @@ function App() {
         <Route element={<ProtectedRoutes />}>
           <Route path={RoutePath.CHAT} element={<Chat />} />
         </Route>
-        <Route path={RoutePath.LOGIN} element={<Login />} />
+        <Route path={RoutePath.LOGIN} element={<Auth />} />
         <Route path="*" element={<Navigate to={RoutePath.CHAT} />} />
       </Routes>
     </div>

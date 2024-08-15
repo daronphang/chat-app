@@ -21,7 +21,7 @@ func (uc * UseCaseService) BroadcastMessageEvent(ctx context.Context, arg domain
 	// as events into the recipients' queues. This ensures events will never be lost.
 	event := domain.BaseEvent{
 		Event: domain.EventMessage,
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		EventTimestamp: time.Now().UTC().Format(time.RFC3339),
 		Data: arg,
 	}
 	maxGoroutines := 10

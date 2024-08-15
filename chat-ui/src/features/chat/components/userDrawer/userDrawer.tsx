@@ -1,43 +1,21 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-
-import styles from './drawer.module.scss';
 import { useEffect, useState } from 'react';
-import { FriendHash } from 'features/user/redux/user.interface';
+import { Friend } from 'features/user/redux/user.interface';
 import { Channel } from 'features/chat/redux/chat.interface';
 import { useAppSelector } from 'core/redux/reduxHooks';
+import styles from './userDrawer.module.scss';
 
 interface DrawerProps {
   title: string;
   subtitle?: string;
   text: string;
-  data: any;
-  friends?: FriendHash;
-  handleClickDrawer: (data: any) => void;
+  data: Friend;
+  handleClickDrawer: (data: Friend) => void;
 }
 
-export default function Drawer({ title, subtitle, text, data, friends, handleClickDrawer }: DrawerProps) {
+export default function UserDrawer({ title, subtitle, text, data, handleClickDrawer }: DrawerProps) {
   const [isOnline, setIsOnline] = useState<boolean>(false);
   const user = useAppSelector(state => state.user);
-
-  useEffect(() => {
-    updateOnlineStatus();
-  }, [friends]);
-
-  const isInstanceOfChannel = (v: any): v is Channel => {
-    return 'channelName' in v;
-  };
-
-  const updateOnlineStatus = () => {
-    if (!friends || !isInstanceOfChannel(data) || data.userIds.length !== 2) {
-      return;
-    }
-
-    const friendId = data.userIds.filter(row => row !== user.userId)[0];
-    if (friendId in friends) {
-      const friend = friends[friendId];
-      setIsOnline(friend.isOnline ? true : false);
-    }
-  };
 
   return (
     <div onClick={() => handleClickDrawer(data)} className={`${styles.drawer} gap-3`}>
@@ -51,7 +29,10 @@ export default function Drawer({ title, subtitle, text, data, friends, handleCli
           <div className="flex-spacer"></div>
           {subtitle && <div className={`${styles.subtitle} me-3`}>{subtitle}</div>}
         </div>
-        <div className="truncated">{text}</div>
+        <div className={styles.headingWrapper}>
+          <div className="truncated">{text}</div>
+          <div className="flex-spacer"></div>
+        </div>
       </div>
     </div>
   );

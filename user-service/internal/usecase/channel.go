@@ -113,3 +113,10 @@ func (uc *UseCaseService) RemoveGroup(ctx context.Context, arg domain.AdminGroup
 	}
 	return nil
 }
+
+func (uc *UseCaseService) UpdateLastReadMessage(ctx context.Context, arg domain.LastReadMessage) error {
+	if err := uc.Repository.UpdateLastReadMessage(ctx, arg); err != nil {
+		return err
+	}
+	return nil
+}

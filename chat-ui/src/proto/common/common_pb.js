@@ -569,7 +569,8 @@ proto.common.Channel.toObject = function(includeInstance, msg) {
     channelid: jspb.Message.getFieldWithDefault(msg, 1, ""),
     channelname: jspb.Message.getFieldWithDefault(msg, 2, ""),
     createdat: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    useridsList: (f = jspb.Message.getRepeatedField(msg, 4)) == null ? undefined : f
+    useridsList: (f = jspb.Message.getRepeatedField(msg, 4)) == null ? undefined : f,
+    lastmessageid: jspb.Message.getFieldWithDefault(msg, 5, 0)
   };
 
   if (includeInstance) {
@@ -621,6 +622,10 @@ proto.common.Channel.deserializeBinaryFromReader = function(msg, reader) {
     case 4:
       var value = /** @type {string} */ (reader.readString());
       msg.addUserids(value);
+      break;
+    case 5:
+      var value = /** @type {number} */ (reader.readUint64());
+      msg.setLastmessageid(value);
       break;
     default:
       reader.skipField();
@@ -676,6 +681,13 @@ proto.common.Channel.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeRepeatedString(
       4,
+      f
+    );
+  }
+  f = message.getLastmessageid();
+  if (f !== 0) {
+    writer.writeUint64(
+      5,
       f
     );
   }
@@ -770,6 +782,24 @@ proto.common.Channel.prototype.addUserids = function(value, opt_index) {
  */
 proto.common.Channel.prototype.clearUseridsList = function() {
   return this.setUseridsList([]);
+};
+
+
+/**
+ * optional uint64 lastMessageId = 5;
+ * @return {number}
+ */
+proto.common.Channel.prototype.getLastmessageid = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.common.Channel} returns this
+ */
+proto.common.Channel.prototype.setLastmessageid = function(value) {
+  return jspb.Message.setProto3IntField(this, 5, value);
 };
 
 

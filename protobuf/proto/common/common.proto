@@ -22,4 +22,5 @@ message Channel {
     string channelName = 2;
     string createdAt = 3;
     repeated string userIds = 4;
+    uint64 lastMessageId = 5;
 }

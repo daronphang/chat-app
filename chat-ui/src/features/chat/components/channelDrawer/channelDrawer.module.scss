@@ -1,6 +1,6 @@
 @use 'src/variables.scss';
 
-.drawer {
+.channelDrawer {
   width: 100%;
   height: 4.5rem;
   display: grid;
@@ -25,6 +25,8 @@
 .headingWrapper {
   display: flex;
   align-items: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .title {

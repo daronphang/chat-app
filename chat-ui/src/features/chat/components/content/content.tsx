@@ -1,14 +1,16 @@
-import { Message } from 'features/chat/redux/chat.interface';
+import { Message, MessageStatus } from 'features/chat/redux/chat.interface';
 import styles from './content.module.scss';
 import { useAppSelector } from 'core/redux/reduxHooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import moment from 'moment';
+import { useEffect } from 'react';
 
 interface ContentProps {
   props: Message;
+  recipientLastReadMessageId?: number;
 }
 
-export default function Content({ props }: ContentProps) {
+export default function Content({ props, recipientLastReadMessageId }: ContentProps) {
   const userId = useAppSelector(state => state.user.userId);
 
   return (
@@ -16,10 +18,17 @@ export default function Content({ props }: ContentProps) {
       {props.content}
       <div className={styles.metadata}>
         <span className="me-2">{moment(props.createdAt).format('MM/DD/YY HH:mm')}</span>
-        {props.messageStatus === 0 && <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'clock']} />}
-        {props.messageStatus === 1 && <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'check']} />}
-        {props.messageStatus === 2 && (
+        {userId === props.senderId && props.messageStatus === MessageStatus.PENDING && (
+          <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'clock']} />
+        )}
+        {userId === props.senderId && props.messageStatus === MessageStatus.RECEIVED && (
+          <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'check']} />
+        )}
+        {userId === props.senderId && props.messageStatus === MessageStatus.DELIVERED && (
           <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'check-double']} />
+        )}
+        {userId === props.senderId && props.messageStatus === MessageStatus.READ && (
+          <FontAwesomeIcon className={styles.read} size="lg" icon={['fas', 'check-double']} />
         )}
       </div>
     </div>

@@ -16,23 +16,41 @@ var (
 	logger, _ = internal.WireLogger()
 )
 
-func (uc *UseCaseService) GetLatestMessages(ctx context.Context, channelID string) ([]domain.Message, error) {
+func (uc *UseCaseService) GetLatestMessages(ctx context.Context, arg domain.MessageRequest) ([]domain.Message, error) {
 	// Very rarely users fetch old messages.
 	// to return messages in ascending order.
-	rv, err := uc.Repository.GetLatestMessages(ctx, channelID)
+
+	// To retrieve all unread and last read messages.
+	// All unread messages will appear after read messages.
+	
+	// In order to retrieve all unread messages, need to perform request by batch due to design of Cassandra.
+	// Secondary index on messageStatus will not work as it will have performance issues when 
+	// querying with inequality.
+
+	unread, err := uc.Repository.GetUnreadMessages(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
+
+	read, err := uc.Repository.GetPreviousMessages(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+
+	rv := append(unread, read...)
+
 	// Messages are returned in descending order, to reverse.
 	slices.Reverse(rv)
 	return rv, nil
 }
 
-func (uc *UseCaseService) GetPreviousMessages(ctx context.Context, arg domain.PrevMessageRequest) ([]domain.Message, error) {
+func (uc *UseCaseService) GetPreviousMessages(ctx context.Context, arg domain.MessageRequest) ([]domain.Message, error) {
 	rv, err := uc.Repository.GetPreviousMessages(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
+	// Messages are returned in descending order, to reverse.
+	slices.Reverse(rv)
 	return rv, nil
 }
 
@@ -73,7 +91,7 @@ func (uc *UseCaseService) SaveMessageAndNotifyRecipients(ctx context.Context, ar
 
 	event := domain.BaseEvent{
 		Event: domain.EventMessage,
-		Timestamp: time.Now().Format(time.RFC3339),
+		EventTimestamp: time.Now().UTC().Format(time.RFC3339),
 		Data: arg,
 	}
 	if err := uc.EventBroker.PublishEventToUserQueue(ctx, arg.SenderID, event); err != nil {

@@ -10,7 +10,7 @@ import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
 import { Channel } from 'features/chat/redux/chat.interface';
 import { addChannel } from 'features/chat/redux/chatSlice';
 import styles from './newGroup.module.scss';
-import Drawer from '../drawer/drawer';
+import UserDrawer from '../userDrawer/userDrawer';
 import { useForm } from 'react-hook-form';
 interface NewGroupProps {
   handleClickBack: () => void;
@@ -75,7 +75,7 @@ export default function NewGroup({ handleClickBack, createNewChannel, broadcastC
     friends.sort((a, b) => a.displayName.localeCompare(b.displayName));
     setDrawers(
       friends.map(row => (
-        <Drawer key={row.userId} data={row} title={row.displayName} text="" handleClickDrawer={handleClickDrawer} />
+        <UserDrawer key={row.userId} data={row} title={row.displayName} text="" handleClickDrawer={handleClickDrawer} />
       ))
     );
   };
@@ -91,6 +91,7 @@ export default function NewGroup({ handleClickBack, createNewChannel, broadcastC
       messages: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      lastMessageId: 0,
     };
     const resp = await createNewChannel(newChannel);
     if (!resp) return;

@@ -8,7 +8,6 @@ import (
 	"protobuf/proto/common"
 	pb "protobuf/proto/message"
 
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 
 	"google.golang.org/grpc/status"
@@ -23,12 +22,17 @@ func (s *GRPCServer) Heartbeat(_ context.Context, _ *emptypb.Empty) (*common.Mes
 	return &common.MessageResponse{Message: "message-service is alive"}, nil
 }
 
-func (s *GRPCServer) GetLatestMessages(ctx context.Context, arg *wrappers.StringValue) (*pb.Messages, error) {
-	if (arg.Value == "") {
-		return nil, status.Errorf(9, "channel id is missing")
+func (s *GRPCServer) GetLatestMessages(ctx context.Context, arg *pb.MessageRequest) (*pb.Messages, error) {
+	p := domain.MessageRequest{
+		ChannelID: arg.ChannelId,
+		LastMessageID: &arg.LastMessageId,
+	}
+	if err := cv.ValidateStruct(p); err != nil {
+		logger.Error("validation error", zap.String("trace", err.Error()))
+		return nil, status.Errorf(9, "validation error: %v", err)
 	}
 	
-	msgs, err := s.uc.GetLatestMessages(ctx, arg.Value)
+	msgs, err := s.uc.GetLatestMessages(ctx, p)
 	if err != nil {
 		return nil, status.Errorf(10, "failed to fetch latest messages: %v", err)
 	}
@@ -48,10 +52,10 @@ func (s *GRPCServer) GetLatestMessages(ctx context.Context, arg *wrappers.String
 	return rv, nil
 }
 
-func (s *GRPCServer) GetPreviousMessages(ctx context.Context, arg *pb.PrevMessageRequest) (*pb.Messages, error) {
-	p := domain.PrevMessageRequest{
+func (s *GRPCServer) GetPreviousMessages(ctx context.Context, arg *pb.MessageRequest) (*pb.Messages, error) {
+	p := domain.MessageRequest{
 		ChannelID: arg.ChannelId,
-		LastMessageID: arg.LastMessageId,
+		LastMessageID: &arg.LastMessageId,
 	}
 	if err := cv.ValidateStruct(p); err != nil {
 		logger.Error("validation error", zap.String("trace", err.Error()))

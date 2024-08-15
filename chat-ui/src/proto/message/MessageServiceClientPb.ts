@@ -19,7 +19,6 @@ import * as grpcWeb from 'grpc-web';
 
 import * as proto_common_common_pb from '../../proto/common/common_pb'; // proto import: "proto/common/common.proto"
 import * as google_protobuf_empty_pb from 'google-protobuf/google/protobuf/empty_pb'; // proto import: "google/protobuf/empty.proto"
-import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb'; // proto import: "google/protobuf/wrappers.proto"
 import * as proto_message_message_pb from '../../proto/message/message_pb'; // proto import: "proto/message/message.proto"
 
 
@@ -88,26 +87,26 @@ export class MessageClient {
   methodDescriptorgetLatestMessages = new grpcWeb.MethodDescriptor(
     '/message.Message/getLatestMessages',
     grpcWeb.MethodType.UNARY,
-    google_protobuf_wrappers_pb.StringValue,
+    proto_message_message_pb.MessageRequest,
     proto_message_message_pb.Messages,
-    (request: google_protobuf_wrappers_pb.StringValue) => {
+    (request: proto_message_message_pb.MessageRequest) => {
       return request.serializeBinary();
     },
     proto_message_message_pb.Messages.deserializeBinary
   );
 
   getLatestMessages(
-    request: google_protobuf_wrappers_pb.StringValue,
+    request: proto_message_message_pb.MessageRequest,
     metadata?: grpcWeb.Metadata | null): Promise<proto_message_message_pb.Messages>;
 
   getLatestMessages(
-    request: google_protobuf_wrappers_pb.StringValue,
+    request: proto_message_message_pb.MessageRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
                response: proto_message_message_pb.Messages) => void): grpcWeb.ClientReadableStream<proto_message_message_pb.Messages>;
 
   getLatestMessages(
-    request: google_protobuf_wrappers_pb.StringValue,
+    request: proto_message_message_pb.MessageRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
                response: proto_message_message_pb.Messages) => void) {
@@ -131,26 +130,26 @@ export class MessageClient {
   methodDescriptorgetPreviousMessages = new grpcWeb.MethodDescriptor(
     '/message.Message/getPreviousMessages',
     grpcWeb.MethodType.UNARY,
-    proto_message_message_pb.PrevMessageRequest,
+    proto_message_message_pb.MessageRequest,
     proto_message_message_pb.Messages,
-    (request: proto_message_message_pb.PrevMessageRequest) => {
+    (request: proto_message_message_pb.MessageRequest) => {
       return request.serializeBinary();
     },
     proto_message_message_pb.Messages.deserializeBinary
   );
 
   getPreviousMessages(
-    request: proto_message_message_pb.PrevMessageRequest,
+    request: proto_message_message_pb.MessageRequest,
     metadata?: grpcWeb.Metadata | null): Promise<proto_message_message_pb.Messages>;
 
   getPreviousMessages(
-    request: proto_message_message_pb.PrevMessageRequest,
+    request: proto_message_message_pb.MessageRequest,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
                response: proto_message_message_pb.Messages) => void): grpcWeb.ClientReadableStream<proto_message_message_pb.Messages>;
 
   getPreviousMessages(
-    request: proto_message_message_pb.PrevMessageRequest,
+    request: proto_message_message_pb.MessageRequest,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
                response: proto_message_message_pb.Messages) => void) {

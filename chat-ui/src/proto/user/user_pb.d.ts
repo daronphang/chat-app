@@ -317,3 +317,29 @@ export namespace AdminGroupMember {
   }
 }
 
+export class LastReadMessage extends jspb.Message {
+  getUserid(): string;
+  setUserid(value: string): LastReadMessage;
+
+  getChannelid(): string;
+  setChannelid(value: string): LastReadMessage;
+
+  getLastmessageid(): number;
+  setLastmessageid(value: number): LastReadMessage;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): LastReadMessage.AsObject;
+  static toObject(includeInstance: boolean, msg: LastReadMessage): LastReadMessage.AsObject;
+  static serializeBinaryToWriter(message: LastReadMessage, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): LastReadMessage;
+  static deserializeBinaryFromReader(message: LastReadMessage, reader: jspb.BinaryReader): LastReadMessage;
+}
+
+export namespace LastReadMessage {
+  export type AsObject = {
+    userid: string,
+    channelid: string,
+    lastmessageid: number,
+  }
+}
+

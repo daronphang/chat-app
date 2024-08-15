@@ -42,6 +42,7 @@ type UserClient interface {
 	RemoveGroupMembers(ctx context.Context, in *GroupMembers, opts ...grpc.CallOption) (*common.MessageResponse, error)
 	LeaveGroup(ctx context.Context, in *GroupMembers, opts ...grpc.CallOption) (*common.MessageResponse, error)
 	RemoveGroup(ctx context.Context, in *AdminGroupMember, opts ...grpc.CallOption) (*common.MessageResponse, error)
+	UpdateLastReadMessage(ctx context.Context, in *LastReadMessage, opts ...grpc.CallOption) (*common.MessageResponse, error)
 }
 
 type userClient struct {
@@ -205,6 +206,15 @@ func (c *userClient) RemoveGroup(ctx context.Context, in *AdminGroupMember, opts
 	return out, nil
 }
 
+func (c *userClient) UpdateLastReadMessage(ctx context.Context, in *LastReadMessage, opts ...grpc.CallOption) (*common.MessageResponse, error) {
+	out := new(common.MessageResponse)
+	err := c.cc.Invoke(ctx, "/user.User/updateLastReadMessage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServer is the server API for User service.
 // All implementations must embed UnimplementedUserServer
 // for forward compatibility
@@ -226,6 +236,7 @@ type UserServer interface {
 	RemoveGroupMembers(context.Context, *GroupMembers) (*common.MessageResponse, error)
 	LeaveGroup(context.Context, *GroupMembers) (*common.MessageResponse, error)
 	RemoveGroup(context.Context, *AdminGroupMember) (*common.MessageResponse, error)
+	UpdateLastReadMessage(context.Context, *LastReadMessage) (*common.MessageResponse, error)
 	mustEmbedUnimplementedUserServer()
 }
 
@@ -283,6 +294,9 @@ func (UnimplementedUserServer) LeaveGroup(context.Context, *GroupMembers) (*comm
 }
 func (UnimplementedUserServer) RemoveGroup(context.Context, *AdminGroupMember) (*common.MessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveGroup not implemented")
+}
+func (UnimplementedUserServer) UpdateLastReadMessage(context.Context, *LastReadMessage) (*common.MessageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateLastReadMessage not implemented")
 }
 func (UnimplementedUserServer) mustEmbedUnimplementedUserServer() {}
 
@@ -603,6 +617,24 @@ func _User_RemoveGroup_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _User_UpdateLastReadMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LastReadMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).UpdateLastReadMessage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.User/updateLastReadMessage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).UpdateLastReadMessage(ctx, req.(*LastReadMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // User_ServiceDesc is the grpc.ServiceDesc for User service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -677,6 +709,10 @@ var User_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "removeGroup",
 			Handler:    _User_RemoveGroup_Handler,
+		},
+		{
+			MethodName: "updateLastReadMessage",
+			Handler:    _User_UpdateLastReadMessage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

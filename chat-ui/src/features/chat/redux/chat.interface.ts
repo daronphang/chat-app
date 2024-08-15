@@ -5,7 +5,7 @@ export interface Message {
   messageType: string;
   content: string;
   createdAt: string;
-  messageStatus: number; // 0 = pending, 1 = received, 2 = delivered, 3 = read
+  messageStatus: number; // 0 = pending, 1 = received, 2 = delivered
   updatedAt: string;
 }
 
@@ -17,10 +17,20 @@ export interface Channel {
   userIds: string[];
   isDraft?: boolean;
   updatedAt: string;
+  lastMessageId: number;
 }
 
 export interface WebSocketEvent {
-  event: string;
-  timestamp: string;
+  event: Event;
+  eventTimestamp: string;
   data: any;
 }
+
+export const MessageStatus = {
+  PENDING: 0,
+  RECEIVED: 1,
+  DELIVERED: 2,
+  READ: 3,
+};
+
+export type Event = 'event/message' | 'event/channel' | 'event/presence';

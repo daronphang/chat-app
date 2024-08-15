@@ -12,7 +12,6 @@ import (
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	common "protobuf/proto/common"
 )
 
@@ -26,8 +25,8 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MessageClient interface {
 	Heartbeat(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*common.MessageResponse, error)
-	GetLatestMessages(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Messages, error)
-	GetPreviousMessages(ctx context.Context, in *PrevMessageRequest, opts ...grpc.CallOption) (*Messages, error)
+	GetLatestMessages(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*Messages, error)
+	GetPreviousMessages(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*Messages, error)
 }
 
 type messageClient struct {
@@ -47,7 +46,7 @@ func (c *messageClient) Heartbeat(ctx context.Context, in *emptypb.Empty, opts .
 	return out, nil
 }
 
-func (c *messageClient) GetLatestMessages(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Messages, error) {
+func (c *messageClient) GetLatestMessages(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*Messages, error) {
 	out := new(Messages)
 	err := c.cc.Invoke(ctx, "/message.Message/getLatestMessages", in, out, opts...)
 	if err != nil {
@@ -56,7 +55,7 @@ func (c *messageClient) GetLatestMessages(ctx context.Context, in *wrapperspb.St
 	return out, nil
 }
 
-func (c *messageClient) GetPreviousMessages(ctx context.Context, in *PrevMessageRequest, opts ...grpc.CallOption) (*Messages, error) {
+func (c *messageClient) GetPreviousMessages(ctx context.Context, in *MessageRequest, opts ...grpc.CallOption) (*Messages, error) {
 	out := new(Messages)
 	err := c.cc.Invoke(ctx, "/message.Message/getPreviousMessages", in, out, opts...)
 	if err != nil {
@@ -70,8 +69,8 @@ func (c *messageClient) GetPreviousMessages(ctx context.Context, in *PrevMessage
 // for forward compatibility
 type MessageServer interface {
 	Heartbeat(context.Context, *emptypb.Empty) (*common.MessageResponse, error)
-	GetLatestMessages(context.Context, *wrapperspb.StringValue) (*Messages, error)
-	GetPreviousMessages(context.Context, *PrevMessageRequest) (*Messages, error)
+	GetLatestMessages(context.Context, *MessageRequest) (*Messages, error)
+	GetPreviousMessages(context.Context, *MessageRequest) (*Messages, error)
 	mustEmbedUnimplementedMessageServer()
 }
 
@@ -82,10 +81,10 @@ type UnimplementedMessageServer struct {
 func (UnimplementedMessageServer) Heartbeat(context.Context, *emptypb.Empty) (*common.MessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Heartbeat not implemented")
 }
-func (UnimplementedMessageServer) GetLatestMessages(context.Context, *wrapperspb.StringValue) (*Messages, error) {
+func (UnimplementedMessageServer) GetLatestMessages(context.Context, *MessageRequest) (*Messages, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLatestMessages not implemented")
 }
-func (UnimplementedMessageServer) GetPreviousMessages(context.Context, *PrevMessageRequest) (*Messages, error) {
+func (UnimplementedMessageServer) GetPreviousMessages(context.Context, *MessageRequest) (*Messages, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPreviousMessages not implemented")
 }
 func (UnimplementedMessageServer) mustEmbedUnimplementedMessageServer() {}
@@ -120,7 +119,7 @@ func _Message_Heartbeat_Handler(srv interface{}, ctx context.Context, dec func(i
 }
 
 func _Message_GetLatestMessages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(wrapperspb.StringValue)
+	in := new(MessageRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -132,13 +131,13 @@ func _Message_GetLatestMessages_Handler(srv interface{}, ctx context.Context, de
 		FullMethod: "/message.Message/getLatestMessages",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessageServer).GetLatestMessages(ctx, req.(*wrapperspb.StringValue))
+		return srv.(MessageServer).GetLatestMessages(ctx, req.(*MessageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Message_GetPreviousMessages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PrevMessageRequest)
+	in := new(MessageRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -150,7 +149,7 @@ func _Message_GetPreviousMessages_Handler(srv interface{}, ctx context.Context, 
 		FullMethod: "/message.Message/getPreviousMessages",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessageServer).GetPreviousMessages(ctx, req.(*PrevMessageRequest))
+		return srv.(MessageServer).GetPreviousMessages(ctx, req.(*MessageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

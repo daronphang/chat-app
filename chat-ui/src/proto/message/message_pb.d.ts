@@ -5,25 +5,25 @@ import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wr
 import * as proto_common_common_pb from '../../proto/common/common_pb'; // proto import: "proto/common/common.proto"
 
 
-export class PrevMessageRequest extends jspb.Message {
+export class MessageRequest extends jspb.Message {
   getChannelid(): string;
-  setChannelid(value: string): PrevMessageRequest;
+  setChannelid(value: string): MessageRequest;
 
-  getLastmessageid(): string;
-  setLastmessageid(value: string): PrevMessageRequest;
+  getLastmessageid(): number;
+  setLastmessageid(value: number): MessageRequest;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): PrevMessageRequest.AsObject;
-  static toObject(includeInstance: boolean, msg: PrevMessageRequest): PrevMessageRequest.AsObject;
-  static serializeBinaryToWriter(message: PrevMessageRequest, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): PrevMessageRequest;
-  static deserializeBinaryFromReader(message: PrevMessageRequest, reader: jspb.BinaryReader): PrevMessageRequest;
+  toObject(includeInstance?: boolean): MessageRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: MessageRequest): MessageRequest.AsObject;
+  static serializeBinaryToWriter(message: MessageRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MessageRequest;
+  static deserializeBinaryFromReader(message: MessageRequest, reader: jspb.BinaryReader): MessageRequest;
 }
 
-export namespace PrevMessageRequest {
+export namespace MessageRequest {
   export type AsObject = {
     channelid: string,
-    lastmessageid: string,
+    lastmessageid: number,
   }
 }
 

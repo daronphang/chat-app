@@ -5,6 +5,7 @@ import wrappers from 'google-protobuf/google/protobuf/wrappers_pb';
 import empty from 'google-protobuf/google/protobuf/empty_pb';
 import { RpcError } from 'grpc-web';
 
+import messagePb from 'proto/message/message_pb';
 import { setChatServerWsUrl } from 'core/config/configSlice';
 import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
 import { Channel, Message } from 'features/chat/redux/chat.interface';
@@ -42,7 +43,7 @@ export default function StartUp({ handleLoading, handleAlert }: StartUpProps) {
     handleStartUp();
     setTimeout(() => {
       handleLoading(false);
-    }, 2000);
+    }, 1000);
   }, []);
 
   const loadMessagesInChannels = async (channels: Channel[]) => {
@@ -50,7 +51,7 @@ export default function StartUp({ handleLoading, handleAlert }: StartUpProps) {
     const chunks: Channel[][] = chunk(channels, 5);
 
     for (let chunk of chunks) {
-      const promise = await Promise.all(chunk.map(row => fetchLatestChannelMessages(row.channelId)));
+      const promise = await Promise.all(chunk.map(row => fetchLatestChannelMessages(row.channelId, row.lastMessageId)));
       // Update messages for each channel.
       for (let i = 0; i < chunk.length; i++) {
         chunk[i].messages = promise[i];
@@ -72,6 +73,7 @@ export default function StartUp({ handleLoading, handleAlert }: StartUpProps) {
           messages: [],
           userIds: row.getUseridsList(),
           updatedAt: new Date().toISOString(),
+          lastMessageId: row.getLastmessageid(),
         };
       });
       return new Promise(resolve => resolve(channels));
@@ -86,10 +88,11 @@ export default function StartUp({ handleLoading, handleAlert }: StartUpProps) {
     }
   };
 
-  const fetchLatestChannelMessages = async (channelId: string): Promise<Message[]> => {
+  const fetchLatestChannelMessages = async (channelId: string, lastMessageId: number): Promise<Message[]> => {
     try {
-      const payload = new wrappers.StringValue();
-      payload.setValue(channelId);
+      const payload = new messagePb.MessageRequest();
+      payload.setChannelid(channelId);
+      payload.setLastmessageid(lastMessageId);
       const resp = await config.api.MESSAGE_SERVICE.getLatestMessages(payload);
 
       // Messages are fetched in ascending order.

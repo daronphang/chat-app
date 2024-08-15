@@ -141,6 +141,22 @@ func (q *Querier) CreateUserToChannelAssociation(ctx context.Context, arg domain
 	return nil
 }
 
+func (q *Querier) UpdateLastReadMessage(ctx context.Context, arg domain.LastReadMessage) error {
+	stmt := `
+	UPDATE user_to_channel SET 
+	last_message_id = $1
+	WHERE user_id = $2
+	AND channel_id = $3
+	`
+
+	_, err := q.db.Exec(ctx, stmt, arg.LastMessageID, arg.UserID, arg.ChannelID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (q *Querier) CreateGroupChannel(ctx context.Context, arg domain.Channel) error {
 	stmt := `
 	INSERT INTO group_channel (
@@ -255,7 +271,8 @@ func (q *Querier) GetChannelsAssociatedToUser(ctx context.Context, arg string) (
 	SELECT 
 	UTC.channel_id AS channel_id,
 	CASE WHEN GC.group_name IS NOT NULL THEN GC.group_NAME WHEN FS.display_name IS NOT NULL THEN FS.display_name ELSE UM.email END AS channel_name,
-	UTC.created_at as created_at	
+	UTC.created_at as created_at,
+	COALESCE(UTC.last_message_id, 0) AS last_message_id	
 	FROM
 	user_to_channel AS UTC
 	LEFT JOIN group_channel AS GC ON GC.channel_id = UTC.channel_id
@@ -278,6 +295,7 @@ func (q *Querier) GetChannelsAssociatedToUser(ctx context.Context, arg string) (
 			&i.ChannelID,
 			&i.ChannelName,
 			&ts,
+			&i.LastMessageID,
 		); err != nil {
 			return nil, err
 		}

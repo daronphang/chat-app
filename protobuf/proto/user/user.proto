@@ -24,6 +24,7 @@ service User {
     rpc removeGroupMembers(GroupMembers) returns (common.MessageResponse) {}
     rpc leaveGroup(GroupMembers) returns (common.MessageResponse) {}
     rpc removeGroup(AdminGroupMember) returns (common.MessageResponse) {}
+    rpc updateLastReadMessage(LastReadMessage) returns (common.MessageResponse) {}
 }
 
 message NewUser {
@@ -92,4 +93,10 @@ message AdminGroupMember {
     string userId = 1;
     string channelId = 2;
     string channelName = 3;
+}
+
+message LastReadMessage {
+    string userId = 1;
+    string channelId = 2;
+    uint64 lastMessageId = 3;
 }
