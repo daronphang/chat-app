@@ -53,6 +53,7 @@ func (s *GRPCServer) BroadcastUserPresenceEvent(ctx context.Context, arg *pb.Use
 	p := domain.UserPresence{
 		UserID: arg.UserId,
 		Status: arg.Status,
+		RecipientIDs: arg.RecipientIds,
 	}
 	if err := cv.ValidateStruct(p); err != nil {
 		logger.Error("validation error", zap.String("trace", err.Error()))

@@ -4,21 +4,25 @@ export interface UserMetadata {
   userId: string;
   email: string;
   displayName: string;
-  friends: FriendHash;
+  recipients: RecipientHash;
 }
 
-export interface Friend {
+export interface Recipient {
   userId: string;
   email: string;
   displayName: string;
+  isFriend: boolean;
+  friendName: string;
   isOnline: boolean;
+  color: string;
 }
 
-export interface FriendHash {
-  [key: string]: Friend;
+export interface RecipientHash {
+  [key: string]: Recipient;
 }
 
 export interface UserPresence {
-  userId: string;
+  clientId: string;
   status: Status;
+  targetId: string;
 }

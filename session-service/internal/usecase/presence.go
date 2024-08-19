@@ -12,25 +12,18 @@ import (
 	"sync"
 
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func (uc *UseCaseService) BroadcastUserPresenceEvent(ctx context.Context, arg domain.UserPresence) error {
-	// Get all the friends of the user.
 	// Performance wise, this should not have a huge impact even if the user has many friends.
 	// This is because the number of online users should be minimal.
 	// Otherwise, this can be improved by running an algorithm to determine the closest friends.
-	users, err := uc.UserClient.GetFriends(ctx, &wrapperspb.StringValue{Value: arg.UserID})
-	if err != nil {
-		return err
-	}
-	
 	// Notify users who are online only.
 	maxGoroutines := 10
 	guard := make(chan bool, maxGoroutines)
 	wg := sync.WaitGroup{}
 	cfg, _ := cfg.ProvideConfig()
-	for _, friend := range users.Friends {
+	for _, recipientID := range arg.RecipientIDs {
 		guard <- true
 		wg.Add(1)
 		go func(friendID string) {
@@ -52,7 +45,7 @@ func (uc *UseCaseService) BroadcastUserPresenceEvent(ctx context.Context, arg do
 				
 				chatServerURL := fmt.Sprintf(
 					"%v://%v/%v",
-					u.Scheme,
+					"http",
 					u.Host,
 					cfg.ChatServerAPI.PresencePath,
 				)
@@ -72,7 +65,7 @@ func (uc *UseCaseService) BroadcastUserPresenceEvent(ctx context.Context, arg do
 				}
 			}
 			<- guard
-		}(friend.UserId)
+		}(recipientID)
 	}
 	wg.Wait()
 	return nil

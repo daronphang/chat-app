@@ -3,10 +3,10 @@ import { Alert } from '@mui/material';
 import { RpcError } from 'grpc-web';
 import useWebSocket from 'react-use-websocket';
 
-import { UserIds, UserSession } from 'proto/session/session_pb';
+import sessionPb from 'proto/session/session_pb';
 import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
 import { defaultWsOptions } from 'core/config/ws.constant';
-import { updateOnlineFriends } from 'features/user/redux/userSlice';
+import { updateFriendPresence, updateOnlineRecipients } from 'features/user/redux/userSlice';
 import { Channel, Message, WebSocketEvent } from 'features/chat/redux/chat.interface';
 import { addChannel, addMessage } from 'features/chat/redux/chatSlice';
 import Dialogue from '../dialogue/dialogue';
@@ -14,6 +14,8 @@ import Drawer from '../drawerChest/drawerChest';
 import Navbar from '../navbar/navbar';
 import styles from './chat.module.scss';
 import StartUp from '../startUp/startUp';
+import { UserPresence } from 'features/user/redux/user.interface';
+import { fetchOnlineRecipients, getRecipientIds } from 'core/utils/chat';
 
 export default function Chat() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -26,7 +28,7 @@ export default function Chat() {
     ...defaultWsOptions,
     filter: event => {
       const data = JSON.parse(event.data) as WebSocketEvent;
-      if (['event/message', 'event/channel'].includes(data.event)) {
+      if (['event/message', 'event/channel', 'event/presence'].includes(data.event)) {
         return true;
       }
       return false;
@@ -35,8 +37,10 @@ export default function Chat() {
       const data = JSON.parse(event.data) as WebSocketEvent;
       if (data.event === 'event/message') {
         handleMessageEvent(data.data, data.eventTimestamp);
-      } else {
+      } else if (data.event === 'event/channel') {
         handleChannelEvent(data.data, data.eventTimestamp);
+      } else {
+        handlePresenceEvent(data.data);
       }
     },
     onError: error => {
@@ -45,18 +49,31 @@ export default function Chat() {
   });
 
   useEffect(() => {
+    if (loading) {
+      return;
+    }
+
     const interval = setInterval(async () => {
       await Promise.all([sendClientHeartbeat()]);
     }, 10000);
 
     (async () => {
-      await fetchOnlineFriends();
+      await Promise.all([
+        sendClientHeartbeat(),
+        broadcastUserPresence('online', getRecipientIds(user.userId, chat.channels)),
+      ]);
+
+      const resp = await fetchOnlineRecipients(config, Object.keys(user.recipients));
+      dispatch(updateOnlineRecipients(resp));
     })();
 
-    () => {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
       clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [loading]);
 
   const handleLoading = (v: boolean) => {
     setLoading(v);
@@ -73,12 +90,17 @@ export default function Chat() {
 
   const handleChannelEvent = (channel: Channel, updatedAt: string) => {
     channel.updatedAt = updatedAt;
+    channel.messages = [];
     dispatch(addChannel(channel));
+  };
+
+  const handlePresenceEvent = (v: UserPresence) => {
+    dispatch(updateFriendPresence(v));
   };
 
   const sendClientHeartbeat = async () => {
     try {
-      const payload = new UserSession();
+      const payload = new sessionPb.UserSession();
       payload.setUserid(user.userId);
       payload.setServer(config.chatServerWsUrl);
       await config.api.SESSION_SERVICE.clientHeartbeat(payload);
@@ -88,16 +110,27 @@ export default function Chat() {
     }
   };
 
-  const fetchOnlineFriends = async () => {
+  const broadcastUserPresence = async (status: string, recipientIds: string[]) => {
+    if (recipientIds.length === 0) {
+      return;
+    }
     try {
-      const payload = new UserIds();
-      const friendIds = Object.keys(user.friends);
-      payload.setUseridsList(friendIds);
-      const resp = await config.api.SESSION_SERVICE.getOnlineUsers(payload);
-      dispatch(updateOnlineFriends(resp.getUseridsList()));
+      const payload = new sessionPb.UserPresence();
+      payload.setUserid(user.userId);
+      payload.setStatus(status);
+      payload.setRecipientidsList(recipientIds);
+      await config.api.SESSION_SERVICE.broadcastUserPresenceEvent(payload);
     } catch (e) {
       const err = e as RpcError;
-      console.error('failed to fetch online status of friends', err.message);
+      console.error('failed to broadcast user presence', err.message);
+    }
+  };
+
+  const handleVisibilityChange = async () => {
+    if (document.hidden) {
+      await broadcastUserPresence('offline', getRecipientIds(user.userId, chat.channels));
+    } else {
+      await broadcastUserPresence('online', getRecipientIds(user.userId, chat.channels));
     }
   };
 
@@ -107,7 +140,7 @@ export default function Chat() {
       {!loading && alert && <Alert severity="error">{alert}</Alert>}
       {!loading && (
         <div className={styles.chat}>
-          <Navbar />
+          <Navbar broadcastUserPresence={broadcastUserPresence} />
           <Drawer />
           <Dialogue sendJsonMessage={sendJsonMessage} />
         </div>

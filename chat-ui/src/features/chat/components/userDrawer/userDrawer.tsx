@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useState } from 'react';
-import { Friend } from 'features/user/redux/user.interface';
+import { Recipient } from 'features/user/redux/user.interface';
 import { Channel } from 'features/chat/redux/chat.interface';
 import { useAppSelector } from 'core/redux/reduxHooks';
 import styles from './userDrawer.module.scss';
@@ -9,8 +9,8 @@ interface DrawerProps {
   title: string;
   subtitle?: string;
   text: string;
-  data: Friend;
-  handleClickDrawer: (data: Friend) => void;
+  data: Recipient;
+  handleClickDrawer: (data: Recipient) => void;
 }
 
 export default function UserDrawer({ title, subtitle, text, data, handleClickDrawer }: DrawerProps) {

@@ -1,0 +1,17 @@
+@use 'src/variables.scss';
+@use 'src/base.scss';
+
+.headerWrapper {
+  background-color: variables.$bg-1;
+  display: flex;
+}
+
+.heading {
+  font-weight: 700;
+  text-align: left;
+}
+
+.iconWrapper {
+  color: variables.$secondary;
+  position: relative;
+}

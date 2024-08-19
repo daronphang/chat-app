@@ -1,22 +1,22 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Badge } from '@mui/material';
-import { RpcError } from 'grpc-web';
-import { enqueueSnackbar } from 'notistack';
 
-import { UserPresence } from 'proto/session/session_pb';
 import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
-import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
-import styles from './navbar.module.scss';
 import { useEffect, useState } from 'react';
-import { removeUser } from 'features/user/redux/userSlice';
+import { resetUser } from 'features/user/redux/userSlice';
+import { resetChat } from 'features/chat/redux/chatSlice';
 import { useNavigate } from 'react-router-dom';
 import { RoutePath } from 'core/config/route.constant';
 import { addAppListener } from 'core/redux/listenerMiddleware';
+import { getRecipientIds } from 'core/utils/chat';
+import styles from './navbar.module.scss';
+import { resetConfig } from 'core/config/configSlice';
 
-type Status = 'online' | 'offline';
+interface NavbarProps {
+  broadcastUserPresence: (status: string, recipientIds: string[]) => void;
+}
 
-export default function Navbar() {
-  const config = useAppSelector(state => state.config);
+export default function Navbar({ broadcastUserPresence }: NavbarProps) {
   const user = useAppSelector(state => state.user);
   const chat = useAppSelector(state => state.chat);
   const [unreadChannels, setUnreadChannels] = useState<number>(0);
@@ -24,10 +24,6 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    (async () => {
-      await broadcastUserPresence('online');
-    })();
-
     setUnreadChannels(Object.keys(chat.unreadChannels).length);
 
     dispatch(
@@ -45,22 +41,13 @@ export default function Navbar() {
   }, []);
 
   const handleLogOut = async () => {
-    await broadcastUserPresence('offline');
-    dispatch(removeUser());
+    await broadcastUserPresence('offline', getRecipientIds(user.userId, chat.channels));
+    dispatch(resetUser());
+    dispatch(resetChat());
+    dispatch(resetConfig());
     navigate(RoutePath.LOGIN);
   };
 
-  const broadcastUserPresence = async (status: Status) => {
-    try {
-      const payload = new UserPresence();
-      payload.setUserid(user.userId);
-      payload.setStatus(status);
-      await config.api.SESSION_SERVICE.broadcastUserPresenceEvent(payload);
-    } catch (e) {
-      const err = e as RpcError;
-      console.error('failed to broadcast user presence', err.message);
-    }
-  };
   return (
     <div className={`${styles.navbar} p-3`}>
       <Badge badgeContent={unreadChannels} max={99} color="primary" className={styles.badgeWrapper}>

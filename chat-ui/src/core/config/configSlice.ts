@@ -2,7 +2,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { Config, Environment } from './config.constant';
 import { ApiError, BaseApi, DevApi, ProdApi } from './api.constant';
 
-interface ConfigState {
+export interface ConfigState {
   config: Config;
   api: BaseApi;
   chatServerWsUrl: string;
@@ -35,6 +35,9 @@ export const configSlice = createSlice({
   name: 'config',
   initialState: initializeState(),
   reducers: {
+    resetConfig: state => {
+      state.chatServerWsUrl = '';
+    },
     setChatServerWsUrl: (state, action: PayloadAction<string>) => {
       state.chatServerWsUrl = action.payload;
       return state;
@@ -45,5 +48,5 @@ export const configSlice = createSlice({
   },
 });
 
-export const { setChatServerWsUrl, setDeviceId } = configSlice.actions;
+export const { resetConfig, setChatServerWsUrl, setDeviceId } = configSlice.actions;
 export default configSlice.reducer;

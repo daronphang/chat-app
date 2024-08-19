@@ -12,6 +12,8 @@ type ExtRepo interface {
 type Repository interface {
 	CreateUser(ctx context.Context, arg NewUser) (UserMetadata, error)
 	GetUser(ctx context.Context, arg string) (UserMetadata, error)
+	GetUserById(ctx context.Context, arg string) (UserMetadata, error)
+	GetUsers(ctx context.Context, arg []string) ([]UserMetadata, error)
 	UpdateUser(ctx context.Context, arg UserMetadata) error
 	AddFriend(ctx context.Context, arg NewFriend) error
 	GetFriends(ctx context.Context, arg string) ([]Friend, error)

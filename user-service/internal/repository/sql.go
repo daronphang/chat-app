@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"strings"
 	"time"
 	"user-service/internal/domain"
 
@@ -58,6 +57,58 @@ func (q *Querier) GetUser(ctx context.Context, arg string) (domain.UserMetadata,
 	return i, err
 }
 
+func (q *Querier) GetUserById(ctx context.Context, arg string) (domain.UserMetadata, error) {
+	stmt := `
+	SELECT user_id, email, display_name, created_at
+	FROM user_metadata
+	WHERE user_id = $1
+	`
+
+	row := q.db.QueryRow(ctx, stmt, arg)
+
+	var i domain.UserMetadata
+	var createdAt pgtype.Timestamp
+	err := row.Scan(
+		&i.UserID,
+		&i.Email,
+		&i.DisplayName,
+		&createdAt,
+	)
+	i.CreatedAt = createdAt.Time.Format(time.RFC3339)
+	return i, err
+}
+
+func (q *Querier) GetUsers(ctx context.Context, arg []string) ([]domain.UserMetadata, error) {
+	stmt := `
+	SELECT user_id, email, display_name, created_at
+	FROM user_metadata
+	WHERE user_id = ANY($1::varchar[])
+	`
+
+	rows, err := q.db.Query(ctx, stmt, arg)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	var items []domain.UserMetadata
+	for rows.Next() {
+		var i domain.UserMetadata
+		var createdAt pgtype.Timestamp
+		if err := rows.Scan(
+			&i.UserID,
+			&i.Email,
+			&i.DisplayName,
+			&createdAt,
+		); err != nil {
+			return nil, err
+		}
+		i.CreatedAt = createdAt.Time.Format(time.RFC3339)
+		items = append(items, i)
+	}
+	return items, err
+}
+
 func (q *Querier) UpdateUser(ctx context.Context, arg domain.UserMetadata) error {
 	stmt := `
 	UPDATE user_metadata SET 
@@ -82,7 +133,7 @@ func (q *Querier) AddFriend(ctx context.Context, arg domain.NewFriend) error {
 	 $1, $2, $3
 	)
 	`
-	_, err := q.db.Exec(ctx, stmt, arg.UserID, arg.FriendID, arg.DisplayName)
+	_, err := q.db.Exec(ctx, stmt, arg.UserID, arg.FriendID, arg.FriendName)
 	if err != nil {
 		return err
 	}
@@ -95,7 +146,8 @@ func (q *Querier) GetFriends(ctx context.Context, arg string) ([]domain.Friend, 
 	SELECT 
 	FS.friend_id AS friend_id,
 	UM.email AS email,
-	FS.display_name AS display_name
+	UM.display_name as display_name,
+	FS.display_name AS friend_name
 	FROM friendship AS FS
 	INNER JOIN user_metadata AS UM ON FS.friend_id = UM.user_id
 	WHERE FS.user_id = $1
@@ -114,6 +166,7 @@ func (q *Querier) GetFriends(ctx context.Context, arg string) ([]domain.Friend, 
 			&i.UserID,
 			&i.Email,
 			&i.DisplayName,
+			&i.FriendName,
 		); err != nil {
 			return nil, err
 		}
@@ -269,16 +322,16 @@ func (q *Querier) GetUsersAssociatedToChannel(ctx context.Context, arg string) (
 func (q *Querier) GetChannelsAssociatedToUser(ctx context.Context, arg string) ([]domain.Channel, error) {
 	stmt := `
 	SELECT 
+	UTC.user_id as user_id,
 	UTC.channel_id AS channel_id,
-	CASE WHEN GC.group_name IS NOT NULL THEN GC.group_NAME WHEN FS.display_name IS NOT NULL THEN FS.display_name ELSE UM.email END AS channel_name,
+	CASE WHEN GC.group_name IS NOT NULL THEN GC.group_NAME ELSE '' END AS channel_name,
 	UTC.created_at as created_at,
 	COALESCE(UTC.last_message_id, 0) AS last_message_id	
 	FROM
 	user_to_channel AS UTC
 	LEFT JOIN group_channel AS GC ON GC.channel_id = UTC.channel_id
-	LEFT JOIN friendship AS FS ON FS.user_id = UTC.user_id AND POSITION(FS.friend_id IN UTC.channel_id) > 0
-	LEFT JOIN user_metadata AS UM ON UM.user_id != UTC.user_id AND POSITION(UM.user_id IN UTC.channel_id) > 0
-	WHERE UTC.user_id = $1
+	WHERE UTC.channel_id IN (SELECT channel_id FROM user_to_channel WHERE user_id = $1)
+	ORDER BY channel_id
 	`
 
 	rows, err := q.db.Query(ctx, stmt, arg)
@@ -288,10 +341,12 @@ func (q *Querier) GetChannelsAssociatedToUser(ctx context.Context, arg string) (
 
 	defer rows.Close()
 	var items []domain.Channel
-	var ts pgtype.Timestamp
 	for rows.Next() {
 		var i domain.Channel
+		var ts pgtype.Timestamp
+		var userID string
 		if err := rows.Scan(
+			&userID,
 			&i.ChannelID,
 			&i.ChannelName,
 			&ts,
@@ -301,13 +356,17 @@ func (q *Querier) GetChannelsAssociatedToUser(ctx context.Context, arg string) (
 		}
 		i.CreatedAt = ts.Time.Format(time.RFC3339)
 
-		if strings.Contains(i.ChannelID, arg) {
-			i.UserIDs = []string{arg, strings.Replace(i.ChannelID, arg, "", 1)}
-		} else {
-			i.UserIDs = []string{arg}
-		}
+		if len(items) > 0 && items[len(items)-1].ChannelID == i.ChannelID {
+			prev := &items[len(items)-1]
+			prev.UserIDs = append(prev.UserIDs, userID)
 
-		items = append(items, i)
+			if userID == arg {
+				prev.LastMessageID = i.LastMessageID
+			}
+		} else {
+			i.UserIDs = append(i.UserIDs, userID)
+			items = append(items, i)
+		}
 	}
 	return items, err
 }

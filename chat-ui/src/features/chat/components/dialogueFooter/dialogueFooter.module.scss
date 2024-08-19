@@ -1,0 +1,21 @@
+@use 'src/variables.scss';
+@use 'src/base.scss';
+
+.footerWrapper {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: variables.$bg-1;
+  display: flex;
+  max-height: 20rem;
+}
+
+.formWrapper {
+  flex-grow: 1;
+}
+
+textarea {
+  resize: none !important;
+  padding: 14px 10px 10px 10px !important;
+}

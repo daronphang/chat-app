@@ -10,7 +10,7 @@ import (
 
 func (uc * UseCaseService) BroadcastChannelEvent(ctx context.Context, arg domain.Channel) error {
 	// Get contacts of all users in the channel.
-	resp, err := uc.UserClient.GetUsersContactsMetadata(ctx, &pb.Users{UserIds: arg.UserIDs})
+	resp, err := uc.UserClient.GetUsersContactsMetadata(ctx, &pb.UserIds{UserIds: arg.UserIDs})
 	if err != nil {
 		return err
 	}

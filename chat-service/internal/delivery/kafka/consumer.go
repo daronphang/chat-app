@@ -87,7 +87,7 @@ func (c *KafkaConsumer) ConsumeFromUserTopic(ctx context.Context, uc *usecase.Us
 			err = cv.UnmarshalAndValidate(p, v)
 		} else if (event.Event == domain.EventChannel) {
 			p, _ := json.Marshal(event.Data)
-			v := new(domain.NewChannelEvent)
+			v := new(domain.Channel)
 			err = cv.UnmarshalAndValidate(p, v)
 		} else {
 			err = errInvalidEvent
@@ -95,7 +95,7 @@ func (c *KafkaConsumer) ConsumeFromUserTopic(ctx context.Context, uc *usecase.Us
 
 		if err != nil {
 			logger.Error(
-				"error validating message event from user topic",
+				"error validating event from user topic",
 				zap.String("payload", string(m.Value)),
 				zap.String("trace", err.Error()),
 			)

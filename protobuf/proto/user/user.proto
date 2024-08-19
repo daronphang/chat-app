@@ -10,6 +10,8 @@ service User {
     rpc heartbeat(google.protobuf.Empty) returns (common.MessageResponse) {}
     rpc getBestServer(google.protobuf.Empty) returns (common.MessageResponse) {}
     rpc signup(NewUser) returns (UserMetadata) {}
+    rpc getUser(google.protobuf.StringValue) returns (UserMetadata) {}
+    rpc getUsers(UserIds) returns (Users) {}
     rpc updateUser(UserMetadata) returns (common.MessageResponse) {}
     rpc login(UserCredentials) returns (UserMetadata) {}
     rpc logout(google.protobuf.StringValue) returns (common.MessageResponse) {}
@@ -18,8 +20,8 @@ service User {
     rpc createChannel(NewChannel) returns (common.Channel) {}
     rpc getUsersAssociatedToChannel(google.protobuf.StringValue) returns (UserContacts) {}
     rpc getChannelsAssociatedToUser(google.protobuf.StringValue) returns (Channels) {}
-    rpc getUsersAssociatedToTargetUser(google.protobuf.StringValue) returns (Users) {}
-    rpc getUsersContactsMetadata(Users) returns (UserContacts) {}
+    rpc getUsersAssociatedToTargetUser(google.protobuf.StringValue) returns (UserIds) {}
+    rpc getUsersContactsMetadata(UserIds) returns (UserContacts) {}
     rpc addGroupMembers(GroupMembers) returns (common.MessageResponse) {}
     rpc removeGroupMembers(GroupMembers) returns (common.MessageResponse) {}
     rpc leaveGroup(GroupMembers) returns (common.MessageResponse) {}
@@ -44,6 +46,10 @@ message UserMetadata {
     repeated Friend friends = 5;
 } 
 
+message Users {
+    repeated UserMetadata users = 1;
+}
+
 message UserContact {
     string userId = 1;
     string email = 2;
@@ -56,20 +62,21 @@ message UserContacts {
 message NewFriend {
     string userId = 1;
     string friendEmail = 2;
-    string displayName = 3;
+    string friendName = 3;
 }
 
 message Friend {
     string userId = 1;
     string email = 2;
     string displayName = 3;
+    string friendName = 4;
 }
 
 message Friends {
     repeated Friend friends = 1;
 }
 
-message Users {
+message UserIds {
     repeated string userIds = 1;
 }
 

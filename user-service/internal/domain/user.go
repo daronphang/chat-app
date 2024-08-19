@@ -27,12 +27,13 @@ type NewFriend struct {
 	UserID		string 	`json:"userId"`
 	FriendEmail string	`json:"friendEmail" validate:"required"`
 	FriendID 	string	`json:"friendId"`
-	DisplayName string	`json:"displayName" validate:"required"`
+	FriendName 	string	`json:"friendName" validate:"required"`
 }
 
 type Friend struct {
 	UserID		string 	`json:"userId" validate:"required"`
 	Email 		string	`json:"email" validate:"required"`
 	DisplayName string	`json:"displayName" validate:"required"`
+	FriendName  string	`json:"friendName" validate:"required"`
 }
 

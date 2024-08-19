@@ -15,6 +15,7 @@ message Message {
     string content = 6;
     string createdAt = 7;
     int32 messageStatus = 9;
+    string updatedAt = 10;
 }
 
 message Channel {

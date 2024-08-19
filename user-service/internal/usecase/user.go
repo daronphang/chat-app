@@ -40,6 +40,27 @@ func (uc *UseCaseService) Login(ctx context.Context, arg domain.UserCredentials)
 	return um, nil
 }
 
+func (uc *UseCaseService) GetUser(ctx context.Context, arg string) (domain.UserMetadata, error) {
+	um, err := uc.Repository.GetUserById(ctx, arg)
+	if err != nil {
+		return domain.UserMetadata{}, err
+	}
+	friends, err := uc.Repository.GetFriends(ctx, um.UserID)
+	if err != nil {
+		return domain.UserMetadata{}, err
+	}
+	um.Friends = friends
+	return um, nil
+}
+
+func (uc *UseCaseService) GetUsers(ctx context.Context, arg []string) ([]domain.UserMetadata, error) {
+	rv, err := uc.Repository.GetUsers(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	return rv, nil
+}
+
 func (uc *UseCaseService) UpdateUser(ctx context.Context, arg domain.UserMetadata) error {
 	if err := uc.Repository.UpdateUser(ctx, arg); err != nil {
 		return err
@@ -62,7 +83,8 @@ func (uc *UseCaseService) AddFriend(ctx context.Context, arg domain.NewFriend) (
 	return domain.Friend{
 		UserID: friend.UserID,
 		Email: friend.Email,
-		DisplayName: arg.DisplayName,
+		DisplayName: friend.DisplayName,
+		FriendName: arg.FriendName,
 	}, nil
 }
 

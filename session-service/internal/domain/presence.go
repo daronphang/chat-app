@@ -7,6 +7,7 @@ type UserPresenceEvent struct {
 	Status		string	`json:"status" validate:"required,oneof=online offline"` 
 }
 type UserPresence struct {
-	UserID		string		`json:"userId" validate:"required"`
-	Status		string 		`json:"status" validate:"required,oneof=online offline"` 
+	UserID			string		`json:"userId" validate:"required"`
+	Status			string 		`json:"status" validate:"required,oneof=online offline"` 
+	RecipientIDs	[]string	`json:"recipientIds" validate:"required"`
 }

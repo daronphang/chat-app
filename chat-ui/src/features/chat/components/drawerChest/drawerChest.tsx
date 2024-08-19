@@ -39,11 +39,16 @@ export default function DrawerChest() {
         variant: 'success',
       });
 
-      // Update metadata.
-      arg.channelId = resp.getChannelid();
-      arg.createdAt = resp.getCreatedat();
-      arg.updatedAt = resp.getCreatedat();
-      return new Promise(resolve => resolve(arg));
+      const newChannel: Channel = {
+        channelId: resp.getChannelid(),
+        createdAt: resp.getCreatedat(),
+        updatedAt: resp.getCreatedat(),
+        channelName: resp.getChannelname(),
+        userIds: resp.getUseridsList(),
+        lastMessageId: 0,
+        messages: [],
+      };
+      return new Promise(resolve => resolve(newChannel));
     } catch (e) {
       const err = e as RpcError;
       const errMsg = err.code === 14 ? config.apiError.NETWORK_ERROR : 'Failed to create new chat';

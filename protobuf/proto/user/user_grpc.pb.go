@@ -28,6 +28,8 @@ type UserClient interface {
 	Heartbeat(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*common.MessageResponse, error)
 	GetBestServer(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*common.MessageResponse, error)
 	Signup(ctx context.Context, in *NewUser, opts ...grpc.CallOption) (*UserMetadata, error)
+	GetUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*UserMetadata, error)
+	GetUsers(ctx context.Context, in *UserIds, opts ...grpc.CallOption) (*Users, error)
 	UpdateUser(ctx context.Context, in *UserMetadata, opts ...grpc.CallOption) (*common.MessageResponse, error)
 	Login(ctx context.Context, in *UserCredentials, opts ...grpc.CallOption) (*UserMetadata, error)
 	Logout(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*common.MessageResponse, error)
@@ -36,8 +38,8 @@ type UserClient interface {
 	CreateChannel(ctx context.Context, in *NewChannel, opts ...grpc.CallOption) (*common.Channel, error)
 	GetUsersAssociatedToChannel(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*UserContacts, error)
 	GetChannelsAssociatedToUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Channels, error)
-	GetUsersAssociatedToTargetUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Users, error)
-	GetUsersContactsMetadata(ctx context.Context, in *Users, opts ...grpc.CallOption) (*UserContacts, error)
+	GetUsersAssociatedToTargetUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*UserIds, error)
+	GetUsersContactsMetadata(ctx context.Context, in *UserIds, opts ...grpc.CallOption) (*UserContacts, error)
 	AddGroupMembers(ctx context.Context, in *GroupMembers, opts ...grpc.CallOption) (*common.MessageResponse, error)
 	RemoveGroupMembers(ctx context.Context, in *GroupMembers, opts ...grpc.CallOption) (*common.MessageResponse, error)
 	LeaveGroup(ctx context.Context, in *GroupMembers, opts ...grpc.CallOption) (*common.MessageResponse, error)
@@ -74,6 +76,24 @@ func (c *userClient) GetBestServer(ctx context.Context, in *emptypb.Empty, opts 
 func (c *userClient) Signup(ctx context.Context, in *NewUser, opts ...grpc.CallOption) (*UserMetadata, error) {
 	out := new(UserMetadata)
 	err := c.cc.Invoke(ctx, "/user.User/signup", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) GetUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*UserMetadata, error) {
+	out := new(UserMetadata)
+	err := c.cc.Invoke(ctx, "/user.User/getUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) GetUsers(ctx context.Context, in *UserIds, opts ...grpc.CallOption) (*Users, error) {
+	out := new(Users)
+	err := c.cc.Invoke(ctx, "/user.User/getUsers", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -152,8 +172,8 @@ func (c *userClient) GetChannelsAssociatedToUser(ctx context.Context, in *wrappe
 	return out, nil
 }
 
-func (c *userClient) GetUsersAssociatedToTargetUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Users, error) {
-	out := new(Users)
+func (c *userClient) GetUsersAssociatedToTargetUser(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*UserIds, error) {
+	out := new(UserIds)
 	err := c.cc.Invoke(ctx, "/user.User/getUsersAssociatedToTargetUser", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -161,7 +181,7 @@ func (c *userClient) GetUsersAssociatedToTargetUser(ctx context.Context, in *wra
 	return out, nil
 }
 
-func (c *userClient) GetUsersContactsMetadata(ctx context.Context, in *Users, opts ...grpc.CallOption) (*UserContacts, error) {
+func (c *userClient) GetUsersContactsMetadata(ctx context.Context, in *UserIds, opts ...grpc.CallOption) (*UserContacts, error) {
 	out := new(UserContacts)
 	err := c.cc.Invoke(ctx, "/user.User/getUsersContactsMetadata", in, out, opts...)
 	if err != nil {
@@ -222,6 +242,8 @@ type UserServer interface {
 	Heartbeat(context.Context, *emptypb.Empty) (*common.MessageResponse, error)
 	GetBestServer(context.Context, *emptypb.Empty) (*common.MessageResponse, error)
 	Signup(context.Context, *NewUser) (*UserMetadata, error)
+	GetUser(context.Context, *wrapperspb.StringValue) (*UserMetadata, error)
+	GetUsers(context.Context, *UserIds) (*Users, error)
 	UpdateUser(context.Context, *UserMetadata) (*common.MessageResponse, error)
 	Login(context.Context, *UserCredentials) (*UserMetadata, error)
 	Logout(context.Context, *wrapperspb.StringValue) (*common.MessageResponse, error)
@@ -230,8 +252,8 @@ type UserServer interface {
 	CreateChannel(context.Context, *NewChannel) (*common.Channel, error)
 	GetUsersAssociatedToChannel(context.Context, *wrapperspb.StringValue) (*UserContacts, error)
 	GetChannelsAssociatedToUser(context.Context, *wrapperspb.StringValue) (*Channels, error)
-	GetUsersAssociatedToTargetUser(context.Context, *wrapperspb.StringValue) (*Users, error)
-	GetUsersContactsMetadata(context.Context, *Users) (*UserContacts, error)
+	GetUsersAssociatedToTargetUser(context.Context, *wrapperspb.StringValue) (*UserIds, error)
+	GetUsersContactsMetadata(context.Context, *UserIds) (*UserContacts, error)
 	AddGroupMembers(context.Context, *GroupMembers) (*common.MessageResponse, error)
 	RemoveGroupMembers(context.Context, *GroupMembers) (*common.MessageResponse, error)
 	LeaveGroup(context.Context, *GroupMembers) (*common.MessageResponse, error)
@@ -252,6 +274,12 @@ func (UnimplementedUserServer) GetBestServer(context.Context, *emptypb.Empty) (*
 }
 func (UnimplementedUserServer) Signup(context.Context, *NewUser) (*UserMetadata, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Signup not implemented")
+}
+func (UnimplementedUserServer) GetUser(context.Context, *wrapperspb.StringValue) (*UserMetadata, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+}
+func (UnimplementedUserServer) GetUsers(context.Context, *UserIds) (*Users, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
 }
 func (UnimplementedUserServer) UpdateUser(context.Context, *UserMetadata) (*common.MessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
@@ -277,10 +305,10 @@ func (UnimplementedUserServer) GetUsersAssociatedToChannel(context.Context, *wra
 func (UnimplementedUserServer) GetChannelsAssociatedToUser(context.Context, *wrapperspb.StringValue) (*Channels, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetChannelsAssociatedToUser not implemented")
 }
-func (UnimplementedUserServer) GetUsersAssociatedToTargetUser(context.Context, *wrapperspb.StringValue) (*Users, error) {
+func (UnimplementedUserServer) GetUsersAssociatedToTargetUser(context.Context, *wrapperspb.StringValue) (*UserIds, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsersAssociatedToTargetUser not implemented")
 }
-func (UnimplementedUserServer) GetUsersContactsMetadata(context.Context, *Users) (*UserContacts, error) {
+func (UnimplementedUserServer) GetUsersContactsMetadata(context.Context, *UserIds) (*UserContacts, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsersContactsMetadata not implemented")
 }
 func (UnimplementedUserServer) AddGroupMembers(context.Context, *GroupMembers) (*common.MessageResponse, error) {
@@ -361,6 +389,42 @@ func _User_Signup_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServer).Signup(ctx, req.(*NewUser))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(wrapperspb.StringValue)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).GetUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.User/getUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).GetUser(ctx, req.(*wrapperspb.StringValue))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserIds)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).GetUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user.User/getUsers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).GetUsers(ctx, req.(*UserIds))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -528,7 +592,7 @@ func _User_GetUsersAssociatedToTargetUser_Handler(srv interface{}, ctx context.C
 }
 
 func _User_GetUsersContactsMetadata_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Users)
+	in := new(UserIds)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -540,7 +604,7 @@ func _User_GetUsersContactsMetadata_Handler(srv interface{}, ctx context.Context
 		FullMethod: "/user.User/getUsersContactsMetadata",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServer).GetUsersContactsMetadata(ctx, req.(*Users))
+		return srv.(UserServer).GetUsersContactsMetadata(ctx, req.(*UserIds))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -653,6 +717,14 @@ var User_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "signup",
 			Handler:    _User_Signup_Handler,
+		},
+		{
+			MethodName: "getUser",
+			Handler:    _User_GetUser_Handler,
+		},
+		{
+			MethodName: "getUsers",
+			Handler:    _User_GetUsers_Handler,
 		},
 		{
 			MethodName: "updateUser",

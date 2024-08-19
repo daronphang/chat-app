@@ -6,11 +6,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
 import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
 import userPb from 'proto/user/user_pb';
-import { Friend, UserMetadata } from 'features/user/redux/user.interface';
+import { Recipient, UserMetadata } from 'features/user/redux/user.interface';
 import { setUser } from 'features/user/redux/userSlice';
 import { RoutePath } from 'core/config/route.constant';
 import styles from './login.module.scss';
-import { useEffect } from 'react';
+import { getRandomColor } from 'core/utils/formatters';
 
 interface FormInput {
   email: string;
@@ -27,16 +27,11 @@ export default function Login({ showSignup }: LoginProps) {
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors },
   } = useForm<FormInput>({
     defaultValues: { email: '' },
     mode: 'onTouched', // default is onSubmit for validation to trigger
   });
-
-  useEffect(() => {
-    onSubmit({ email: 'daronphang@gmail.com' });
-  }, []);
 
   const onError = () => {
     enqueueSnackbar('Missing or invalid fields', {
@@ -53,17 +48,20 @@ export default function Login({ showSignup }: LoginProps) {
       userId: resp.getUserid(),
       email: resp.getEmail(),
       displayName: resp.getDisplayname(),
-      friends: {},
+      recipients: {},
     };
 
     resp.getFriendsList().forEach(row => {
-      const friend: Friend = {
+      const friend: Recipient = {
         userId: row.getUserid(),
         email: row.getEmail(),
         displayName: row.getDisplayname(),
         isOnline: false,
+        friendName: row.getFriendname(),
+        isFriend: true,
+        color: getRandomColor(),
       };
-      user.friends[friend.userId] = friend;
+      user.recipients[friend.userId] = friend;
     });
 
     dispatch(setUser(user));

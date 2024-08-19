@@ -64,6 +64,7 @@ func (s *GRPCServer) Login(ctx context.Context, arg *pb.UserCredentials) (*pb.Us
 			UserId: friend.UserID,
 			Email: friend.Email,
 			DisplayName: friend.DisplayName,
+			FriendName: friend.FriendName,
 		})
 	}
 	return &pb.UserMetadata{
@@ -73,6 +74,56 @@ func (s *GRPCServer) Login(ctx context.Context, arg *pb.UserCredentials) (*pb.Us
 		CreatedAt: rv.CreatedAt,
 		Friends: friends,
 	}, nil
+}
+
+func (s *GRPCServer) GetUser(ctx context.Context, arg *wrappers.StringValue) (*pb.UserMetadata, error) {	
+	if (arg.Value == "") {
+		return nil, status.Errorf(9, "user id is missing")
+	}
+		
+	rv, err := s.uc.GetUser(ctx, arg.Value); 
+	if err != nil {
+		return nil, status.Error(16, err.Error())
+	}
+
+	friends := make([]*pb.Friend, 0)
+	for _, friend := range rv.Friends {
+		friends = append(friends, &pb.Friend{
+			UserId: friend.UserID,
+			Email: friend.Email,
+			DisplayName: friend.DisplayName,
+		})
+	}
+	return &pb.UserMetadata{
+		UserId: rv.UserID,
+		Email: rv.Email,
+		DisplayName: rv.DisplayName,
+		CreatedAt: rv.CreatedAt,
+		Friends: friends,
+	}, nil
+}
+
+func (s *GRPCServer) GetUsers(ctx context.Context, arg *pb.UserIds) (*pb.Users, error) {	
+	if (len(arg.UserIds) == 0) {
+		return nil, status.Errorf(9, "missing user ids")
+	}
+		
+	rv, err := s.uc.GetUsers(ctx, arg.UserIds); 
+	if err != nil {
+		return nil, status.Error(16, err.Error())
+	}
+	
+	var users []*pb.UserMetadata
+	for _, x := range rv {
+		users = append(users, &pb.UserMetadata{
+			UserId: x.UserID,
+			Email: x.Email,
+			DisplayName: x.DisplayName,
+			CreatedAt: x.CreatedAt,
+		})
+	}
+
+	return &pb.Users{Users: users}, nil
 }
 
 func (s *GRPCServer) UpdateUser(ctx context.Context, arg *pb.UserMetadata) (*common.MessageResponse, error) {	
@@ -105,7 +156,7 @@ func (s *GRPCServer) AddFriend(ctx context.Context, arg *pb.NewFriend) (*pb.Frie
 	p := domain.NewFriend{
 		UserID: arg.UserId,
 		FriendEmail: arg.FriendEmail,
-		DisplayName: arg.DisplayName,
+		FriendName: arg.FriendName,
 	}
 	if err := cv.ValidateStruct(p); err != nil {
 		logger.Error("validation error", zap.String("trace", err.Error()))
@@ -120,6 +171,7 @@ func (s *GRPCServer) AddFriend(ctx context.Context, arg *pb.NewFriend) (*pb.Frie
 		UserId: rv.UserID,
 		Email: rv.Email,
 		DisplayName: rv.DisplayName,
+		FriendName: rv.FriendName,
 	}, nil
 }
 
@@ -139,13 +191,14 @@ func (s *GRPCServer) GetFriends(ctx context.Context, arg *wrappers.StringValue) 
 			UserId: x.UserID,
 			Email: x.Email,
 			DisplayName: x.DisplayName,
+			FriendName: x.FriendName,
 		})
 	}
 
 	return &pb.Friends{Friends: friends}, nil
 }
 
-func (s *GRPCServer) GetUsersAssociatedToTargetUser(ctx context.Context, arg *wrappers.StringValue) (*pb.Users, error) {
+func (s *GRPCServer) GetUsersAssociatedToTargetUser(ctx context.Context, arg *wrappers.StringValue) (*pb.UserIds, error) {
 	if (arg.Value == "") {
 		return nil, status.Errorf(9, "user id is missing")
 	}
@@ -154,10 +207,10 @@ func (s *GRPCServer) GetUsersAssociatedToTargetUser(ctx context.Context, arg *wr
 	if err != nil {
 		return nil, status.Error(10, err.Error())
 	}
-	return &pb.Users{UserIds: rv}, nil
+	return &pb.UserIds{UserIds: rv}, nil
 }
 
-func (s *GRPCServer) GetUsersContactsMetadata(ctx context.Context, arg *pb.Users) (*pb.UserContacts, error) {
+func (s *GRPCServer) GetUsersContactsMetadata(ctx context.Context, arg *pb.UserIds) (*pb.UserContacts, error) {
 	rv, err := s.uc.GetUsersContactsMetadata(ctx, arg.UserIds)
 	if err != nil {
 		return nil, status.Error(10, err.Error())

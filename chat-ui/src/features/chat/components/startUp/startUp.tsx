@@ -12,6 +12,8 @@ import { Channel, Message } from 'features/chat/redux/chat.interface';
 import { initChannels } from 'features/chat/redux/chatSlice';
 import { chunk } from 'core/utils/formatters';
 import styles from './startUp.module.scss';
+import { fetchUnknownUsers, getRecipientId } from 'core/utils/chat';
+import { addRecipients } from 'features/user/redux/userSlice';
 
 interface StartUpProps {
   handleLoading: (v: boolean) => void;
@@ -30,15 +32,25 @@ export default function StartUp({ handleLoading, handleAlert }: StartUpProps) {
 
       const channels = promise[0];
       const wsUrl = promise[1];
-      if (channels.length === 0) {
-        return;
-      } else if (!wsUrl) {
+
+      if (!wsUrl) {
         handleAlert('Failed to connect to chat server');
         return;
       }
 
       dispatch(setChatServerWsUrl(wsUrl));
-      await loadMessagesInChannels(channels);
+      if (channels.length === 0) {
+        return;
+      }
+
+      const promise2 = await Promise.all([
+        loadChannelsMetadata(channels),
+        fetchUnknownUsers(config, getUnknownUsers(channels)),
+      ]);
+      const unknownRecipients = promise2[1];
+      if (unknownRecipients && unknownRecipients.length > 0) {
+        dispatch(addRecipients(unknownRecipients));
+      }
     }
     handleStartUp();
     setTimeout(() => {
@@ -46,7 +58,7 @@ export default function StartUp({ handleLoading, handleAlert }: StartUpProps) {
     }, 1000);
   }, []);
 
-  const loadMessagesInChannels = async (channels: Channel[]) => {
+  const loadChannelsMetadata = async (channels: Channel[]) => {
     // Buffer channel requests and updates to Redux store.
     const chunks: Channel[][] = chunk(channels, 5);
 
@@ -70,9 +82,9 @@ export default function StartUp({ handleLoading, handleAlert }: StartUpProps) {
           channelId: row.getChannelid(),
           channelName: row.getChannelname(),
           createdAt: row.getCreatedat(),
+          updatedAt: row.getCreatedat(),
           messages: [],
           userIds: row.getUseridsList(),
-          updatedAt: new Date().toISOString(),
           lastMessageId: row.getLastmessageid(),
         };
       });
@@ -104,8 +116,8 @@ export default function StartUp({ handleLoading, handleAlert }: StartUpProps) {
           messageType: row.getMessagetype(),
           content: row.getContent(),
           createdAt: row.getCreatedat(),
+          updatedAt: row.getCreatedat(),
           messageStatus: row.getMessagestatus(),
-          updatedAt: new Date().toISOString(),
         };
       });
       return new Promise(resolve => resolve(messages));
@@ -135,6 +147,19 @@ export default function StartUp({ handleLoading, handleAlert }: StartUpProps) {
       });
       return new Promise(resolve => resolve(null));
     }
+  };
+
+  const getUnknownUsers = (channels: Channel[]): string[] => {
+    // Unknown users in group chats are excluded. To fetch separately when
+    // user navigates to the group chat.
+    const unknownUsers: string[] = [];
+    channels.forEach(row => {
+      const recipientId = getRecipientId(user.userId, row.channelId);
+      if (recipientId && !(recipientId in user.recipients)) {
+        unknownUsers.push(recipientId);
+      }
+    });
+    return unknownUsers;
   };
 
   return (

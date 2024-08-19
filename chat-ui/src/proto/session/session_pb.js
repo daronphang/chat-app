@@ -60,7 +60,7 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.session.UserPresence = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(this, opt_data, 0, -1, proto.session.UserPresence.repeatedFields_, null);
 };
 goog.inherits(proto.session.UserPresence, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -252,6 +252,13 @@ proto.session.UserSession.prototype.setServer = function(value) {
 
 
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.session.UserPresence.repeatedFields_ = [3];
+
 
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -284,7 +291,8 @@ proto.session.UserPresence.prototype.toObject = function(opt_includeInstance) {
 proto.session.UserPresence.toObject = function(includeInstance, msg) {
   var f, obj = {
     userid: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    status: jspb.Message.getFieldWithDefault(msg, 2, "")
+    status: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    recipientidsList: (f = jspb.Message.getRepeatedField(msg, 3)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -329,6 +337,10 @@ proto.session.UserPresence.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {string} */ (reader.readString());
       msg.setStatus(value);
       break;
+    case 3:
+      var value = /** @type {string} */ (reader.readString());
+      msg.addRecipientids(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -372,6 +384,13 @@ proto.session.UserPresence.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
+  f = message.getRecipientidsList();
+  if (f.length > 0) {
+    writer.writeRepeatedString(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -408,6 +427,43 @@ proto.session.UserPresence.prototype.getStatus = function() {
  */
 proto.session.UserPresence.prototype.setStatus = function(value) {
   return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * repeated string recipientIds = 3;
+ * @return {!Array<string>}
+ */
+proto.session.UserPresence.prototype.getRecipientidsList = function() {
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 3));
+};
+
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.session.UserPresence} returns this
+ */
+proto.session.UserPresence.prototype.setRecipientidsList = function(value) {
+  return jspb.Message.setField(this, 3, value || []);
+};
+
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.session.UserPresence} returns this
+ */
+proto.session.UserPresence.prototype.addRecipientids = function(value, opt_index) {
+  return jspb.Message.addToRepeatedField(this, 3, value, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.session.UserPresence} returns this
+ */
+proto.session.UserPresence.prototype.clearRecipientidsList = function() {
+  return this.setRecipientidsList([]);
 };
 
 

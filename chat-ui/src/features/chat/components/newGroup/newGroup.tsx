@@ -1,10 +1,10 @@
 import { Chip, Tooltip } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { enqueueSnackbar } from 'notistack';
 
 import Search from 'shared/components/search/search';
-import { Friend } from 'features/user/redux/user.interface';
+import { Recipient } from 'features/user/redux/user.interface';
 import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
 import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
 import { Channel } from 'features/chat/redux/chat.interface';
@@ -20,13 +20,13 @@ interface NewGroupProps {
 
 interface FormInput {
   groupName: string;
-  users: Friend[];
+  users: Recipient[];
 }
 
 export default function NewGroup({ handleClickBack, createNewChannel, broadcastChannelEvent }: NewGroupProps) {
   const [drawers, setDrawers] = useState<JSX.Element[]>([]);
-  const [users, setUsers] = useState<Friend[]>([]);
-  const config = useAppSelector(state => state.config);
+  const [users, setUsers] = useState<Recipient[]>([]);
+  const friends = useRef<Recipient[]>([]);
   const user = useAppSelector(state => state.user);
   const dispatch = useAppDispatch();
   const {
@@ -41,15 +41,15 @@ export default function NewGroup({ handleClickBack, createNewChannel, broadcastC
   });
 
   useEffect(() => {
-    const friends: Friend[] = Object.values(user.friends);
-    displayFriends(friends);
+    friends.current = Object.values(user.recipients).filter(row => row.isFriend);
+    displayFriends(friends.current);
   }, []);
 
   const handleSearchResult = (v: any[]) => {
     displayFriends(v);
   };
 
-  const handleClickDrawer = (v: Friend) => {
+  const handleClickDrawer = (v: Recipient) => {
     setUsers(state => {
       const idx = state.findIndex(row => row.userId === v.userId);
       if (idx === -1) {
@@ -71,11 +71,11 @@ export default function NewGroup({ handleClickBack, createNewChannel, broadcastC
     });
   };
 
-  const displayFriends = (friends: Friend[]) => {
-    friends.sort((a, b) => a.displayName.localeCompare(b.displayName));
+  const displayFriends = (friends: Recipient[]) => {
+    friends.sort((a, b) => a.friendName.localeCompare(b.friendName));
     setDrawers(
       friends.map(row => (
-        <UserDrawer key={row.userId} data={row} title={row.displayName} text="" handleClickDrawer={handleClickDrawer} />
+        <UserDrawer key={row.userId} data={row} title={row.friendName} text="" handleClickDrawer={handleClickDrawer} />
       ))
     );
   };
@@ -83,14 +83,15 @@ export default function NewGroup({ handleClickBack, createNewChannel, broadcastC
   const onSubmit = async (data: FormInput) => {
     const userIds = data.users.map(row => row.userId);
     userIds.push(user.userId);
+    const timestamp = new Date().toISOString();
 
     const newChannel: Channel = {
       channelId: '',
       channelName: data.groupName,
       userIds,
       messages: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: timestamp,
+      updatedAt: timestamp,
       lastMessageId: 0,
     };
     const resp = await createNewChannel(newChannel);
@@ -156,14 +157,17 @@ export default function NewGroup({ handleClickBack, createNewChannel, broadcastC
           </button>
         </form>
         <div className="mb-4"></div>
-        <Search
-          sourceData={Object.values(user.friends)}
-          excludedFields={['userId', 'email', 'isOnline']}
-          handleSearchResult={handleSearchResult}
-        />
+        {friends.current.length > 0 && (
+          <Search
+            sourceData={friends.current}
+            excludedFields={['userId', 'email', 'isOnline', 'isFriend', 'displayName']}
+            handleSearchResult={handleSearchResult}
+          />
+        )}
         <div className="mb-3"></div>
       </div>
-      <div className={`${styles.drawerWrapper} p-3`}>{drawers}</div>
+      {friends.current.length === 0 && <div className="text-center">To create a group, add friends.</div>}
+      {friends.current.length > 0 && <div className={`${styles.drawerWrapper} p-3`}>{drawers}</div>}
     </>
   );
 }

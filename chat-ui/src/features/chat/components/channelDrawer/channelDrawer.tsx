@@ -2,17 +2,22 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEffect, useRef, useState } from 'react';
 import { Badge } from '@mui/material';
 import moment from 'moment';
+import { RpcError } from 'grpc-web';
 
-import { Message, MessageStatus } from 'features/chat/redux/chat.interface';
+import wrappers from 'google-protobuf/google/protobuf/wrappers_pb';
+import { Channel, Message } from 'features/chat/redux/chat.interface';
 import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
-import { addUnreadChannel, setChannelAsRead, setCurChannelId } from 'features/chat/redux/chatSlice';
+import { addChannel, addUnreadChannel, setChannelAsRead, setCurChannelId } from 'features/chat/redux/chatSlice';
 import styles from './channelDrawer.module.scss';
+import { fetchUnknownUsers, isGroupChat } from 'core/utils/chat';
+import { Recipient } from 'features/user/redux/user.interface';
+import { addRecipient, addRecipients } from 'features/user/redux/userSlice';
 
 interface DrawerProps {
-  channelId: string;
+  channel: Channel;
 }
 
-export default function ChannelDrawer({ channelId }: DrawerProps) {
+export default function ChannelDrawer({ channel }: DrawerProps) {
   const [isOnline, setIsOnline] = useState<boolean>(false);
   const [title, setTitle] = useState<string>('');
   const [subtitle, setSubtitle] = useState<string>('');
@@ -20,58 +25,84 @@ export default function ChannelDrawer({ channelId }: DrawerProps) {
   const [text, setText] = useState<string>('');
   const [badgeContent, setBadgeContent] = useState<number>(0);
   // For 1-on-1 chat, to store the friendId.
-  const chatType = useRef<string>('');
+  const chatType = useRef<string>('group');
 
   const user = useAppSelector(state => state.user);
-  const channel = useAppSelector(state => state.chat.channelHash[channelId]);
+  const config = useAppSelector(state => state.config);
   const curChannelId = useAppSelector(state => state.chat.curChannelId);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (!chatType.current) {
-      setChatType();
-    }
+    setChatType();
+  }, []);
 
-    setTitle(getTitle());
+  useEffect(() => {
+    handleNewMessage();
+  }, [channel.messages]);
+
+  useEffect(() => {
+    handleRecipientStatusChange();
+  }, [user.recipients]);
+
+  useEffect(() => {
+    setTitle(channel.channelName);
+  }, [channel.channelName]);
+
+  const setChatType = () => {
+    if (isGroupChat(channel)) {
+      return;
+    }
+    const friendId = channel.userIds.find(row => row !== user.userId);
+    if (!friendId) {
+      chatType.current = 'unknown';
+    } else {
+      chatType.current = friendId;
+    }
+  };
+
+  const handleNewMessage = async () => {
     if (channel.messages.length === 0) {
       setText('Draft');
       setSubtitle(getSubtitle(channel.createdAt));
-    } else {
-      setText(channel.messages[channel.messages.length - 1].content);
-      setSubtitle(getSubtitle(channel.messages[channel.messages.length - 1].createdAt));
+      return;
+    }
 
-      if (curChannelId !== channel.channelId) {
-        const count = getUnreadMessages();
-        setBadgeContent(count);
-        if (count > 0) {
-          dispatch(addUnreadChannel(channel.channelId));
-        }
+    const latestMsg = channel.messages[channel.messages.length - 1];
+    if (isGroupChat(channel)) {
+      const name = await resolveRecipientIdToName(latestMsg.senderId);
+      setText(`${name}: ${latestMsg.content}`);
+    } else {
+      setText(latestMsg.content);
+    }
+    setSubtitle(getSubtitle(latestMsg.createdAt));
+
+    if (curChannelId !== channel.channelId) {
+      const count = countUnreadMessages();
+      setBadgeContent(count);
+      if (count > 0) {
+        dispatch(addUnreadChannel(channel.channelId));
       }
     }
-  }, [channel]);
+  };
 
-  useEffect(() => {
-    if (!chatType.current || chatType.current === 'group') {
+  const handleRecipientStatusChange = async () => {
+    if (chatType.current === 'group') {
       return;
     }
 
-    if (chatType.current in user.friends) {
-      setIsOnline(user.friends[chatType.current].isOnline);
-    }
-  }, [user.friends]);
-
-  const setChatType = () => {
-    // Group channel.
-    if (channel.channelId.length <= 36) {
-      chatType.current = 'group';
-      return;
+    if (chatType.current in user.recipients && user.recipients[chatType.current].isFriend) {
+      setIsOnline(user.recipients[chatType.current].isOnline);
     }
 
-    const friendId = channel.userIds.find(row => row !== user.userId);
-    if (!friendId) {
-      return;
+    const newChannelName = await resolveRecipientIdToName(chatType.current);
+    if (channel.channelName !== newChannelName) {
+      const payload: Channel = {
+        ...channel,
+        channelName: newChannelName,
+        updatedAt: new Date().toISOString(),
+      };
+      dispatch(addChannel(payload));
     }
-    chatType.current = friendId;
   };
 
   const getSubtitle = (timestamp: string) => {
@@ -82,22 +113,47 @@ export default function ChannelDrawer({ channelId }: DrawerProps) {
     return moment(timestamp).format('DD/MM');
   };
 
-  const getTitle = (): string => {
-    if (chatType.current === 'group') {
-      return channel.channelName;
+  // Applicable only for group chats.
+  const resolveRecipientIdToName = async (recipientId: string): Promise<string> => {
+    if (user.userId === recipientId) {
+      return new Promise(resolve => resolve('You'));
+    } else if (recipientId in user.recipients) {
+      const recipient = user.recipients[recipientId];
+      if (recipient.isFriend) return new Promise(resolve => resolve(recipient.friendName));
+      return new Promise(resolve => resolve(recipient.email));
     }
 
-    // Check if user is friend.
-    if (chatType.current in user.friends) {
-      return user.friends[chatType.current].displayName;
+    const unknownUser = await getUnknownUser(recipientId);
+    if (!unknownUser) {
+      return new Promise(resolve => resolve('Unknown User'));
     }
-    // User is not friend. To fetch user's name instead.
-    return '';
+    dispatch(addRecipient(unknownUser));
+    return new Promise(resolve => resolve(unknownUser.email));
   };
 
-  const fetchUser = async () => {};
+  const getUnknownUser = async (userId: string): Promise<Recipient | null> => {
+    try {
+      const payload = new wrappers.StringValue();
+      payload.setValue(userId);
+      const resp = await config.api.USER_SERVICE.getUser(payload);
+      const rv: Recipient = {
+        userId: resp.getUserid(),
+        email: resp.getEmail(),
+        displayName: resp.getDisplayname(),
+        isFriend: false,
+        friendName: '',
+        isOnline: false,
+        color: '#000000',
+      };
+      return new Promise(resolve => resolve(rv));
+    } catch (e) {
+      const err = e as RpcError;
+      console.error('unable to get unknown user', err.message);
+      return new Promise(resolve => resolve(null));
+    }
+  };
 
-  const getUnreadMessages = (): number => {
+  const countUnreadMessages = (): number => {
     let count = 0;
     let cur: Message;
     for (let i = channel.messages.length - 1; i >= 0; i--) {
@@ -114,7 +170,15 @@ export default function ChannelDrawer({ channelId }: DrawerProps) {
     return count;
   };
 
-  const handleClickDrawer = () => {
+  const handleClickDrawer = async () => {
+    // All users in a group are fetched when the chat is clicked.
+    if (chatType.current === 'group') {
+      const userIds = channel.userIds.filter(row => row !== user.userId && !(row in user.recipients));
+      const resp = await fetchUnknownUsers(config, userIds);
+      if (resp && resp.length > 0) {
+        dispatch(addRecipients(resp));
+      }
+    }
     if (badgeContent > 0) {
       setBadgeContent(0);
       dispatch(setChannelAsRead(channel.channelId));

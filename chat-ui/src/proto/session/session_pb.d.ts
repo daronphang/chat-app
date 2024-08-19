@@ -33,6 +33,11 @@ export class UserPresence extends jspb.Message {
   getStatus(): string;
   setStatus(value: string): UserPresence;
 
+  getRecipientidsList(): Array<string>;
+  setRecipientidsList(value: Array<string>): UserPresence;
+  clearRecipientidsList(): UserPresence;
+  addRecipientids(value: string, index?: number): UserPresence;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UserPresence.AsObject;
   static toObject(includeInstance: boolean, msg: UserPresence): UserPresence.AsObject;
@@ -45,6 +50,7 @@ export namespace UserPresence {
   export type AsObject = {
     userid: string,
     status: string,
+    recipientidsList: Array<string>,
   }
 }
 

@@ -6,14 +6,16 @@ import { Tooltip } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import userPb from 'proto/user/user_pb';
-import { Friend } from 'features/user/redux/user.interface';
-import { addFriend } from 'features/user/redux/userSlice';
+import { Recipient } from 'features/user/redux/user.interface';
+import { addRecipient } from 'features/user/redux/userSlice';
 import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
 import styles from './newUser.module.scss';
+import { getRandomColor } from 'core/utils/formatters';
+import { fetchOnlineRecipients } from 'core/utils/chat';
 
 interface FormInput {
   email: string;
-  displayName: string;
+  friendName: string;
 }
 
 interface NewFriendProps {
@@ -30,14 +32,14 @@ export default function NewUser({ handleClickBack }: NewFriendProps) {
     reset,
     formState: { errors },
   } = useForm<FormInput>({
-    defaultValues: { email: '', displayName: '' },
+    defaultValues: { email: '', friendName: '' },
     mode: 'onTouched', // default is onSubmit for validation to trigger
   });
 
   const onSubmit = async (data: FormInput) => {
     // Check if friend exists.
-    const friends = Object.values(user.friends);
-    const exist = friends.find(row => row.email === data.email);
+    const friends = Object.values(user.recipients);
+    const exist = friends.find(row => row.email === data.email && row.isFriend);
     if (exist) {
       enqueueSnackbar('Friend already exists', {
         ...defaultSnackbarOptions,
@@ -47,18 +49,24 @@ export default function NewUser({ handleClickBack }: NewFriendProps) {
     }
 
     // Add friend.
-    const friend: Friend = {
+    const friend: Recipient = {
       userId: '',
       email: data.email,
-      displayName: data.displayName,
+      displayName: '',
+      friendName: data.friendName,
       isOnline: false,
+      isFriend: true,
+      color: getRandomColor(),
     };
     const resp = await addNewFriend(friend);
     if (!resp) return;
 
-    // Update required metadata.
-    friend.userId = resp.getUserid();
-    dispatch(addFriend(friend));
+    // Check if user is online.
+    const temp = await fetchOnlineRecipients(config, [resp.userId]);
+    if (temp.length > 0) {
+      resp.isOnline = true;
+    }
+    dispatch(addRecipient(resp));
     reset();
   };
 
@@ -69,19 +77,24 @@ export default function NewUser({ handleClickBack }: NewFriendProps) {
     });
   };
 
-  const addNewFriend = async (newFriend: Friend): Promise<userPb.Friend | null> => {
+  const addNewFriend = async (newFriend: Recipient): Promise<Recipient | null> => {
     try {
       const payload = new userPb.NewFriend();
       payload.setUserid(user.userId);
       payload.setFriendemail(newFriend.email);
-      payload.setDisplayname(newFriend.displayName);
+      payload.setFriendname(newFriend.friendName);
       const resp = await config.api.USER_SERVICE.addFriend(payload);
 
       enqueueSnackbar('New friend added', {
         ...defaultSnackbarOptions,
         variant: 'success',
       });
-      return new Promise(resolve => resolve(resp));
+      const recipient: Recipient = {
+        ...newFriend,
+        userId: resp.getUserid(),
+        displayName: resp.getDisplayname(),
+      };
+      return new Promise(resolve => resolve(recipient));
     } catch (e) {
       const err = e as RpcError;
       const errMsg = err.code === 14 ? config.apiError.NETWORK_ERROR : 'Failed to add friend';
@@ -113,12 +126,12 @@ export default function NewUser({ handleClickBack }: NewFriendProps) {
           className={`base-input ${styles.inputField}`}></input>
         {errors.email && <span className="input-error-msg">Email is invalid</span>}
         <input
-          {...register('displayName', { required: true })}
+          {...register('friendName', { required: true })}
           id="new-friend-display-name-input"
           autoComplete="on"
           placeholder="Friend Name"
           className={`base-input mt-3 ${styles.inputField}`}></input>
-        {errors.displayName && <span className="input-error-msg">Field is required</span>}
+        {errors.friendName && <span className="input-error-msg">Field is required</span>}
       </form>
       <button className={`btn mt-4 ${styles.button}`} onClick={handleSubmit(onSubmit, onError)}>
         Add Friend

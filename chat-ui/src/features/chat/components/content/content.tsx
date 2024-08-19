@@ -3,31 +3,60 @@ import styles from './content.module.scss';
 import { useAppSelector } from 'core/redux/reduxHooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import moment from 'moment';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ContentProps {
-  props: Message;
+  message: Message;
+  isGroup: boolean;
   recipientLastReadMessageId?: number;
 }
 
-export default function Content({ props, recipientLastReadMessageId }: ContentProps) {
-  const userId = useAppSelector(state => state.user.userId);
+export default function Content({ message, isGroup, recipientLastReadMessageId }: ContentProps) {
+  const user = useAppSelector(state => state.user);
+  const [sender, setSender] = useState<string>('');
+  const [color, setColor] = useState<string>('#000000');
+
+  useEffect(() => {
+    if (isGroup && message.senderId in user.recipients) {
+      setSender(resolveSenderIdToName(message.senderId));
+      setColor(user.recipients[message.senderId].color);
+    }
+  }, []);
+
+  // Applicable only for group chats.
+  const resolveSenderIdToName = (senderId: string): string => {
+    if (user.userId === senderId) {
+      return '';
+    } else if (senderId in user.recipients) {
+      const sender = user.recipients[senderId];
+      if (sender.isFriend) {
+        return sender.friendName;
+      }
+      return sender.email;
+    }
+    return 'Unknown User';
+  };
 
   return (
-    <div className={`${userId === props.senderId ? styles.senderContent : styles.receiverContent} mb-3 p-2`}>
-      {props.content}
+    <div className={`${user.userId === message.senderId ? styles.senderContent : styles.receiverContent} mb-3 p-2`}>
+      {sender && (
+        <div style={{ color: color }}>
+          <strong>{sender}</strong>
+        </div>
+      )}
+      {message.content}
       <div className={styles.metadata}>
-        <span className="me-2">{moment(props.createdAt).format('MM/DD/YY HH:mm')}</span>
-        {userId === props.senderId && props.messageStatus === MessageStatus.PENDING && (
+        <span className="me-2">{moment(message.createdAt).format('MM/DD/YY HH:mm')}</span>
+        {user.userId === message.senderId && message.messageStatus === MessageStatus.PENDING && (
           <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'clock']} />
         )}
-        {userId === props.senderId && props.messageStatus === MessageStatus.RECEIVED && (
+        {user.userId === message.senderId && message.messageStatus === MessageStatus.RECEIVED && (
           <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'check']} />
         )}
-        {userId === props.senderId && props.messageStatus === MessageStatus.DELIVERED && (
+        {user.userId === message.senderId && message.messageStatus === MessageStatus.DELIVERED && (
           <FontAwesomeIcon className={styles.icon} size="lg" icon={['fas', 'check-double']} />
         )}
-        {userId === props.senderId && props.messageStatus === MessageStatus.READ && (
+        {user.userId === message.senderId && message.messageStatus === MessageStatus.READ && (
           <FontAwesomeIcon className={styles.read} size="lg" icon={['fas', 'check-double']} />
         )}
       </div>

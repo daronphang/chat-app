@@ -1,29 +1,25 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Channel, Message, MessageStatus } from './chat.interface';
-import { Friend } from 'features/user/redux/user.interface';
-
-interface UnreadChannelHash {
-  [key: string]: boolean;
-}
-
-interface ChannelHash {
-  [key: string]: Channel;
-}
+import { Channel, Message, UnreadChannelHash } from './chat.interface';
 
 interface ChatState {
-  channelHash: ChannelHash;
+  channels: Channel[];
   curChannelId: string;
   unreadChannels: UnreadChannelHash;
+  // When a chat is loaded, latest metadata for channels/users will be fetched.
+  // However, there may be older events in the user's queue which should
+  // not overwrite. This serves as a checkpoint for events coming from the queue.
+  initTimestamp: string;
 }
 
 const initialState: ChatState = {
   curChannelId: '',
   unreadChannels: {},
-  channelHash: {},
+  channels: [],
+  initTimestamp: '',
 };
 
-const isNewerEvent = (newEventTimestamp: string, curEventTimestamp: string): boolean => {
-  if (new Date(newEventTimestamp).getTime() > new Date(curEventTimestamp).getTime()) {
+const isNewerEvent = (newEventTimestamp: string, initTimestamp: string): boolean => {
+  if (new Date(newEventTimestamp).getTime() > new Date(initTimestamp).getTime()) {
     return true;
   }
   return false;
@@ -49,10 +45,36 @@ const isMessageBigger = (newMsg: Message, curMsg: Message): boolean => {
   return false;
 };
 
+const getLatestTimestamp = (channel: Channel): number => {
+  if (channel.messages.length === 0) {
+    return new Date(channel.createdAt).getTime();
+  }
+  return new Date(channel.messages[channel.messages.length - 1].createdAt).getTime();
+};
+
+const sortChannelsByLatestTimestamp = (channels: Channel[]) => {
+  // When new messages or channels are created, the channels need to be sorted
+  // in descending order. This operation will not be costly as only 1 channel may
+  // need to be spliced to the front of an already sorted array.
+  // Hence, it is ok to call this function whenever there is a change in channels.
+  channels.sort((a, b) => {
+    return getLatestTimestamp(b) - getLatestTimestamp(a);
+  });
+};
+
 export const chatSlice = createSlice({
   name: 'chat',
   initialState,
+  // Redux doesn't allow updates to action.payload as the same object might be
+  // used in other dispatches.
   reducers: {
+    resetChat: state => {
+      state.channels = [];
+      state.curChannelId = '';
+      state.unreadChannels = {};
+      state.initTimestamp = '';
+      return state;
+    },
     setCurChannelId: (state, action: PayloadAction<string>) => {
       state.curChannelId = action.payload;
       return state;
@@ -68,15 +90,21 @@ export const chatSlice = createSlice({
       return state;
     },
     initChannels: (state, action: PayloadAction<Channel[]>) => {
-      action.payload.forEach(row => {
-        state.channelHash[row.channelId] = row;
-      });
+      sortChannelsByLatestTimestamp(action.payload);
+      state.channels = action.payload;
+      state.initTimestamp = new Date().toISOString();
       return state;
     },
     addMessage: (state, action: PayloadAction<Message>) => {
       // Multiple state updates required.
+      if (isNewerEvent(state.initTimestamp, action.payload.updatedAt)) {
+        return state;
+      }
+
       const v = action.payload;
-      if (!(v.channelId in state.channelHash)) {
+      const channel = state.channels.find(row => row.channelId === v.channelId);
+
+      if (!channel) {
         // Channel does not exist, to add.
         const newChannel: Channel = {
           channelId: v.channelId,
@@ -87,18 +115,19 @@ export const chatSlice = createSlice({
           updatedAt: v.createdAt,
           lastMessageId: 0,
         };
-        state.channelHash[v.channelId] = newChannel;
+        state.channels.push(newChannel);
+        sortChannelsByLatestTimestamp(state.channels);
         return state;
       }
 
       // Message received may not come in sequential order.
       // Need to check for deduplicated messages also.
-      const channel = state.channelHash[v.channelId];
       const size = channel.messages.length;
       let curMsg: Message;
 
       if (size === 0 || isMessageBigger(v, channel.messages[size - 1])) {
         channel.messages.push(action.payload);
+        sortChannelsByLatestTimestamp(state.channels);
         return state;
       }
 
@@ -110,6 +139,7 @@ export const chatSlice = createSlice({
           if (isNewerEvent(v.updatedAt, curMsg.updatedAt)) {
             curMsg.messageId = v.messageId;
             curMsg.messageStatus = v.messageStatus;
+            curMsg.updatedAt = v.updatedAt;
           }
           return state;
         } else if (isMessageBigger(v, curMsg)) {
@@ -125,51 +155,41 @@ export const chatSlice = createSlice({
     },
     addChannel: (state, action: PayloadAction<Channel>) => {
       // Multiple state updates required.
+      if (isNewerEvent(state.initTimestamp, action.payload.updatedAt)) {
+        return state;
+      }
+
       const v = action.payload;
-      if (!(v.channelId in state.channelHash)) {
-        state.channelHash[v.channelId] = v;
+      const channel = state.channels.find(row => row.channelId === v.channelId);
+
+      if (!channel) {
+        state.channels.push(v);
+        sortChannelsByLatestTimestamp(state.channels);
+        return state;
+      } else if (!isNewerEvent(v.updatedAt, channel.updatedAt)) {
         return state;
       }
 
-      // Update existing channel if applicable.
-      const curChannel = state.channelHash[v.channelId];
-      if (!isNewerEvent(v.updatedAt, curChannel.updatedAt)) {
-        return state;
-      }
-
-      curChannel.channelId = v.channelId;
-      curChannel.channelName = v.channelName;
-      curChannel.createdAt = v.createdAt;
-      if (v.isDraft) {
-        curChannel.isDraft = v.isDraft;
-      }
-
+      // Update existing channel metadata.
+      channel.channelName = v.channelName;
+      channel.userIds = v.userIds;
       return state;
     },
-    setMessageAsRead: (state, action: PayloadAction<Message>) => {
-      // Redux doesn't allow updates to action.payload as the same object might be
-      // used in other dispatches.
-      if (!(action.payload.channelId in state.channelHash)) {
+    moveChannelToFront: (state, action: PayloadAction<string>) => {
+      const idx = state.channels.findIndex(row => row.channelId === action.payload);
+      if (idx === -1) {
         return state;
       }
-
-      const channel = state.channelHash[action.payload.channelId];
-      let cur: Message;
-      for (let i = channel.messages.length - 1; i >= 0; i--) {
-        cur = channel.messages[i];
-        if (cur.messageId === action.payload.messageId) {
-          cur.messageStatus = MessageStatus.READ;
-          return state;
-        }
-      }
-
+      const channel = state.channels.splice(idx, 1)[0];
+      state.channels.splice(0, 0, channel);
       return state;
     },
-    setLastReadMessageId: (state, action: PayloadAction<string>) => {
-      if (!(action.payload in state.channelHash)) {
+    setLastReadMessageInChannel: (state, action: PayloadAction<string>) => {
+      const channel = state.channels.find(row => row.channelId === action.payload);
+      if (!channel) {
         return state;
       }
-      const channel = state.channelHash[action.payload];
+
       const latestMessageId = channel.messages[channel.messages.length - 1].messageId;
       channel.lastMessageId = latestMessageId;
       return state;
@@ -180,10 +200,15 @@ export const chatSlice = createSlice({
       }
 
       const chId = action.payload[0].channelId;
-      if (!(chId in state.channelHash)) {
+      const channel = state.channels.find(row => row.channelId === chId);
+      if (!channel) {
         return state;
       }
-      const channel = state.channelHash[chId];
+
+      if (isNewerEvent(action.payload[action.payload.length - 1].createdAt, channel.messages[0].createdAt)) {
+        return state;
+      }
+
       channel.messages = [...action.payload, ...channel.messages];
       return state;
     },
@@ -191,13 +216,15 @@ export const chatSlice = createSlice({
 });
 
 export const {
+  resetChat,
   initChannels,
   addChannel,
+  moveChannelToFront,
   addMessage,
   setCurChannelId,
   addUnreadChannel,
   setChannelAsRead,
-  setLastReadMessageId,
+  setLastReadMessageInChannel,
   addOlderMessages,
 } = chatSlice.actions;
 export default chatSlice.reducer;

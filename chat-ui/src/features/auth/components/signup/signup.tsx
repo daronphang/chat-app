@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
 import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
 import userPb from 'proto/user/user_pb';
-import { Friend, UserMetadata } from 'features/user/redux/user.interface';
+import { Recipient, UserMetadata } from 'features/user/redux/user.interface';
 import { setUser } from 'features/user/redux/userSlice';
 import { RoutePath } from 'core/config/route.constant';
 import styles from './signup.module.scss';
@@ -49,19 +49,8 @@ export default function Signup({ showLogin }: SignupProps) {
       userId: resp.getUserid(),
       email: resp.getEmail(),
       displayName: resp.getDisplayname(),
-      friends: {},
+      recipients: {},
     };
-
-    resp.getFriendsList().forEach(row => {
-      const friend: Friend = {
-        userId: row.getUserid(),
-        email: row.getEmail(),
-        displayName: row.getDisplayname(),
-        isOnline: false,
-      };
-      user.friends[friend.userId] = friend;
-    });
-
     dispatch(setUser(user));
     navigate(RoutePath.CHAT);
   };

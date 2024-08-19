@@ -23,7 +23,7 @@ func (h *RestHandler) HandleUserPresenceEvent(c echo.Context) error {
 		Data: *p,
 	}
 
-	if err := h.usecase.SendEventToClient(c.Request().Context(), p.ClientID, event); err != nil {
+	if err := h.usecase.SendEventToClient(c.Request().Context(), p.TargetID, event); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 

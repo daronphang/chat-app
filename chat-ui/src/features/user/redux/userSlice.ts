@@ -1,11 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { UserMetadata, Friend, UserPresence } from './user.interface';
+import { UserMetadata, Recipient, UserPresence } from './user.interface';
 
 const initialState: UserMetadata = {
   userId: '',
   email: '',
   displayName: '',
-  friends: {},
+  recipients: {},
 };
 
 export const userSlice = createSlice({
@@ -16,41 +16,48 @@ export const userSlice = createSlice({
       state.userId = action.payload.userId;
       state.email = action.payload.email;
       state.displayName = action.payload.displayName;
-      state.friends = action.payload.friends;
+      state.recipients = action.payload.recipients;
       return state;
     },
-    removeUser: state => {
+    resetUser: state => {
       state.userId = '';
       state.email = '';
       state.displayName = '';
-      state.friends = {};
+      state.recipients = {};
       return state;
     },
-    addFriend: (state, action: PayloadAction<Friend>) => {
-      state.friends[action.payload.userId] = action.payload;
+    addRecipient: (state, action: PayloadAction<Recipient>) => {
+      state.recipients[action.payload.userId] = action.payload;
       return state;
     },
-    updateOnlineFriends: (state, action: PayloadAction<string[]>) => {
-      const friends = Object.values(state.friends);
-      for (let i = 0; i < friends.length; i++) {
-        const friend = friends[i];
-        if (action.payload.includes(friend.userId)) {
-          friend.isOnline = true;
+    addRecipients: (state, action: PayloadAction<Recipient[]>) => {
+      action.payload.forEach(row => {
+        state.recipients[row.userId] = row;
+      });
+      return state;
+    },
+    updateOnlineRecipients: (state, action: PayloadAction<string[]>) => {
+      const recipients = Object.values(state.recipients);
+      for (let i = 0; i < recipients.length; i++) {
+        const recipient = recipients[i];
+        if (action.payload.includes(recipient.userId)) {
+          recipient.isOnline = true;
         } else {
-          friend.isOnline = false;
+          recipient.isOnline = false;
         }
       }
       return state;
     },
     updateFriendPresence: (state, action: PayloadAction<UserPresence>) => {
-      if (action.payload.userId in state.friends) {
-        const friend = state.friends[action.payload.userId];
-        friend.isOnline = action.payload.status === 'online' ? true : false;
+      if (action.payload.clientId in state.recipients) {
+        const recipient = state.recipients[action.payload.clientId];
+        recipient.isOnline = action.payload.status === 'online' ? true : false;
       }
       return state;
     },
   },
 });
 
-export const { setUser, removeUser, addFriend, updateOnlineFriends, updateFriendPresence } = userSlice.actions;
+export const { setUser, resetUser, addRecipient, addRecipients, updateOnlineRecipients, updateFriendPresence } =
+  userSlice.actions;
 export default userSlice.reducer;

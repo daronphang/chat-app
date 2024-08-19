@@ -1,52 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppSelector } from 'core/redux/reduxHooks';
-import styles from './channelPanel.module.scss';
 import ChannelDrawer from '../channelDrawer/channelDrawer';
-import { PriorityQueue } from '@datastructures-js/priority-queue';
-
-interface ChannelSort {
-  channelId: string;
-  key: number;
-  messageSize: number;
-}
+import styles from './channelPanel.module.scss';
 
 export default function ChannelPanel() {
   const [drawers, setDrawers] = useState<JSX.Element[]>([]);
-  const channelHash = useAppSelector(state => state.chat.channelHash);
+  const channels = useAppSelector(state => state.chat.channels);
+  const curChannelId = useAppSelector(state => state.chat.curChannelId);
+  const initiatedConvos = useRef<Set<string>>(new Set());
 
   useEffect(() => {
+    if (curChannelId) {
+      initiatedConvos.current.add(curChannelId);
+    }
     displayDrawers();
-  }, [channelHash]);
+  }, [channels]);
 
   const displayDrawers = () => {
-    // Priority queue for sorting.
-    const pq = new PriorityQueue<ChannelSort>((a, b) => {
-      return b.key - a.key;
-    });
-    Object.values(channelHash).forEach(row => {
-      let timestamp = new Date(row.createdAt);
-      if (row.messages.length > 0) {
-        timestamp = new Date(row.messages[row.messages.length - 1].createdAt);
-      }
-      const temp: ChannelSort = {
-        channelId: row.channelId,
-        key: timestamp.getTime(),
-        messageSize: row.messages.length,
-      };
-      pq.enqueue(temp);
-    });
-
+    // Channels will be moved up to the front for the following:
+    // 1. New messages
+    // 2. New channel
+    // Other events (name/picture change, new members, message/channel updates, etc) will be ignored.
+    // Channels will already be sorted by Redux.
     const newDrawers: JSX.Element[] = [];
-    let row: ChannelSort;
-    while (pq.size() > 0) {
-      row = pq.dequeue();
-
-      if (row.channelId.length > 36 && row.messageSize === 0) {
-        continue;
+    channels.forEach(row => {
+      if (row.channelId.length > 36 && row.messages.length === 0 && !initiatedConvos.current.has(row.channelId)) {
+        // Hide 1-on-1 chats with no messages if user did not initiate a conversation.
       } else {
-        newDrawers.push(<ChannelDrawer key={row.channelId} channelId={row.channelId} />);
+        newDrawers.push(<ChannelDrawer key={row.channelId} channel={row} />);
       }
-    }
+    });
 
     setDrawers(newDrawers);
   };

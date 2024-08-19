@@ -81,6 +81,26 @@ export namespace UserMetadata {
   }
 }
 
+export class Users extends jspb.Message {
+  getUsersList(): Array<UserMetadata>;
+  setUsersList(value: Array<UserMetadata>): Users;
+  clearUsersList(): Users;
+  addUsers(value?: UserMetadata, index?: number): UserMetadata;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): Users.AsObject;
+  static toObject(includeInstance: boolean, msg: Users): Users.AsObject;
+  static serializeBinaryToWriter(message: Users, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): Users;
+  static deserializeBinaryFromReader(message: Users, reader: jspb.BinaryReader): Users;
+}
+
+export namespace Users {
+  export type AsObject = {
+    usersList: Array<UserMetadata.AsObject>,
+  }
+}
+
 export class UserContact extends jspb.Message {
   getUserid(): string;
   setUserid(value: string): UserContact;
@@ -130,8 +150,8 @@ export class NewFriend extends jspb.Message {
   getFriendemail(): string;
   setFriendemail(value: string): NewFriend;
 
-  getDisplayname(): string;
-  setDisplayname(value: string): NewFriend;
+  getFriendname(): string;
+  setFriendname(value: string): NewFriend;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): NewFriend.AsObject;
@@ -145,7 +165,7 @@ export namespace NewFriend {
   export type AsObject = {
     userid: string,
     friendemail: string,
-    displayname: string,
+    friendname: string,
   }
 }
 
@@ -158,6 +178,9 @@ export class Friend extends jspb.Message {
 
   getDisplayname(): string;
   setDisplayname(value: string): Friend;
+
+  getFriendname(): string;
+  setFriendname(value: string): Friend;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Friend.AsObject;
@@ -172,6 +195,7 @@ export namespace Friend {
     userid: string,
     email: string,
     displayname: string,
+    friendname: string,
   }
 }
 
@@ -195,21 +219,21 @@ export namespace Friends {
   }
 }
 
-export class Users extends jspb.Message {
+export class UserIds extends jspb.Message {
   getUseridsList(): Array<string>;
-  setUseridsList(value: Array<string>): Users;
-  clearUseridsList(): Users;
-  addUserids(value: string, index?: number): Users;
+  setUseridsList(value: Array<string>): UserIds;
+  clearUseridsList(): UserIds;
+  addUserids(value: string, index?: number): UserIds;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): Users.AsObject;
-  static toObject(includeInstance: boolean, msg: Users): Users.AsObject;
-  static serializeBinaryToWriter(message: Users, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): Users;
-  static deserializeBinaryFromReader(message: Users, reader: jspb.BinaryReader): Users;
+  toObject(includeInstance?: boolean): UserIds.AsObject;
+  static toObject(includeInstance: boolean, msg: UserIds): UserIds.AsObject;
+  static serializeBinaryToWriter(message: UserIds, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UserIds;
+  static deserializeBinaryFromReader(message: UserIds, reader: jspb.BinaryReader): UserIds;
 }
 
-export namespace Users {
+export namespace UserIds {
   export type AsObject = {
     useridsList: Array<string>,
   }

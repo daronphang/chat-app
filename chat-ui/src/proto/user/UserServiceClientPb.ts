@@ -171,6 +171,92 @@ export class UserClient {
     this.methodDescriptorsignup);
   }
 
+  methodDescriptorgetUser = new grpcWeb.MethodDescriptor(
+    '/user.User/getUser',
+    grpcWeb.MethodType.UNARY,
+    google_protobuf_wrappers_pb.StringValue,
+    proto_user_user_pb.UserMetadata,
+    (request: google_protobuf_wrappers_pb.StringValue) => {
+      return request.serializeBinary();
+    },
+    proto_user_user_pb.UserMetadata.deserializeBinary
+  );
+
+  getUser(
+    request: google_protobuf_wrappers_pb.StringValue,
+    metadata?: grpcWeb.Metadata | null): Promise<proto_user_user_pb.UserMetadata>;
+
+  getUser(
+    request: google_protobuf_wrappers_pb.StringValue,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: proto_user_user_pb.UserMetadata) => void): grpcWeb.ClientReadableStream<proto_user_user_pb.UserMetadata>;
+
+  getUser(
+    request: google_protobuf_wrappers_pb.StringValue,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: proto_user_user_pb.UserMetadata) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/user.User/getUser',
+        request,
+        metadata || {},
+        this.methodDescriptorgetUser,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/user.User/getUser',
+    request,
+    metadata || {},
+    this.methodDescriptorgetUser);
+  }
+
+  methodDescriptorgetUsers = new grpcWeb.MethodDescriptor(
+    '/user.User/getUsers',
+    grpcWeb.MethodType.UNARY,
+    proto_user_user_pb.UserIds,
+    proto_user_user_pb.Users,
+    (request: proto_user_user_pb.UserIds) => {
+      return request.serializeBinary();
+    },
+    proto_user_user_pb.Users.deserializeBinary
+  );
+
+  getUsers(
+    request: proto_user_user_pb.UserIds,
+    metadata?: grpcWeb.Metadata | null): Promise<proto_user_user_pb.Users>;
+
+  getUsers(
+    request: proto_user_user_pb.UserIds,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: proto_user_user_pb.Users) => void): grpcWeb.ClientReadableStream<proto_user_user_pb.Users>;
+
+  getUsers(
+    request: proto_user_user_pb.UserIds,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: proto_user_user_pb.Users) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/user.User/getUsers',
+        request,
+        metadata || {},
+        this.methodDescriptorgetUsers,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/user.User/getUsers',
+    request,
+    metadata || {},
+    this.methodDescriptorgetUsers);
+  }
+
   methodDescriptorupdateUser = new grpcWeb.MethodDescriptor(
     '/user.User/updateUser',
     grpcWeb.MethodType.UNARY,
@@ -519,28 +605,28 @@ export class UserClient {
     '/user.User/getUsersAssociatedToTargetUser',
     grpcWeb.MethodType.UNARY,
     google_protobuf_wrappers_pb.StringValue,
-    proto_user_user_pb.Users,
+    proto_user_user_pb.UserIds,
     (request: google_protobuf_wrappers_pb.StringValue) => {
       return request.serializeBinary();
     },
-    proto_user_user_pb.Users.deserializeBinary
+    proto_user_user_pb.UserIds.deserializeBinary
   );
 
   getUsersAssociatedToTargetUser(
     request: google_protobuf_wrappers_pb.StringValue,
-    metadata?: grpcWeb.Metadata | null): Promise<proto_user_user_pb.Users>;
+    metadata?: grpcWeb.Metadata | null): Promise<proto_user_user_pb.UserIds>;
 
   getUsersAssociatedToTargetUser(
     request: google_protobuf_wrappers_pb.StringValue,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: proto_user_user_pb.Users) => void): grpcWeb.ClientReadableStream<proto_user_user_pb.Users>;
+               response: proto_user_user_pb.UserIds) => void): grpcWeb.ClientReadableStream<proto_user_user_pb.UserIds>;
 
   getUsersAssociatedToTargetUser(
     request: google_protobuf_wrappers_pb.StringValue,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: proto_user_user_pb.Users) => void) {
+               response: proto_user_user_pb.UserIds) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
@@ -561,26 +647,26 @@ export class UserClient {
   methodDescriptorgetUsersContactsMetadata = new grpcWeb.MethodDescriptor(
     '/user.User/getUsersContactsMetadata',
     grpcWeb.MethodType.UNARY,
-    proto_user_user_pb.Users,
+    proto_user_user_pb.UserIds,
     proto_user_user_pb.UserContacts,
-    (request: proto_user_user_pb.Users) => {
+    (request: proto_user_user_pb.UserIds) => {
       return request.serializeBinary();
     },
     proto_user_user_pb.UserContacts.deserializeBinary
   );
 
   getUsersContactsMetadata(
-    request: proto_user_user_pb.Users,
+    request: proto_user_user_pb.UserIds,
     metadata?: grpcWeb.Metadata | null): Promise<proto_user_user_pb.UserContacts>;
 
   getUsersContactsMetadata(
-    request: proto_user_user_pb.Users,
+    request: proto_user_user_pb.UserIds,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
                response: proto_user_user_pb.UserContacts) => void): grpcWeb.ClientReadableStream<proto_user_user_pb.UserContacts>;
 
   getUsersContactsMetadata(
-    request: proto_user_user_pb.Users,
+    request: proto_user_user_pb.UserIds,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
                response: proto_user_user_pb.UserContacts) => void) {
