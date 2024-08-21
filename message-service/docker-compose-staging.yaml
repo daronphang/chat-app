@@ -89,6 +89,11 @@ services:
       CASSANDRA_LISTEN_ADDRESS: cassandra1
       CASSANDRA_DC: dc-1
       CASSANDRA_CLUSTER_NAME: chatapp-cluster
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        window: 120s
     networks:
       - chatapp
 networks:

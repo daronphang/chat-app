@@ -36,7 +36,7 @@ func NewConsumer(brokers []string, consumerGroupID string, topic string) *KafkaC
 		// Different consumer groups can read from the same partition.
 		GroupID: consumerGroupID, 
 		Topic: topic,
-		MaxWait: 1 * time.Second,
+		MaxWait: 10 * time.Millisecond,
 	})
 	return &KafkaConsumer{reader: r, client: topic}
 }

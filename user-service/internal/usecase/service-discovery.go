@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"math/rand"
 )
 
 var (
@@ -15,6 +16,11 @@ func (uc *UseCaseService) GetBestServer(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	// Shuffle slice.
+	rand.Shuffle(len(rv), func(i, j int) {
+        rv[i], rv[j] = rv[j], rv[i]
+    })
 
 	// To find the server with CPU < 50% and memory < 80%.
 	// First come first serve basis.

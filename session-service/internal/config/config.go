@@ -43,7 +43,8 @@ type UserClient struct {
 	HostAddress string `yaml:"hostAddress"` // localhost:5672
 }
 
-type ChatServerAPI struct {
+type ChatServer struct {
+	Port 			int 	`yaml:"port"`
 	PresencePath 	string 	`yaml:"presencePath"`
 }
 
@@ -58,7 +59,7 @@ type Config struct {
 	LogDir 			string 			`yaml:"logDir"`
 	Redis 			RedisConfig 	`yaml:"redis"`
 	UserClient 		UserClient 		`yaml:"userClient"`
-	ChatServerAPI	ChatServerAPI	`yaml:"chatServerApi"`
+	ChatServer		ChatServer		`yaml:"chatServer"`
 	Kafka 			KafkaConfig 	`yaml:"kafka"`
 	RabbitMQ 		RabbitMQConfig 	`yaml:"rabbitmq"`
 }

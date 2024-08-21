@@ -5,6 +5,7 @@ import { ApiError, BaseApi, DevApi, ProdApi } from './api.constant';
 export interface ConfigState {
   config: Config;
   api: BaseApi;
+  chatServerAddress: string;
   chatServerWsUrl: string;
   apiError: ApiError;
   deviceId: string;
@@ -14,6 +15,7 @@ const initializeState = (): ConfigState => {
   const config: Config = {
     ENVIRONMENT: (process.env.REACT_APP_ENVIRONMENT as Environment) || 'DEVELOPMENT',
     ENVOY_PROXY_ADDRESS: process.env.REACT_APP_ENVOY_PROXY_ADDRESS || '',
+    CHAT_WEBSOCKET_API: process.env.REACT_APP_CHAT_WEBSOCKET_API || '',
   };
 
   // API class will not undergo any mutation, does not require hydration,
@@ -25,6 +27,7 @@ const initializeState = (): ConfigState => {
   return {
     config,
     api,
+    chatServerAddress: '',
     chatServerWsUrl: '',
     apiError: ApiError,
     deviceId: '',
@@ -37,6 +40,11 @@ export const configSlice = createSlice({
   reducers: {
     resetConfig: state => {
       state.chatServerWsUrl = '';
+      state.chatServerAddress = '';
+    },
+    setChatServerAddress: (state, action: PayloadAction<string>) => {
+      state.chatServerAddress = action.payload;
+      return state;
     },
     setChatServerWsUrl: (state, action: PayloadAction<string>) => {
       state.chatServerWsUrl = action.payload;
@@ -48,5 +56,5 @@ export const configSlice = createSlice({
   },
 });
 
-export const { resetConfig, setChatServerWsUrl, setDeviceId } = configSlice.actions;
+export const { resetConfig, setChatServerAddress, setChatServerWsUrl, setDeviceId } = configSlice.actions;
 export default configSlice.reducer;

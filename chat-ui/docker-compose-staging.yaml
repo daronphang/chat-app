@@ -1,7 +1,7 @@
 version: '3.0'
 services:
   frontend:
-    image: chatui
+    image: chat-ui
     build: .
     ports:
       - 80:80
@@ -26,7 +26,7 @@ services:
     ports:
       - 19901:9901
     volumes:
-      - ../envoy/envoy.staging.yaml:/etc/envoy/envoy.yaml
+      - ./envoy/envoy.staging.yaml:/etc/envoy/envoy.yaml
     networks:
       - chatapp
 

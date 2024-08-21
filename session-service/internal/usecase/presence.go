@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	cfg "session-service/internal/config"
 	"session-service/internal/domain"
 	"sync"
@@ -37,17 +36,18 @@ func (uc *UseCaseService) BroadcastUserPresenceEvent(ctx context.Context, arg do
 			}
 
 			// Notify all user's devices.
-			for _, server := range userSession.Servers {
-				u, err := url.Parse(server)
-				if err != nil {
-					continue
-				}
+			for _, serverAddress := range userSession.Servers {
+				// u, err := url.Parse(server)
+				// if err != nil {
+				// 	continue
+				// }
 				
 				chatServerURL := fmt.Sprintf(
-					"%v://%v/%v",
+					"%v://%v:%v/%v",
 					"http",
-					u.Host,
-					cfg.ChatServerAPI.PresencePath,
+					serverAddress, // u.Host
+					cfg.ChatServer.Port,
+					cfg.ChatServer.PresencePath,
 				)
 				payload := domain.UserPresenceEvent{
 					TargetID: friendID,

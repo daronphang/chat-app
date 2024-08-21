@@ -30,7 +30,7 @@ func NewConsumer(brokers []string, consumerGroupID string, topic string) *KafkaC
 		GroupID: consumerGroupID, 
 		Topic: topic,
 		// Workaround for bug where reader hangs on process exit.
-		MaxWait: 1 * time.Second, 
+		MaxWait: 10 * time.Millisecond, 
 	})
 	return &KafkaConsumer{reader: r}
 }

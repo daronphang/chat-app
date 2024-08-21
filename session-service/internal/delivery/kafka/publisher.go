@@ -29,7 +29,7 @@ func newWriter(cfg *config.Config) *kafka.Writer {
 		RequiredAcks: kafka.RequireOne,
 		MaxAttempts: 5,
 		BatchSize: 100,
-		BatchTimeout: 1 * time.Second,
+		BatchTimeout: 10 * time.Millisecond,
 	}
 	return w
 }

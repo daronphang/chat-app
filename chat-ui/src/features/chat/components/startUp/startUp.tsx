@@ -6,7 +6,7 @@ import empty from 'google-protobuf/google/protobuf/empty_pb';
 import { RpcError } from 'grpc-web';
 
 import messagePb from 'proto/message/message_pb';
-import { setChatServerWsUrl } from 'core/config/configSlice';
+import { setChatServerAddress, setChatServerWsUrl } from 'core/config/configSlice';
 import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
 import { Channel, Message } from 'features/chat/redux/chat.interface';
 import { initChannels } from 'features/chat/redux/chatSlice';
@@ -28,16 +28,18 @@ export default function StartUp({ handleLoading, handleAlert }: StartUpProps) {
 
   useEffect(() => {
     async function handleStartUp() {
-      const promise = await Promise.all([fetchChannelsAssociatedToUser(user.userId), fetchChatServerWsUrl()]);
+      const promise = await Promise.all([fetchChannelsAssociatedToUser(user.userId), fetchChatServerAddress()]);
 
       const channels = promise[0];
-      const wsUrl = promise[1];
+      const address = promise[1];
 
-      if (!wsUrl) {
+      if (!address) {
         handleAlert('Failed to connect to chat server');
         return;
       }
 
+      const wsUrl = `${config.config.CHAT_WEBSOCKET_API}?client=${user.userId}&device=${config.deviceId}&server=${address}`;
+      dispatch(setChatServerAddress(address));
       dispatch(setChatServerWsUrl(wsUrl));
       if (channels.length === 0) {
         return;
@@ -132,12 +134,11 @@ export default function StartUp({ handleLoading, handleAlert }: StartUpProps) {
     }
   };
 
-  const fetchChatServerWsUrl = async (): Promise<string | null> => {
+  const fetchChatServerAddress = async (): Promise<string | null> => {
     try {
       const payload = new empty.Empty();
       const resp = await config.api.USER_SERVICE.getBestServer(payload);
-      const wsUrl = `${resp.getMessage()}?client=${user.userId}&device=${config.deviceId}`;
-      return new Promise(resolve => resolve(wsUrl));
+      return new Promise(resolve => resolve(resp.getMessage()));
     } catch (e) {
       const err = e as RpcError;
       const errMsg = err.code === 14 ? config.apiError.NETWORK_ERROR : 'Failed to connect to chat server';

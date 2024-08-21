@@ -36,6 +36,12 @@ const isSameMessage = (newMsg: Message, curMsg: Message): boolean => {
   return false;
 };
 
+const isNewerMessage = (newMsg: Message, curMsg: Message): boolean => {
+  // If the response received is too fast, using updatedTimestamp may be unreliable.
+  if (newMsg.messageStatus > curMsg.messageStatus) return true;
+  return false;
+};
+
 const isMessageBigger = (newMsg: Message, curMsg: Message): boolean => {
   if (newMsg.messageId && curMsg.messageId && newMsg.messageId > curMsg.messageId) {
     return true;
@@ -136,7 +142,7 @@ export const chatSlice = createSlice({
       for (let i = size - 1; i >= 0; i--) {
         curMsg = channel.messages[i];
         if (isSameMessage(v, curMsg)) {
-          if (isNewerEvent(v.updatedAt, curMsg.updatedAt)) {
+          if (isNewerMessage(v, curMsg) || isNewerEvent(v.updatedAt, curMsg.updatedAt)) {
             curMsg.messageId = v.messageId;
             curMsg.messageStatus = v.messageStatus;
             curMsg.updatedAt = v.updatedAt;

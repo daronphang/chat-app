@@ -102,7 +102,7 @@ export default function Chat() {
     try {
       const payload = new sessionPb.UserSession();
       payload.setUserid(user.userId);
-      payload.setServer(config.chatServerWsUrl);
+      payload.setServer(config.chatServerAddress);
       await config.api.SESSION_SERVICE.clientHeartbeat(payload);
     } catch (e) {
       const err = e as RpcError;
