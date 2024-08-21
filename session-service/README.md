@@ -1,19 +1,32 @@
 # Session service
 
-Responsibilities of session service are as follows:
-
-- Maintain heartbeat session with users and storing chat server metadata for each user
-- Perform broadcasting events i.e. if user is online, perform A, else, perform B
-
-## Development
+## First time setup
 
 ### Redis
 
 1. Spin up Docker instance
 
 ```sh
-$ docker run --rm --name redis -d -p 6379:6379 redis
+$ docker run --rm --name redis -d -p 6379:6379 redis:7.4
 ```
+
+### Kafka
+
+1. Spin up Docker instance
+
+```sh
+$ docker run --rm --name kafka -p 9092:9092 -d apache/kafka:3.7.0
+```
+
+### RabbitMQ
+
+1. Spin up Docker instance
+
+```sh
+$ docker run --rm --name rabbitmq -p 5672:5672 -p 15672:15672 -d rabbitmq:3.13-management
+```
+
+## Development
 
 ### Wire (DI)
 
@@ -29,13 +42,13 @@ $ wire ./internal
 $ go generate ./internal # once wire_gen.go is created, can regenerate using this
 ```
 
-### Web server
+### HTTP server
 
 1. Run server
 
 ```sh
 $ cd path/to/root/directory
-$ go run cmd/rest/main.go
+$ go run cmd/http/main.go
 ```
 
 ## Testing
@@ -73,4 +86,22 @@ $ go test ./... -v -coverpkg=./...
 ```sh
 $ cd path/to/root/directory
 $ docker compose -f docker-compose-testing.yaml up -d
+```
+
+## Deployment
+
+### Docker
+
+As protobuf files are stored in the parent directory, Docker's build context needs to be specified from there.
+
+```sh
+$ cd path/to/parent/directory
+$ docker build -t session-service -f ./session-service/Dockerfile .
+```
+
+### Docker compose
+
+```sh
+$ docker network create -d bridge chatapp
+$ docker compose -f docker-compose-staging.yaml up -d
 ```

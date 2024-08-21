@@ -1,11 +1,6 @@
-# Presence service
+# User service
 
-Responsibilities of chat service are as follows:
-
-- Fanout online and offline status to friends of user
-- Maintain heartbeat session with user for online confirmation
-
-## Development
+## First time setup
 
 ### etcd
 
@@ -16,14 +11,32 @@ $ docker run -d -p 4001:4001 -p 2380:2380 -p 2379:2379 \
  --name etcd quay.io/coreos/etcd:v3.5.15 \
   /usr/local/bin/etcd \
  --name etcd0 \
- --advertise-client-urls http://172.17.0.8:2379,http://172.17.0.8:4001 \
+ --advertise-client-urls http://HOST_IP:2379,http://HOST_IP:4001 \
  --listen-client-urls http://0.0.0.0:2379,http://0.0.0.0:4001 \
- --initial-advertise-peer-urls http://172.17.0.8:2380 \
+ --initial-advertise-peer-urls http://HOST_IP:2380 \
  --listen-peer-urls http://0.0.0.0:2380 \
  --initial-cluster-token etcd-cluster-1 \
- --initial-cluster etcd0=http://172.17.0.8:2380 \
+ --initial-cluster etcd0=http://HOST_IP:2380 \
  --initial-cluster-state new
 ```
+
+### Kafka
+
+1. Spin up Docker instance
+
+```sh
+$ docker run --rm --name kafka -p 9092:9092 -d apache/kafka:3.7.0
+```
+
+### PostgreSQL
+
+1. Spin up Docker instance
+
+```sh
+$ docker run -d --name postgres -p 5432:5432 -e POSTGRES_PASSWORD=password postgres:16.4
+```
+
+## Development
 
 ### Wire (DI)
 
@@ -83,4 +96,22 @@ $ go test ./... -v -coverpkg=./...
 ```sh
 $ cd path/to/root/directory
 $ docker compose -f docker-compose-testing.yaml up -d
+```
+
+## Deployment
+
+### Docker
+
+As protobuf files are stored in the parent directory, Docker's build context needs to be specified from there.
+
+```sh
+$ cd path/to/parent/directory
+$ docker build -t user-service -f ./user-service/Dockerfile .
+```
+
+### Docker compose
+
+```sh
+$ docker network create -d bridge chatapp
+$ docker compose -f docker-compose-staging.yaml up -d
 ```

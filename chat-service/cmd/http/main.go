@@ -69,7 +69,7 @@ func main() {
 	}()
 
 	// Send server metadata to service discovery.
-	go sd.ServiceDiscoveryHeartbeat(ctx)
+	go sd.SendHeartbeatToServiceDiscovery(ctx)
 
 	// Create ctx for listening to SIGINT and SIGTERM
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)

@@ -11,6 +11,12 @@
   text-align: left;
 }
 
+.textWrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .iconWrapper {
   color: variables.$secondary;
   position: relative;

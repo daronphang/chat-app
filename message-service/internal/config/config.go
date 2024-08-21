@@ -49,6 +49,7 @@ type Config struct {
 	Kafka 			KafkaConfig 	`yaml:"kafka"`
 	Cassandra 		CassandraConfig `yaml:"cassandra"`
 	BroadcastClient	BroadcastClient	`yaml:"broadcastClient"`
+	Concurrency		int				`yaml:"concurrency"`
 }
 
 var syncOnceConfig sync.Once
@@ -75,6 +76,8 @@ func readConfigFromFile() error {
 		viper.SetConfigName("config.testing")
 	} else if env == "PRODUCTION" {
 		viper.SetConfigName("config.production")
+	} else if env == "STAGING" {
+		viper.SetConfigName("config.staging")
 	} else {
 		viper.SetConfigName("config.development")
 	}

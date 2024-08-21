@@ -1,0 +1,35 @@
+version: '3.0'
+services:
+  frontend:
+    image: chatui
+    build: .
+    ports:
+      - 80:80
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        window: 120s
+    healthcheck:
+      test: ['CMD-SHELL', 'curl --fail localhost:80/ || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - chatapp
+  envoy:
+    container_name: chatapp-envoy
+    image: envoyproxy/envoy:dev-8a5d7b0241b419854a4dd1c16c382a9784cdca4a
+    ports:
+      - 19901:9901
+    volumes:
+      - ../envoy/envoy.staging.yaml:/etc/envoy/envoy.yaml
+    networks:
+      - chatapp
+
+networks:
+  chatapp:
+    external: true

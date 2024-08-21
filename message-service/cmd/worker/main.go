@@ -65,11 +65,11 @@ func main() {
 	// Spin up goroutines equivalent to the number of partitions per topic.
 	// All goroutines share the same consumer group.
 	// One consumer per goroutine.
-	fmt.Println("running goroutines for reading Kafka message partitions...")
+	fmt.Printf("spinning %v goroutines for reading Kafka message partitions...", cfg.Concurrency)
 	consumers := make([]*k.KafkaConsumer, 0)
 	brokers := strings.Split(cfg.Kafka.BrokerAddresses, ",")
 	consumerGroup := "messageConsumer"
-	for range k.MessagePartitions {
+	for range cfg.Concurrency {
 		// For each goroutine, will have a separate Kafka consumer.
 		c := k.NewConsumer(brokers, consumerGroup, k.MessageTopic)
 		consumers = append(consumers, c)

@@ -57,7 +57,7 @@ func main() {
 	uc := usecase.NewUseCaseService(eb, db, client)
 
 	// Listen to protocol and port.
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", cfg.Port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to listen on port %v", cfg.Port), zap.String("trace", err.Error()))
 	}

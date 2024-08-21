@@ -87,6 +87,8 @@ func readConfigFromFile() error {
 		viper.SetConfigName("config.testing")
 	} else if env == "PRODUCTION" {
 		viper.SetConfigName("config.production")
+	} else if env == "STAGING" {
+		viper.SetConfigName("config.staging")
 	} else {
 		viper.SetConfigName("config.development")
 	}

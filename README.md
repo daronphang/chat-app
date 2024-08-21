@@ -7,13 +7,11 @@
 - Support for 1-on-1 and group chats
 - Real-time chat communication
 - Support for large scale daily active users (DAU)
-- Online indicator
+- Online presence indicator
 - Persistent storage of messages
 - Push notification
 - Multiple device support (assume user will be in the same geographical location)
-- Chats are sorted by the latest timestamp of last message
-- Support for media upload
-- Support for unread messages
+- Support for message read receipts
 
 ### Non-functional
 
@@ -26,8 +24,25 @@
 ## Additional features
 
 - Caching at client browser using IndexedDB
+- Asset Service for managing static content including media, files, images, etc.
+- Support for message editing
 
 # Architecture design
+
+## Overview
+
+![alt text](./assets/chat-app-architecture.png)
+
+1. User authenticates with User Service
+2. On successful login, User Service responds with user metadata
+3. User retrieves Chat Server to connect to from the Service Discovery and establishes a websocket connection
+4. Chat Server publishes regular heartbeat to the Service Discovery
+5. On successful websocket connection, Chat Server will read from the User's Queue which receives current events (message, channel, etc.)
+6. When a user sends a message, the Chat Server will write the message to the Message Queue and send an acknowledgement back to the user
+7. Message Workers subscribing to the Message Queue will save the message in a Key-Value Data Store
+8. On successful write, the message will be published to the respective recipient's queue, regardless if the user is offline/online
+9. User session is stored temporarily in a Key-Value Data Store that is managed by the Session Service
+10. If the recipient is offline, an event will be created and pushed to the Notification Queue, which will be subsequently read by the Notification Workers for sending push notification
 
 ## Communication
 
@@ -142,9 +157,11 @@ A heartbeat mechanism can be implemented to determine if the client is still con
 
 When the message is successfully pushed to the broker queue, a message acknowledgement back to the client will be sent. If the acknowledgement message does not include a messageId, the message failed to deliver.
 
-## Unread messages
+## Message read receipts
 
 When a user opens a channel, all unread messages will be marked as read, even if the user did not visit every message.
+
+Instead of marking every message as read, the user's lastReadMessageId can be persisted with the channel metadata to serve as the checkpoint for determining whether messages from senders have been read.
 
 ## Channel events
 
@@ -199,7 +216,7 @@ The main reason for handling large rooms differently is the fact that many users
 
 ## Online presence
 
-Presence servers are responsible for managing online status and communicating with clients through WebSocket.
+Session servers are responsible for managing online status and broadcasting events to recipients. A key-value data store such as Redis can be used to persist data.
 
 ### User login
 
@@ -263,3 +280,15 @@ Instead, we introduce a **heartbeat mechanism** to solve this problem. Periodica
 - The compressed and encrypted file is sent to the asset service to store the file on blob storage
 - Maintains a hash for each file to avoid duplication of content on the blob storage
 - Third-party AWS S3 is used
+
+## Deployment
+
+1. Create Docker network
+
+```sh
+$ docker network create -d bridge chatapp
+```
+
+2. Spin up Docker compose files in the following order: message-service, user-service, session-service
+
+3. Spin up Docker compose

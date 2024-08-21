@@ -1,0 +1,96 @@
+version: "3.0"
+services:
+  mshttp:
+    image: message-service
+    build:
+      context: ../
+      dockerfile: message-service/Dockerfile
+    depends_on:
+      - kafka1
+      - cassandra1
+    environment:
+      - GO_ENV=STAGING
+    ports:
+      - 15020-15029:50051
+    deploy:
+      mode: replicated
+      replicas: 1
+      endpoint_mode: dnsrr
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        window: 120s
+    command: ["/http"]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "grpcurl -plaintext localhost:50051 message.Message/heartbeat",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    networks:
+      - chatapp
+  msworker:
+    image: message-service
+    build:
+      context: ../
+      dockerfile: message-service/Dockerfile
+    depends_on:
+      - kafka1
+      - cassandra1
+    environment:
+      - GO_ENV=STAGING
+    deploy:
+      mode: replicated
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        window: 120s
+    command: ["/worker"]
+    healthcheck:
+      test: ["CMD-SHELL", "cat /app/README.md"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - chatapp
+  kafka1:
+    container_name: chatapp-kafka1
+    image: apache/kafka:3.7.0
+    ports:
+      - 19092:19092
+    # https://github.com/apache/kafka/blob/trunk/docker/examples/README.md
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka1:9093"
+      KAFKA_LISTENERS: "PLAINTEXT://:9092,PLAINTEXT_HOST://:19092,CONTROLLER://:9093"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka1:9092,PLAINTEXT_HOST://localhost:19092"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - chatapp
+  cassandra1:
+    container_name: chatapp-cassandra1
+    image: cassandra:5.0
+    ports:
+      - 19042:9042
+    # volumes:
+    #   - path:/var/lib/cassandra:rw
+    environment:
+      CASSANDRA_LISTEN_ADDRESS: cassandra1
+      CASSANDRA_DC: dc-1
+      CASSANDRA_CLUSTER_NAME: chatapp-cluster
+    networks:
+      - chatapp
+networks:
+  chatapp:
+    external: true

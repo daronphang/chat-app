@@ -2,4 +2,5 @@
 .gitignore
 .git
 .vscode
-README.md
+/log
+*.log

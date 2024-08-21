@@ -10,6 +10,7 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 type GRPCServer struct {
@@ -30,5 +31,6 @@ func New(logger *zap.Logger, uc *usecase.UseCaseService) *grpc.Server {
 		recovery.UnaryServerInterceptor(recovery.WithRecoveryHandler(interceptor.RecoveryHandler)),
 	))
 	pb.RegisterMessageServer(s, &GRPCServer{uc: uc})
+	reflection.Register(s)
 	return s
 }

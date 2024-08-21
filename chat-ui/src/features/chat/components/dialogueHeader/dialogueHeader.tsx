@@ -31,9 +31,9 @@ export default function DialogueHeader({ channel }: DialogueHeaderProps) {
   return (
     <div className={`${styles.headerWrapper} p-3`}>
       <FontAwesomeIcon className={styles.iconWrapper} size="3x" icon={['fas', 'circle-user']} />
-      <div className="ms-3">
+      <div className={`${styles.textWrapper} ms-3`}>
         <div className={`${styles.heading}`}>{title}</div>
-        <div>{isOnline ? 'Online' : ''}</div>
+        {isOnline && <div>Online</div>}
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ package svcdis
 
 import (
 	"chat-service/internal"
+	"chat-service/internal/config"
 	"chat-service/internal/domain"
 	"context"
 	"encoding/json"
@@ -67,7 +68,7 @@ func calculateCPUUsage() (float32, error) {
 	aggUserTime := stat.CPUStats[0].User - stat.CPUStats[0].Guest
 	aggNiceTime := stat.CPUStats[0].Nice - stat.CPUStats[0].GuestNice
 	aggTotal := aggUserTime + aggNiceTime + stat.CPUStats[0].System + stat.CPUStats[0].Steal + stat.CPUStats[0].IRQ + stat.CPUStats[0].SoftIRQ + aggIdle
-	aggCPUUsage := float32(1 - (aggIdle / aggTotal))
+	aggCPUUsage := float32(1 - (float32(aggIdle) / float32(aggTotal)))
 
 	// idle := 0
 	// total := 0
@@ -81,9 +82,7 @@ func calculateCPUUsage() (float32, error) {
 	// 	total += userTime + niceTime + int(s.System) + int(s.Steal) + int(s.IRQ) + int(s.SoftIRQ) + int(s.Idle) + int(s.IOWait)
 	// }
 
-	// testUsage := float32(1 - (idle / total))
-	// fmt.Println(testUsage)
-
+	// testUsage := float32(1 - (float32(idle) / float32(total)))
 	return aggCPUUsage, nil
 }
 
@@ -92,42 +91,44 @@ func calculateMemUsage() (float32, error) {
 	if err != nil {
 		return 0, err
 	}
-	memUsage := float32( stat.MemFree / stat.MemTotal)
+	memUsage := (float32(stat.MemFree) / float32(stat.MemTotal))
 	return memUsage, nil
 }
 
 func getServerMetadata(uuid string) (domain.ServerMetadata, error) {
-	_, err := getOutboundIP()
+	ip, err := getOutboundIP()
 	if err != nil {
 		return domain.ServerMetadata{}, err
 	}
 
-	// cpu, err := calculateCPUUsage()
-	// if err != nil {
-	// 	return domain.ServerMetadata{}, err
-	// }
+	cpu, err := calculateCPUUsage()
+	if err != nil {
+		return domain.ServerMetadata{}, err
+	}
 	
-	// mem, err := calculateMemUsage()
-	// if err != nil {
-	// 	return domain.ServerMetadata{}, err
-	// }
+	mem, err := calculateMemUsage()
+	if err != nil {
+		return domain.ServerMetadata{}, err
+	}
+	
+	cfg, _ := config.ProvideConfig()
 
 	api := url.URL{
 		Scheme: "ws",
-		Host: "localhost:8080", // ip.String()
+		Host: fmt.Sprintf("%v:%v", ip.String(), cfg.Port),
 		Path: "api/v1/ws",
 	}
 	
 	sm := domain.ServerMetadata{
 		Name: fmt.Sprintf("chat-server-%v", uuid),
 		URL: api.String(),
-		CPU: 0.423,
-		Memory: 0.675,
+		CPU: cpu,
+		Memory: mem,
 	}
 	return sm, nil
 }
 
-func (sdc *ServiceDiscoveryClient) updateServerMetadata(ctx context.Context, uuid string) error {
+func (sdc *ServiceDiscoveryClient) saveServerMetadataInServiceDiscovery(ctx context.Context, uuid string) error {
 	rv, err := getServerMetadata(uuid)
 	if err != nil {
 		return err
@@ -151,12 +152,12 @@ func (sdc *ServiceDiscoveryClient) updateServerMetadata(ctx context.Context, uui
 	return nil
 }
 
-func (sdc *ServiceDiscoveryClient) ServiceDiscoveryHeartbeat(ctx context.Context) {
+func (sdc *ServiceDiscoveryClient) SendHeartbeatToServiceDiscovery(ctx context.Context) {
 	uuid := uuid.NewString()
 	for {
 		// For clientv3, need to pass your own context with timeout.
-		<- time.After(5 * time.Second)
-		if err := sdc.updateServerMetadata(ctx, uuid); err != nil {
+		<- time.After(15 * time.Second)
+		if err := sdc.saveServerMetadataInServiceDiscovery(ctx, uuid); err != nil {
 			logger.Error(
 				"unable to update service discovery with server metadata",
 				zap.String("trace", err.Error()),
