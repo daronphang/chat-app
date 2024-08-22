@@ -1,0 +1,109 @@
+syntax = "proto3";
+package user;
+option go_package = "protobuf/proto/user";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "proto/common/common.proto";
+
+service User {
+    rpc heartbeat(google.protobuf.Empty) returns (common.MessageResponse) {}
+    rpc getBestServer(google.protobuf.Empty) returns (common.MessageResponse) {}
+    rpc signup(NewUser) returns (UserMetadata) {}
+    rpc getUser(google.protobuf.StringValue) returns (UserMetadata) {}
+    rpc getUsers(UserIds) returns (Users) {}
+    rpc updateUser(UserMetadata) returns (common.MessageResponse) {}
+    rpc login(UserCredentials) returns (UserMetadata) {}
+    rpc logout(google.protobuf.StringValue) returns (common.MessageResponse) {}
+    rpc addFriend(NewFriend) returns (Friend) {}
+    rpc getFriends(google.protobuf.StringValue) returns (Friends) {}
+    rpc createChannel(NewChannel) returns (common.Channel) {}
+    rpc getUsersAssociatedToChannel(google.protobuf.StringValue) returns (UserContacts) {}
+    rpc getChannelsAssociatedToUser(google.protobuf.StringValue) returns (Channels) {}
+    rpc getUsersAssociatedToTargetUser(google.protobuf.StringValue) returns (UserIds) {}
+    rpc getUsersContactsMetadata(UserIds) returns (UserContacts) {}
+    rpc addGroupMembers(GroupMembers) returns (common.MessageResponse) {}
+    rpc removeGroupMembers(GroupMembers) returns (common.MessageResponse) {}
+    rpc leaveGroup(GroupMembers) returns (common.MessageResponse) {}
+    rpc removeGroup(AdminGroupMember) returns (common.MessageResponse) {}
+    rpc updateLastReadMessage(LastReadMessage) returns (common.MessageResponse) {}
+}
+
+message NewUser {
+    string email = 1;
+    string displayName = 2;
+}
+
+message UserCredentials {
+    string email = 1;
+}
+
+message UserMetadata {
+    string userId = 1;
+    string email = 2;
+    string displayName = 3;
+    string createdAt = 4;
+    repeated Friend friends = 5;
+} 
+
+message Users {
+    repeated UserMetadata users = 1;
+}
+
+message UserContact {
+    string userId = 1;
+    string email = 2;
+}
+
+message UserContacts {
+    repeated UserContact userContacts = 1;
+}
+
+message NewFriend {
+    string userId = 1;
+    string friendEmail = 2;
+    string friendName = 3;
+}
+
+message Friend {
+    string userId = 1;
+    string email = 2;
+    string displayName = 3;
+    string friendName = 4;
+}
+
+message Friends {
+    repeated Friend friends = 1;
+}
+
+message UserIds {
+    repeated string userIds = 1;
+}
+
+message Channels {
+    repeated common.Channel channels = 1;
+}
+
+message NewChannel {
+    repeated string userIds = 2;
+    string channelName = 3;
+}
+
+message GroupMembers {
+    repeated string userIds = 1;
+    string channelId = 2;
+    string userId = 3;
+    uint64 lastMessageId = 4;
+}
+
+message AdminGroupMember {
+    string userId = 1;
+    string channelId = 2;
+    string channelName = 3;
+}
+
+message LastReadMessage {
+    string userId = 1;
+    string channelId = 2;
+    uint64 lastMessageId = 3;
+}

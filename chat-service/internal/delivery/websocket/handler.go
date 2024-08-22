@@ -22,7 +22,7 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 
 	// Maximum message size allowed from peer.
-	maxMessageSize = 512
+	maxMessageSize = 65536
 )
 
 var (
@@ -68,13 +68,14 @@ func (d *Device) readPump() {
 			}
 			return
 		} 
-		
+
 		msg = bytes.TrimSpace(bytes.Replace(msg, newline, space, -1))
 		buffer := new(bytes.Buffer)
 		if err := json.Compact(buffer, msg); err != nil {
 			logger.Error(
 				"unable to compact inbound message in JSON",
 				zap.String("payload", string(msg)),
+				zap.String("trace", err.Error()),
 			)
 			continue
 		}
@@ -97,14 +98,6 @@ func (d *Device) writePump() {
 		case data, ok := <- d.send:
 			if !ok {
 				// Channel is closed.
-				return 
-			}
-			d.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := d.conn.WriteMessage(websocket.TextMessage, data); err != nil {
-				return
-			}
-		case data, ok := <- d.presence:
-			if !ok {
 				return 
 			}
 			d.conn.SetWriteDeadline(time.Now().Add(writeWait))
@@ -153,7 +146,6 @@ func ServeWs(w http.ResponseWriter, r *http.Request) {
 		deviceID: deviceID,
 		conn: conn, 
 		send: make(chan []byte),
-		presence: make(chan []byte),
 	}
 	hub.registerDevice <- device
 

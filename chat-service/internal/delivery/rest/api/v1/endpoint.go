@@ -11,10 +11,9 @@ func RegisterBaseRoutes(g *echo.Group, h *handler.RestHandler) {
 }
 
 func RegisterMessageRoutes(g *echo.Group, h *handler.RestHandler) {
-	g.POST("", h.SendMsgToClient)
-	g.POST("/media", h.UploadMedia)
+	g.POST("/media", h.HandleMediaContent)
 }
 
-func RegisterPresenceRoutes(g *echo.Group, h *handler.RestHandler) {
-	g.GET("", h.BroadcastUserStatus)
+func RegisterEventRoutes(g *echo.Group, h *handler.RestHandler) {
+	g.POST("/presence", h.HandleUserPresenceEvent)
 }

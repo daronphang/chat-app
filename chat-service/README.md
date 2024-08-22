@@ -1,15 +1,12 @@
 # Chat service
 
-Responsibilities of chat service are as follows:
+## First time setup
 
-- Maintains websocket connection with client
-- Handles outbound messages and acknowledgement
-- Handles inbound messages delivered by other chat servers
+### etcd
 
-Other design considerations to take note of:
-
-- Users can have multiple devices, and may be connected to the same chat server
-- If the same outbound message is received once by the sender, message is successfully sent; if received twice, message is successfully delivered to recipients
+```sh
+$ go get go.etcd.io/etcd/etcdctl/v3
+```
 
 ## Development
 
@@ -27,7 +24,7 @@ $ wire ./internal
 $ go generate ./internal # once wire_gen.go is created, can regenerate using this
 ```
 
-### Web server
+### HTTP server
 
 1. Run server
 
@@ -71,4 +68,29 @@ $ go test ./... -v -coverpkg=./...
 ```sh
 $ cd path/to/root/directory
 $ docker compose -f docker-compose-testing.yaml up -d
+```
+
+## Deployment
+
+### IP address
+
+```sh
+$ hostname -i # private
+$ wget -qO- ifconfig.me # public
+$ docker inspect \
+  -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' container_name_or_id
+```
+
+### Docker
+
+```sh
+$ cd path/to/root/directory
+$ docker build -t chat-service .
+```
+
+### Docker compose
+
+```sh
+$ docker network create -d bridge chatapp
+$ docker compose -f docker-compose-staging.yaml up -d
 ```

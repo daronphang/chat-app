@@ -1,0 +1,56 @@
+version: "3.0"
+services:
+  sshttp:
+    image: session-service
+    build:
+      context: ../
+      dockerfile: session-service/Dockerfile
+    depends_on:
+      - redis
+      - rabbitmq
+    environment:
+      - GO_ENV=STAGING
+    ports:
+      - 15030-15039:50051
+    deploy:
+      mode: replicated
+      replicas: 3
+      endpoint_mode: dnsrr
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        window: 120s
+    command: ["/http"]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "grpcurl -plaintext localhost:50051 session.Session/heartbeat",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - chatapp
+  redis:
+    container_name: chatapp-redis
+    image: redis:7.4
+    ports:
+      - 16379:6379
+    # volumes:
+    #   - path:/data:rw
+    networks:
+      - chatapp
+  rabbitmq:
+    container_name: chatapp-rabbitmq
+    image: rabbitmq:3.13-management
+    ports:
+      - 15672:5672
+    # volumes:
+    #   - path:/var/lib/rabbitmq:rw
+    networks:
+      - chatapp
+networks:
+  chatapp:
+    external: true

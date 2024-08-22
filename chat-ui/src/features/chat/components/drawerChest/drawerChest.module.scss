@@ -1,0 +1,9 @@
+@use 'src/variables.scss';
+
+.drawer {
+  background-color: variables.$bg-2;
+  width: 25rem;
+  height: 100%;
+  border-right: 0.1rem solid variables.$navbar-border;
+  overflow: hidden;
+}

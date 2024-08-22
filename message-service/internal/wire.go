@@ -13,5 +13,3 @@ func WireLogger() (*zap.Logger, error) {
 	wire.Build(config.ProvideConfig, config.ProvideLogger)
 	return &zap.Logger{}, nil
 }
-
-

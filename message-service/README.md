@@ -1,19 +1,6 @@
 # Message service
 
-Responsibilities of chat service are as follows:
-
-- Stores messages in NoSQL persistent store (Cassandra)
-- Maintains channel-client and client-channel relationships
-- If receiver is online, to forward to message to respective chat server
-- If receiver is offline, to send push notification
-
-Other design considerations to take note of:
-
-- A group chat can be duplicated i.e. multiple groups having the same users inside
-- 1-on-1 chats musts have a single channelId; for new chats, need to perform additional logic to check if the other user has already created
-- For new chats created, need to broadcast to user's devices
-
-## Development
+## First time setup
 
 ### Cassandra
 
@@ -23,14 +10,6 @@ Other design considerations to take note of:
 $ docker run --rm --name cassandra -p 9042:9042 -d cassandra:5.0
 ```
 
-### RabbitMQ
-
-1. Spin up Docker instance
-
-```sh
-$ docker run --rm --name rabbitmq -p 5672:5672 -p 15672:15672 -d rabbitmq:3.13-management
-```
-
 ### Kafka
 
 1. Spin up Docker instance
@@ -38,6 +17,8 @@ $ docker run --rm --name rabbitmq -p 5672:5672 -p 15672:15672 -d rabbitmq:3.13-m
 ```sh
 $ docker run --rm --name kafka -p 9092:9092 -d apache/kafka:3.7.0
 ```
+
+## Development
 
 ### Wire (DI)
 
@@ -53,13 +34,22 @@ $ wire ./internal
 $ go generate ./internal # once wire_gen.go is created, can regenerate using this
 ```
 
-### Web server
+### HTTP server
 
 1. Run server
 
 ```sh
 $ cd path/to/root/directory
-$ go run cmd/rest/main.go
+$ go run cmd/http/main.go
+```
+
+### Kafka workers
+
+1. Run workers
+
+```sh
+$ cd path/to/root/directory
+$ go run cmd/worker/main.go
 ```
 
 ## Testing
@@ -97,4 +87,23 @@ $ go test ./... -v -coverpkg=./...
 ```sh
 $ cd path/to/root/directory
 $ docker compose -f docker-compose-testing.yaml up -d
+```
+
+## Deployment
+
+### Docker
+
+As protobuf files are stored in the parent directory, Docker's build context needs to be specified from there.
+
+```sh
+$ cd path/to/parent/directory
+$ docker build -t message-service -f ./message-service/Dockerfile .
+$ docker run -d -p 50051:50051 message-service
+```
+
+### Docker compose
+
+```sh
+$ docker network create -d bridge chatapp
+$ docker compose -f docker-compose-staging.yaml up -d
 ```

@@ -1,0 +1,30 @@
+@use 'src/variables.scss';
+
+.headerWrapper {
+  display: flex;
+  align-items: center;
+}
+
+.heading {
+  font-weight: 800;
+  text-align: left;
+  font-size: variables.$font-lg;
+}
+
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  background-color: variables.$bg-2;
+}
+
+.inputField {
+  background-color: variables.$bg-1 !important;
+}
+
+.button {
+  border: 1px solid variables.$secondary !important;
+  background-color: variables.$bg-1 !important;
+}

@@ -3,22 +3,20 @@ package usecase
 import (
 	"context"
 	"message-service/internal/domain"
+
+	pb "protobuf/proto/session"
 )
 
 type EventBroker interface {
-	PublishMessage(ctx context.Context, partitionKey string, topic string, arg interface{}) error
-}
-
-type MessageBroker interface {
-	PublishMessage(ctx context.Context, queue string, routingKey string, arg interface{}) error
+	PublishEventToUserQueue(ctx context.Context, userID string, arg domain.BaseEvent) error
 }
 
 type UseCaseService struct {
-	Repository 		domain.Repository
-	MessageBroker 	MessageBroker
-	EventBroker		EventBroker
+	Repository 				domain.Repository
+	EventBroker				EventBroker
+	SessionClient   	pb.SessionClient
 }
 
-func NewUseCaseService(mb MessageBroker, eb EventBroker, repo domain.Repository) *UseCaseService {
-	return &UseCaseService{MessageBroker: mb, EventBroker: eb, Repository: repo}
+func NewUseCaseService(eb EventBroker, repo domain.Repository, sc pb.SessionClient) *UseCaseService {
+	return &UseCaseService{EventBroker: eb, Repository: repo, SessionClient: sc}
 }

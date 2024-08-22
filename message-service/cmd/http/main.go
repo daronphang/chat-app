@@ -7,7 +7,6 @@ import (
 	"message-service/internal/config"
 	g "message-service/internal/delivery/grpc"
 	"message-service/internal/delivery/kafka"
-	rmq "message-service/internal/delivery/rabbitmq"
 	"message-service/internal/repository"
 	"message-service/internal/usecase"
 	"net"
@@ -36,14 +35,29 @@ func main() {
 		logger.Fatal("error setting up logger", zap.String("trace", err.Error()))
     }
 
-	// Create usecase with dependencies.
-	db := repository.New(ctx, cfg, logger)
-	mb := &rmq.RabbitMQClient{} // Dummy as it is not needed in server.
+	// Setup DB.
+	if err := repository.SetupDB(ctx, cfg); err != nil {
+		logger.Fatal("error setting up DB", zap.String("trace", err.Error()))
+	}
+
+	// Create gRPC client dependency.
+	client, err := g.NewClient(cfg)
+	if err != nil {
+		logger.Fatal("error setting up grpc user client", zap.String("trace", err.Error()))
+	}
+
+	// Create db dependency.
+	db, err := repository.New(cfg)
+	if err != nil {
+		logger.Fatal("error setting up DB instance", zap.String("trace", err.Error()))
+	}
+
+	// Create usecase.
 	eb := &kafka.KafkaClient{}	// Dummy as it is not needed in server.
-	uc := usecase.NewUseCaseService(mb, eb, db)
+	uc := usecase.NewUseCaseService(eb, db, client)
 
 	// Listen to protocol and port.
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", cfg.Port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to listen on port %v", cfg.Port), zap.String("trace", err.Error()))
 	}
@@ -72,8 +86,6 @@ func main() {
 
 func gracefulShutdown(s *grpc.Server, db *repository.Querier) {
 	fmt.Println("performing graceful shutdown...")
-
 	s.GracefulStop()
-
 	db.Close()
 }

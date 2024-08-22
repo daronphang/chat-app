@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"message-service/internal"
 	"message-service/internal/config"
 	"path"
 	"runtime"
@@ -12,6 +13,10 @@ import (
 	c "github.com/golang-migrate/migrate/v4/database/cassandra"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"go.uber.org/zap"
+)
+
+var (
+	logger, _ = internal.WireLogger()
 )
 
 // If migration is dirty, force the migration version down by 1
@@ -52,7 +57,7 @@ func provideMigrateInstance(d database.Driver) (*migrate.Migrate, error) {
 	return m, nil
 }
 
-func migrateDB(cfg *config.Config, logger *zap.Logger) error {
+func migrateDB(cfg *config.Config) error {
 	// Create driver.
 	d, err := provideDriver(cfg)
 	if err != nil {

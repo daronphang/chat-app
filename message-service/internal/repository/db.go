@@ -54,3 +54,20 @@ func provideSession(cluster *gocql.ClusterConfig) (*gocql.Session, error) {
 
 	return session, nil
 }
+
+func SetupDB(ctx context.Context, cfg *config.Config) error {
+	// Connect to Cassandra.
+	cluster := provideCluster(cfg)
+
+	// Create keyspace if required.
+	if err := createKeyspace(ctx, cluster); err != nil {
+		return err
+	}
+
+	// Migrate db.
+	if err := migrateDB(cfg); err != nil {
+		return err
+	}
+
+	return nil
+}

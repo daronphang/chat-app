@@ -31,7 +31,11 @@ func (e Environment) String() string {
 }
 
 type KafkaConfig struct {
-	BrokerAddresses string `yaml:"BrokerAddresses"` // localhost:9092,localhost:9093
+	BrokerAddresses string `yaml:"brokerAddresses"` // localhost:9092,localhost:9093
+}
+
+type EtcdConfig struct {
+	BrokerAddresses string `yaml:"brokerAddresses"` // localhost:2379,localhost:22379
 }
 
 type Config struct {
@@ -39,6 +43,7 @@ type Config struct {
 	Port 		int 		`yaml:"port"`
 	LogDir 		string 		`yaml:"logDir"`
 	Kafka 		KafkaConfig `yaml:"kafka"`
+	Etcd		EtcdConfig	`yaml:"etcd"`
 }
 
 var syncOnceConfig sync.Once
@@ -65,6 +70,8 @@ func readConfigFromFile() error {
 		viper.SetConfigName("config.testing")
 	} else if env == "PRODUCTION" {
 		viper.SetConfigName("config.production")
+	} else if env == "STAGING" {
+		viper.SetConfigName("config.staging")
 	} else {
 		viper.SetConfigName("config.development")
 	}

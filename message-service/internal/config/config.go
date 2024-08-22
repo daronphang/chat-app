@@ -34,21 +34,22 @@ type KafkaConfig struct {
 	BrokerAddresses string `yaml:"brokerAddresses"` // localhost:9092,localhost:9093
 }
 
-type RabbitMQConfig struct {
-	HostAddress string `yaml:"hostAddress"` // localhost:5672
-}
-
 type CassandraConfig struct {
 	HostAddresses string `yaml:"hostAddresses"` // localhost:9042,localhost:9043
 }
 
+type BroadcastClient struct {
+	HostAddress string `yaml:"hostAddress"` // localhost:5672
+}
+
 type Config struct {
-	Environment string 			`yaml:"environment"`
-	Port 		int 			`yaml:"port"`
-	LogDir 		string 			`yaml:"logDir"`
-	Kafka 		KafkaConfig 	`yaml:"kafka"`
-	Cassandra 	CassandraConfig `yaml:"cassandra"`
-	RabbitMQ 	RabbitMQConfig 	`yaml:"rabbitmq"`
+	Environment 	string 			`yaml:"environment"`
+	Port 			int 			`yaml:"port"`
+	LogDir 			string 			`yaml:"logDir"`
+	Kafka 			KafkaConfig 	`yaml:"kafka"`
+	Cassandra 		CassandraConfig `yaml:"cassandra"`
+	BroadcastClient	BroadcastClient	`yaml:"broadcastClient"`
+	Concurrency		int				`yaml:"concurrency"`
 }
 
 var syncOnceConfig sync.Once
@@ -75,6 +76,8 @@ func readConfigFromFile() error {
 		viper.SetConfigName("config.testing")
 	} else if env == "PRODUCTION" {
 		viper.SetConfigName("config.production")
+	} else if env == "STAGING" {
+		viper.SetConfigName("config.staging")
 	} else {
 		viper.SetConfigName("config.development")
 	}

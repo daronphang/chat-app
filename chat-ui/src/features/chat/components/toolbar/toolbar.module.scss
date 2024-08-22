@@ -1,0 +1,10 @@
+@use 'src/variables.scss';
+
+.toolbarWrapper {
+  display: flex;
+}
+
+.heading {
+  font-weight: 800;
+  text-align: left;
+}

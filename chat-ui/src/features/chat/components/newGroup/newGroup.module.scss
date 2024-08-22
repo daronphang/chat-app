@@ -1,0 +1,36 @@
+@use 'src/variables.scss';
+
+.headerWrapper {
+  display: flex;
+  align-items: center;
+}
+
+.heading {
+  font-weight: 800;
+  text-align: left;
+  font-size: variables.$font-lg;
+}
+
+.chipWrapper {
+  display: flex;
+  gap: 0.5rem;
+  background-color: variables.$bg-1 !important;
+}
+
+.inputField {
+  background-color: variables.$bg-1 !important;
+}
+
+.placeholder {
+  color: #828283;
+}
+
+.button {
+  border: 1px solid variables.$secondary !important;
+  background-color: variables.$bg-1 !important;
+}
+
+.drawerWrapper {
+  height: calc(100vh - 23rem);
+  overflow: scroll;
+}

@@ -1,0 +1,17 @@
+@use 'src/variables.scss';
+
+.headerWrapper {
+  display: flex;
+  align-items: center;
+}
+
+.heading {
+  font-weight: 800;
+  text-align: left;
+  font-size: variables.$font-lg;
+}
+
+.drawerWrapper {
+  height: calc(100vh - 9rem);
+  overflow: scroll;
+}

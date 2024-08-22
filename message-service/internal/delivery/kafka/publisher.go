@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"message-service/internal/config"
+	"message-service/internal/domain"
 	"strings"
 	"time"
 
@@ -22,18 +23,18 @@ batching behavior is to share one Writer amongst multiple go routines.
 One writer is maintained throughout the application, and you have the
 the ability to define the topic on a per-message basis by setting Message.Topic.
 */
-func NewWriter(cfg *config.Config) *kafka.Writer {
+func newWriter(cfg *config.Config) *kafka.Writer {
 	w := &kafka.Writer{
 		Addr: kafka.TCP(strings.Split(cfg.Kafka.BrokerAddresses, ",")...),
 		RequiredAcks: kafka.RequireOne,
 		MaxAttempts: 5,
 		BatchSize: 100,
-		BatchTimeout: 1 * time.Second,
+		BatchTimeout: 00 * time.Millisecond,
 	}
 	return w
 }
 
-func (k *KafkaClient) PublishMessage(ctx context.Context, key string, topic string, arg interface{}) error {
+func (k *KafkaClient) publishMessage(ctx context.Context, key string, topic string, arg interface{}) error {
 	v, err := json.Marshal(arg)
 	if err != nil {
 		return err
@@ -43,8 +44,12 @@ func (k *KafkaClient) PublishMessage(ctx context.Context, key string, topic stri
 		Value: v,
 		Topic: topic,
 	}
-	if err := k.Writer.WriteMessages(ctx, msg); err != nil {
+	if err := k.writer.WriteMessages(ctx, msg); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (k *KafkaClient) PublishEventToUserQueue(ctx context.Context, userID string, arg domain.BaseEvent) error {
+	return k.publishMessage(ctx, userID, userID, arg)
 }

@@ -1,0 +1,11 @@
+@use 'src/variables.scss';
+
+.chat {
+  display: grid;
+  grid-auto-columns: auto auto 1fr;
+  grid-template-areas: 'one two three';
+  min-height: 100vh;
+  max-height: 100vh;
+  min-width: 100vw;
+  overflow: hidden;
+}

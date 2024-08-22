@@ -3,7 +3,6 @@ package kafka
 import (
 	"message-service/internal"
 	"message-service/internal/config"
-	"message-service/internal/domain"
 	"net"
 	"strconv"
 	"strings"
@@ -15,19 +14,47 @@ var (
 	logger, _ = internal.WireLogger()
 )
 
+const (
+	MessageTopic 		string 	= "message"
+	MessagePartitions 	int 	= 10
+)
+
 type KafkaClient struct {
-	Reader *kafka.Reader
-	Writer *kafka.Writer
+	writer *kafka.Writer
 }
 
-func New(r *kafka.Reader, w *kafka.Writer) *KafkaClient {
-	return &KafkaClient{Reader: r, Writer: w}
+func New(cfg *config.Config) *KafkaClient {
+	return &KafkaClient{writer: newWriter(cfg)}
 }
 
-func CreateKafkaTopic(cfg *config.Config, topicCfg domain.BrokerTopicConfig) error {
+func (kc *KafkaClient) Close() {
+	kc.writer.Close()
+}
+
+/*
+Topics are explicitly configured for the following reasons:
+
+- You cannot decrease the number of partitions 
+
+- Increasing the partitions will force a re-balance
+
+- ReplicationFactor cannot be greater than the number of brokers available
+
+- Having different consumer groups will read from the same partition and result in duplication
+*/
+func CreateKafkaTopics(cfg *config.Config) error {
 	// Connect to cluster.
-	conn, err := kafka.Dial("tcp", strings.Split(cfg.Kafka.BrokerAddresses, ",")[0])
-	if err != nil {
+	var conn *kafka.Conn
+	var err error
+
+	for _, address := range strings.Split(cfg.Kafka.BrokerAddresses, ",") {
+		conn, err = kafka.Dial("tcp", address)
+		if err == nil {
+			break
+		} 
+	}
+
+	if conn == nil {
 		return err
 	}
 	defer conn.Close()
@@ -45,12 +72,12 @@ func CreateKafkaTopic(cfg *config.Config, topicCfg domain.BrokerTopicConfig) err
 	}
 	defer controllerConn.Close()
 
-	// Create topic.
+	// Create topics.
 	if err := controllerConn.CreateTopics(
 		kafka.TopicConfig{
-			Topic: topicCfg.Topic,
-			NumPartitions: topicCfg.Partitions,
-			ReplicationFactor: topicCfg.ReplicationFactor,
+			Topic: MessageTopic,
+			NumPartitions: MessagePartitions,
+			ReplicationFactor: 1,
 		},
 	); err != nil {
 		return err
@@ -58,3 +85,4 @@ func CreateKafkaTopic(cfg *config.Config, topicCfg domain.BrokerTopicConfig) err
 	
 	return nil
 }
+

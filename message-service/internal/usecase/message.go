@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"message-service/internal"
 	"message-service/internal/domain"
-	"message-service/internal/util"
-	"sort"
-	"strings"
+	"protobuf/proto/common"
+	"slices"
 	"time"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -18,98 +16,90 @@ var (
 	logger, _ = internal.WireLogger()
 )
 
-func (uc *UseCaseService) GetLatestMessages(ctx context.Context, arg domain.LatestMessagesRequest) ([]domain.Message, error) {
-	rv, err := uc.Repository.GetLatestMessages(ctx, arg.ChannelID, arg.LastMessageID)
+func (uc *UseCaseService) GetLatestMessages(ctx context.Context, arg domain.MessageRequest) ([]domain.Message, error) {
+	// Very rarely users fetch old messages.
+	// to return messages in ascending order.
+
+	// To retrieve all unread and last read messages.
+	// All unread messages will appear after read messages.
+	
+	// In order to retrieve all unread messages, need to perform request by batch due to design of Cassandra.
+	// Secondary index on messageStatus will not work as it will have performance issues when 
+	// querying with inequality.
+
+	unread, err := uc.Repository.GetUnreadMessages(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
+
+	read, err := uc.Repository.GetPreviousMessages(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+
+	rv := append(unread, read...)
+
+	// Messages are returned in descending order, to reverse.
+	slices.Reverse(rv)
 	return rv, nil
 }
 
-func (uc *UseCaseService) SaveMessageAndDeliverToRecipients(ctx context.Context, arg domain.Message) error {
+func (uc *UseCaseService) GetPreviousMessages(ctx context.Context, arg domain.MessageRequest) ([]domain.Message, error) {
+	rv, err := uc.Repository.GetPreviousMessages(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	// Messages are returned in descending order, to reverse.
+	slices.Reverse(rv)
+	return rv, nil
+}
+
+func (uc *UseCaseService) UpdateMessageStatus(ctx context.Context, arg domain.Message) error {
+	if err := uc.Repository.UpdateMessageStatus(ctx, arg); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (uc *UseCaseService) SaveMessageAndNotifyRecipients(ctx context.Context, arg domain.Message) error {
 	// Save message in db.
+	arg.MessageStatus = domain.Received
 	if err := uc.Repository.CreateMessage(ctx, arg); err != nil {
 		return err
 	}
 
-	// Get userIds associated to channel.
-	userIDs, err := uc.Repository.GetUserIdsAssociatedToChannels(ctx, arg.ChannelID)
+	// Broadcast message event.
+	msg := &common.Message{
+		MessageId: arg.MessageID,
+		ChannelId: arg.ChannelID,
+		SenderId: arg.SenderID,
+		Content: arg.Content,
+		CreatedAt: arg.CreatedAt,
+		MessageType: arg.MessageType,
+		MessageStatus: int32(arg.MessageStatus),
+	}
+	_, err := uc.SessionClient.BroadcastMessageEvent(ctx, msg)
 	if err != nil {
 		return err
 	}
 
-	// Push message to the queues of all users in the channel.
-	// TODO: Assumption made that the topic is already created.
-	// Pushing to queue must be guaranteed.
-	maxGoroutines := 10
-	guard := make(chan bool, maxGoroutines)
-	for _, userID := range userIDs {
-		guard <- true
-		go func(userID string) {
-			errMsg := fmt.Sprintf("failed to push message %v to user %v queue", arg.MessageID, userID)
-			err := util.ExpBackoff(
-				500 * time.Millisecond,
-				2,
-				3,
-				errMsg,
-				func() error {
-					return uc.EventBroker.PublishMessage(ctx, userID, userID, arg)
-				},
-			)
-			if err != nil {
-				logger.Error(
-					errMsg,
-					zap.String("trace", err.Error()),
-				)
-				<- guard
-				return
-			}
-
-			// If user is offline, to send push notification via queue.
-			// Delivery is not guaranteed.
-			// resp = fetch()
-			if err := uc.MessageBroker.PublishMessage(
-				ctx, 
-				domain.NotificationQueueConfig.Queue,
-				domain.NotificationQueueConfig.RoutingKeys[0],
-				arg,
-			); err != nil {
-				logger.Error(
-					fmt.Sprintf("failed to notify user %v for message %v", userID, arg.MessageID),
-					zap.String("trace", err.Error()),
-				)
-			}
-			<- guard
-		}(userID)
-	}
-	return nil
-}
-
-func (uc *UseCaseService) AddUsersToChannel(ctx context.Context, channelID string, userIDs []string) error {
-	if channelID == "" {
-		if len(userIDs) == 2 {
-			sort.Strings(userIDs)
-			channelID = strings.Join(userIDs, "")
-		} else {
-			channelID = uuid.NewString()
-		}
-	}
-	if err := uc.Repository.AddUserIDsToChannel(ctx, channelID, userIDs); err != nil {
+	// Update status of delivered message in db and notify sender.
+	arg.MessageStatus = domain.Delivered
+	if err := uc.UpdateMessageStatus(ctx, arg); err != nil {
 		return err
 	}
+
+	event := domain.BaseEvent{
+		Event: domain.EventMessage,
+		EventTimestamp: time.Now().UTC().Format(time.RFC3339),
+		Data: arg,
+	}
+	if err := uc.EventBroker.PublishEventToUserQueue(ctx, arg.SenderID, event); err != nil {
+		logger.Error(
+			fmt.Sprintf("failed to notify delivery to sender %v for message %v", arg.SenderID, arg.MessageID),
+			zap.String("trace", err.Error()),
+		)
+	}
+
 	return nil
 }
-
-func (uc *UseCaseService) GetUserRelations(ctx context.Context, userID string) ([]string, error) {
-	relations, err := uc.Repository.GetUserRelations(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-	return relations, nil
-}
-
-func (uc *UseCaseService) JoinGroup(ctx context.Context) {}
-
-func (uc *UseCaseService) LeaveGroup(ctx context.Context) {}
-
-func (uc *UseCaseService) DeleteUserChat(ctx context.Context, client string, channelID string) {}

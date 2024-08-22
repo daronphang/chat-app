@@ -1,0 +1,39 @@
+@use 'src/variables.scss';
+@use 'src/base.scss';
+
+.dialogueWrapper {
+  position: relative;
+}
+
+.dialogue {
+  width: 100%;
+  height: calc(100vh - 10rem);
+  background-color: variables.$bg-dialogue;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: scroll;
+  overflow-anchor: none !important;
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo {
+  width: 18rem;
+}
+
+.loader {
+  text-align: center;
+  font-size: variables.$font-sm;
+  background-color: variables.$bg-1;
+  box-sizing: border-box;
+  border-radius: 0.25rem;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}

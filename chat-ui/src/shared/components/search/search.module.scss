@@ -1,0 +1,18 @@
+@use 'src/variables.scss';
+
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  background-color: variables.$bg-2;
+}
+
+.formWrapper {
+  flex-grow: 1;
+}
+
+.searchField {
+  background-color: variables.$bg-1 !important;
+}
