@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import Chat from 'features/chat/components/chat/chat';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import './App.scss';
+import { v4 as uuidv4 } from 'uuid';
 
 // Font awesome declarations.
 import {
@@ -53,7 +54,7 @@ function App() {
     if (cookie) {
       deviceId = cookie.pop() as string;
     } else {
-      deviceId = crypto.randomUUID();
+      deviceId = uuidv4();
       document.cookie = `deviceId=${deviceId}`;
     }
     return deviceId;
