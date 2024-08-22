@@ -5,7 +5,7 @@ import { enqueueSnackbar } from 'notistack';
 
 import userPb from 'proto/user/user_pb';
 import messagePb from 'proto/message/message_pb';
-import AppLogo from 'assets/images/chatLogo.png';
+import AppLogo from 'assets/images/chatLogo2.png';
 import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
 import { addOlderMessages, setLastReadMessageInChannel } from 'features/chat/redux/chatSlice';
 import { Channel, Message } from 'features/chat/redux/chat.interface';

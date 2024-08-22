@@ -7,7 +7,7 @@ import (
 	linuxproc "github.com/c9s/goprocinfo/linux"
 )
 
-func getSystemTotalCPU() (uint64, error) {
+func GetSystemCPUUsed() (uint64, error) {
 	/*
 	cat /proc/stat 
 	cpu 1279636934 73759586 192327563 12184330186 543227057 56603 68503253 0 0 
@@ -25,7 +25,6 @@ func getSystemTotalCPU() (uint64, error) {
 	to the idle time instead.
 	*/
 
-
 	// for idx, s := range stat.CPUStats {
 	// 	if idx == 0 {
 	// 		continue
@@ -41,31 +40,26 @@ func getSystemTotalCPU() (uint64, error) {
 		return 0, err
 	}
 
-	aggIdle := stat.CPUStats[0].Idle + stat.CPUStats[0].IOWait
-	aggUserTime := stat.CPUStats[0].User - stat.CPUStats[0].Guest
-	aggNiceTime := stat.CPUStats[0].Nice - stat.CPUStats[0].GuestNice
-	aggTotal := aggUserTime + aggNiceTime + stat.CPUStats[0].System + stat.CPUStats[0].Steal + stat.CPUStats[0].IRQ + stat.CPUStats[0].SoftIRQ + aggIdle
+	aggIdle := stat.CPUStatAll.Idle + stat.CPUStatAll.IOWait
+	aggUserTime := stat.CPUStatAll.User - stat.CPUStatAll.Guest
+	aggNiceTime := stat.CPUStatAll.Nice - stat.CPUStatAll.GuestNice
+	aggTotal := aggUserTime + aggNiceTime + stat.CPUStatAll.System + stat.CPUStatAll.Steal + stat.CPUStatAll.IRQ + stat.CPUStatAll.SoftIRQ + aggIdle
+	aggUsed := aggTotal - aggIdle
 	// aggCPUUsage := float64(1 - (float64(aggIdle) / float64(aggTotal)))
-	return aggTotal, nil
+	return aggUsed, nil
 }
 
-func getContainerCPULimit(totalSystemCPU uint64) (uint64, error) {
-	stat, err := linuxproc.ReadStat("/proc/stat")
+func GetContainerCPUCores() (float64, error) {
+	strContainerCores, err := extractStatValue("/sys/fs/cgroup/cpu.max", "")
 	if err != nil {
 		return 0, err
 	}
-	systemCores := len(stat.CPUStats)
-
-	strContainerLimit, err := extractStatValue("/sys/fs/cgroup/cpu.max", "")
-	if err != nil {
-		return 0, err
-	}
-	temp := strings.Split(strContainerLimit, " ")
+	temp := strings.Split(strContainerCores, " ")
 	if len(temp) != 2 {
 		return 0, errInvalidStat
 	}
 
-	containerLimitRef, err := strconv.Atoi(temp[0])
+	containerCoreRef, err := strconv.Atoi(temp[0])
 	if err != nil {
 		return 0, err
 	}
@@ -75,15 +69,14 @@ func getContainerCPULimit(totalSystemCPU uint64) (uint64, error) {
 		return 0, err
 	}
 
-	containerCores := float32(containerLimitRef) / float32(singleCoreRef)
-	singleCPUCore := float32(totalSystemCPU / uint64(systemCores))
-	return uint64(containerCores * singleCPUCore), nil
+	containerCores := float64(containerCoreRef) / float64(singleCoreRef)
+	return containerCores, nil
 }
 
-func getContainerCPUUsage() (uint64, error) {
+func GetContainerCPUUsed() (uint64, error) {
 	/*
 	/sys/fs/cgroup/cpu.stat
-	usage_usec 22498068	(milliseconds)
+	usage_usec 22498068
 	user_usec 11991789
 	system_usec 10506279
 	nr_periods 18781
@@ -92,16 +85,31 @@ func getContainerCPUUsage() (uint64, error) {
 	nr_bursts 0
 	burst_usec 0
 
+	usage_usec is measured in microseconds.
 	As CPU in /proc/stat is reported in jiffies (1/100th of second, or 10 milliseconds),
-	need to convert it into jiffies i.e. divide by 10.
+	need to convert it into jiffies i.e. multiply by 0.001 and divide by 10.
 	*/
-	strCPUUsage, err := extractStatValue("/sys/fs/cgroup/cpu.stat", "usage_usec")
+	strCPUUsed, err := extractStatValue("/sys/fs/cgroup/cpu.stat", "usage_usec")
 	if err != nil {
 		return 0, err
 	}
-	CPUUsage, err := strconv.ParseInt(strCPUUsage, 10, 64)
+	CPUUsed, err := strconv.ParseInt(strCPUUsed, 10, 64)
 	if err != nil {
 		return 0, err
 	}
-	return uint64(CPUUsage) / uint64(10), nil
+	return uint64(CPUUsed) / uint64(1000 * 10), nil
+}
+
+func CalculateCPUUsage(prevStat *ContainerStat, curStat *ContainerStat) (float64, error) {
+	// https://github.com/docker/cli/blob/35626bae8a8e3ab9e820965fe559188e0ad9ba98/cli/command/container/stats_helpers.go
+	// https://docs.docker.com/engine/api/v1.43/#tag/Container/operation/ContainerStats
+
+	CPUDelta := curStat.CPUUsed - prevStat.CPUUsed
+	systemCPUDelta := curStat.SystemCPUUsed - prevStat.SystemCPUUsed
+	noCPUs, err := GetContainerCPUCores()
+	if err != nil {
+		return 0, err
+	}
+	cpuUsage := (float64(CPUDelta) / float64(systemCPUDelta)) * noCPUs
+	return cpuUsage, nil
 }

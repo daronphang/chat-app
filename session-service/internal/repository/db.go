@@ -79,3 +79,11 @@ func (r *RedisClient) GetUserSession(ctx context.Context, userID string) (domain
 	}
 	return *p, err
 }
+
+func (r *RedisClient) RemoveUserSession(ctx context.Context, userID string) error {
+	_, err := r.rdb.Del(ctx, userID).Result()
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -21,6 +21,7 @@ var (
 	syncOnceConfig sync.Once
 	hostIPAddress net.IP
 	logger, _ = internal.WireLogger()
+	prevStat *cgroup2.ContainerStat
 )
 
 func getOutboundIP() (net.IP, error) {
@@ -45,10 +46,19 @@ func getServerMetadata(uuid string) (domain.ServerMetadata, error) {
 		return domain.ServerMetadata{}, err
 	}
 
-	stat, err := cgroup2.GetContainerStat()
+	cpuUsage := float64(0)
+	curStat, err := cgroup2.GetContainerStat()
 	if err != nil {
 		return domain.ServerMetadata{}, err
 	}
+	if prevStat != nil {
+		cpuUsage, err = cgroup2.CalculateCPUUsage(prevStat, curStat)
+		if err != nil {
+			return domain.ServerMetadata{}, err
+		}
+	}
+	memUsage := cgroup2.CalculateMemUsage(curStat)
+	prevStat = curStat
 
 	// api := url.URL{
 	// 	Scheme: "http",
@@ -58,8 +68,8 @@ func getServerMetadata(uuid string) (domain.ServerMetadata, error) {
 	sm := domain.ServerMetadata{
 		Name: fmt.Sprintf("chat-server-%v", uuid),
 		URL: ip.String(),
-		CPU: float64(stat.CPUUsage) / float64(stat.CPULimit),
-		Memory: float64(stat.MemUsage) / float64(stat.MemLimit),
+		CPU: cpuUsage,
+		Memory: memUsage,
 	}
 	return sm, nil
 }

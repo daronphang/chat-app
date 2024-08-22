@@ -6,14 +6,14 @@ import (
 	linuxproc "github.com/c9s/goprocinfo/linux"
 )
 
-func getContainerMemUsageNoCache() (uint64, error) {
+func GetContainerMemUsedNoCache() (uint64, error) {
 	// Need to subtract cache (inactive_file) from total usage.
 	// https://github.com/docker/cli/blob/d47c36debb4221194b98fa0f72573669e6ac0bc7/cli/command/container/stats_helpers.go#L105
-	strMemUsage, err := extractStatValue("/sys/fs/cgroup/memory.current", "")
+	strMemUsed, err := extractStatValue("/sys/fs/cgroup/memory.current", "")
 	if err != nil {
 		return 0, err
 	}
-	memUsage, err := strconv.ParseInt(strMemUsage, 10, 64)
+	memUsed, err := strconv.ParseInt(strMemUsed, 10, 64)
 	if err != nil {
 		return 0, err
 	}
@@ -26,14 +26,30 @@ func getContainerMemUsageNoCache() (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return uint64(memUsage - cache), nil
+	return uint64(memUsed - cache), nil
 }
 
-func GetSystemMemUsage() (float64, error) {
+func GetSystemMemUsed() (uint64, error) {
 	stat, err := linuxproc.ReadMemInfo("/proc/meminfo")
 	if err != nil {
 		return 0, err
 	}
-	memUsage := float64(1 - (float64(stat.MemFree) / float64(stat.MemTotal)))
-	return memUsage, nil
+	memUsed := stat.MemTotal - stat.MemFree
+	return memUsed, nil
+}
+
+func GetContainerMemLimit() (uint64, error) {
+	strMemLimit, err := extractStatValue("/sys/fs/cgroup/memory.max", "")
+	if err != nil {
+		return 0, err
+	}
+	memLimit, err := strconv.ParseInt(strMemLimit, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return uint64(memLimit), nil
+}
+
+func CalculateMemUsage(stat *ContainerStat) float64 {
+	return float64(stat.MemUsed) / float64(stat.MemLimit)
 }

@@ -289,6 +289,4 @@ Instead, we introduce a **heartbeat mechanism** to solve this problem. Periodica
 $ docker network create -d bridge chatapp
 ```
 
-2. Spin up Docker compose files in the following order: message-service, user-service, session-service
-
-3. Spin up Docker compose
+2. Spin up Docker compose files in the following order: message-service, user-service, session-service, chat-service, chat-ui

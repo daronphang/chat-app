@@ -10,6 +10,7 @@ import { Recipient, UserMetadata } from 'features/user/redux/user.interface';
 import { setUser } from 'features/user/redux/userSlice';
 import { RoutePath } from 'core/config/route.constant';
 import styles from './signup.module.scss';
+import { KeyboardEvent } from 'react';
 
 interface FormInput {
   email: string;
@@ -55,6 +56,15 @@ export default function Signup({ showLogin }: SignupProps) {
     navigate(RoutePath.CHAT);
   };
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    // KeyUp is too late, newline will be created on Enter.
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(onSubmit, onError)();
+      return;
+    }
+  };
+
   const signup = async (data: FormInput): Promise<userPb.UserMetadata | null> => {
     try {
       const payload = new userPb.NewUser();
@@ -86,7 +96,8 @@ export default function Signup({ showLogin }: SignupProps) {
             id="signup-email-input"
             autoComplete="on"
             placeholder="Enter Email"
-            className={`base-input ${styles.inputField}`}></input>
+            className={`base-input ${styles.inputField}`}
+            onKeyDown={handleKeyDown}></input>
           {errors.email && <span className="input-error-msg">Email is invalid</span>}
           <input
             {...register('displayName', {
@@ -95,7 +106,8 @@ export default function Signup({ showLogin }: SignupProps) {
             id="signup-display-name-input"
             autoComplete="on"
             placeholder="Enter Display Name"
-            className={`base-input ${styles.inputField} mt-3`}></input>
+            className={`base-input ${styles.inputField} mt-3`}
+            onKeyDown={handleKeyDown}></input>
           {errors.displayName && <span className="input-error-msg">Field is required</span>}
         </form>
       </div>

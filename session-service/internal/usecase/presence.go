@@ -14,6 +14,15 @@ import (
 )
 
 func (uc *UseCaseService) BroadcastUserPresenceEvent(ctx context.Context, arg domain.UserPresence) error {
+	if arg.Status == "offline" {
+		if err := uc.Repository.RemoveUserSession(ctx, arg.UserID); err != nil {
+			logger.Error(
+				fmt.Sprintf("unable to remove user session for %v", arg.UserID),
+				zap.String("trace", err.Error()),
+			)
+		}
+	}
+
 	// Performance wise, this should not have a huge impact even if the user has many friends.
 	// This is because the number of online users should be minimal.
 	// Otherwise, this can be improved by running an algorithm to determine the closest friends.

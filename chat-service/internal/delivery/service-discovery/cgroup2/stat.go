@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -15,52 +14,39 @@ var (
 
 type ContainerStat struct {
 	MemLimit 		uint64 
-	MemUsage 		uint64
-	TotalSystemCPU	uint64 	// Jiffies.
-	CPUUsage 		uint64	// Jiffies.
-	CPULimit 		uint64
+	MemUsed 		uint64
+	SystemCPUUsed	uint64	// Jiffies.
+	CPUUsed 		uint64	// Jiffies.
 }
 
 func GetContainerStat() (*ContainerStat, error) {
-	containerStat := &ContainerStat{}
+	stat := &ContainerStat{}
 
-	// CPU.
-	totalSystemCPU, err := getSystemTotalCPU()
+	systemCPUUsed, err := GetSystemCPUUsed()
 	if err != nil {
 		return nil, err
 	}
-	containerStat.TotalSystemCPU = totalSystemCPU
+	stat.SystemCPUUsed = systemCPUUsed
 
-	CPULimit, err := getContainerCPULimit(totalSystemCPU)
+	CPUUsed, err := GetContainerCPUUsed()
 	if err != nil {
 		return nil, err
 	}
-	containerStat.CPULimit = CPULimit
+	stat.CPUUsed = CPUUsed
 
-	CPUUsage, err := getContainerCPUUsage()
+	memUsed, err := GetContainerMemUsedNoCache()
 	if err != nil {
 		return nil, err
 	}
-	containerStat.CPUUsage = CPUUsage
+	stat.MemUsed = memUsed
 
-	// Memory.
-	memUsage, err := getContainerMemUsageNoCache()
+	memLimit, err := GetContainerMemLimit()
 	if err != nil {
 		return nil, err
 	}
-	containerStat.MemUsage = memUsage
-
-	strMemLimit, err := extractStatValue("/sys/fs/cgroup/memory.max", "")
-	if err != nil {
-		return nil, err
-	}
-	memLimit, err := strconv.ParseInt(strMemLimit, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	containerStat.MemLimit = uint64(memLimit)
-
-	return containerStat, nil
+	stat.MemLimit = memLimit
+	
+	return stat, nil
 }
 
 func extractStatValue(filePath string, key string) (string, error) {

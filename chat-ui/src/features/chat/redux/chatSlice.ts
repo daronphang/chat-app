@@ -169,7 +169,12 @@ export const chatSlice = createSlice({
       const channel = state.channels.find(row => row.channelId === v.channelId);
 
       if (!channel) {
-        state.channels.push(v);
+        const newChannel: Channel = {
+          ...v,
+          messages: [],
+          lastMessageId: 0,
+        };
+        state.channels.push(newChannel);
         sortChannelsByLatestTimestamp(state.channels);
         return state;
       } else if (!isNewerEvent(v.updatedAt, channel.updatedAt)) {
@@ -179,6 +184,9 @@ export const chatSlice = createSlice({
       // Update existing channel metadata.
       channel.channelName = v.channelName;
       channel.userIds = v.userIds;
+      if (v.lastMessageId > channel.lastMessageId) {
+        channel.lastMessageId = v.lastMessageId;
+      }
       return state;
     },
     moveChannelToFront: (state, action: PayloadAction<string>) => {

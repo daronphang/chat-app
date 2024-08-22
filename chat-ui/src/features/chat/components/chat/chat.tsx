@@ -90,7 +90,6 @@ export default function Chat() {
 
   const handleChannelEvent = (channel: Channel, updatedAt: string) => {
     channel.updatedAt = updatedAt;
-    channel.messages = [];
     dispatch(addChannel(channel));
   };
 

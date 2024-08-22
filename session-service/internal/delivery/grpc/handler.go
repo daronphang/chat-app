@@ -19,7 +19,7 @@ var (
 )
 
 func (s *GRPCServer) Heartbeat(_ context.Context, _ *emptypb.Empty) (*common.MessageResponse, error) {
-	return &common.MessageResponse{Message: "presence-service is alive"}, nil
+	return &common.MessageResponse{Message: "session-service is alive"}, nil
 }
 
 func (s *GRPCServer) ClientHeartbeat(ctx context.Context, arg *pb.UserSession) (*common.MessageResponse, error) {

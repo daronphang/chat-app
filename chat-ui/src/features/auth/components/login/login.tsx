@@ -11,6 +11,7 @@ import { setUser } from 'features/user/redux/userSlice';
 import { RoutePath } from 'core/config/route.constant';
 import styles from './login.module.scss';
 import { getRandomColor } from 'core/utils/formatters';
+import { KeyboardEvent } from 'react';
 
 interface FormInput {
   email: string;
@@ -68,6 +69,15 @@ export default function Login({ showSignup }: LoginProps) {
     navigate(RoutePath.CHAT);
   };
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    // KeyUp is too late, newline will be created on Enter.
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(onSubmit, onError)();
+      return;
+    }
+  };
+
   const login = async (data: FormInput): Promise<userPb.UserMetadata | null> => {
     try {
       const payload = new userPb.UserCredentials();
@@ -98,7 +108,8 @@ export default function Login({ showSignup }: LoginProps) {
             id="login-email-input"
             autoComplete="on"
             placeholder="Enter Email"
-            className={`base-input ${styles.inputField}`}></input>
+            className={`base-input ${styles.inputField}`}
+            onKeyDown={handleKeyDown}></input>
           {errors.email && <span className="input-error-msg">Email is invalid</span>}
         </form>
       </div>
