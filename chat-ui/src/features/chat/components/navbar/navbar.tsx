@@ -6,11 +6,11 @@ import { useEffect, useState } from 'react';
 import { resetUser } from 'features/user/redux/userSlice';
 import { resetChat } from 'features/chat/redux/chatSlice';
 import { useNavigate } from 'react-router-dom';
-import { RoutePath } from 'core/config/route.constant';
+import { RoutePath } from 'core/constants/route.constant';
 import { addAppListener } from 'core/redux/listenerMiddleware';
 import { getRecipientIds } from 'core/utils/chat';
 import styles from './navbar.module.scss';
-import { resetConfig } from 'core/config/configSlice';
+import { resetConfig } from 'core/constants/configSlice';
 
 interface NavbarProps {
   broadcastUserPresence: (status: string, recipientIds: string[]) => void;

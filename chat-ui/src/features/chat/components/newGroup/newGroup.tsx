@@ -6,7 +6,7 @@ import { enqueueSnackbar } from 'notistack';
 import Search from 'shared/components/search/search';
 import { Recipient } from 'features/user/redux/user.interface';
 import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
-import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
+import { defaultSnackbarOptions } from 'core/constants/snackbar.constant';
 import { Channel } from 'features/chat/redux/chat.interface';
 import { addChannel } from 'features/chat/redux/chatSlice';
 import styles from './newGroup.module.scss';

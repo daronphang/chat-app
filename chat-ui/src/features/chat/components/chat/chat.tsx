@@ -5,7 +5,7 @@ import useWebSocket from 'react-use-websocket';
 
 import sessionPb from 'proto/session/session_pb';
 import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
-import { defaultWsOptions } from 'core/config/ws.constant';
+import { defaultWsOptions } from 'core/constants/ws.constant';
 import { updateFriendPresence, updateOnlineRecipients } from 'features/user/redux/userSlice';
 import { Channel, Message, WebSocketEvent } from 'features/chat/redux/chat.interface';
 import { addChannel, addMessage } from 'features/chat/redux/chatSlice';

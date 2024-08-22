@@ -22,9 +22,9 @@ import {
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { ProtectedRoutes } from 'core/guards/authGuard';
 import Auth from 'features/auth/components/auth/auth';
-import { RoutePath } from 'core/config/route.constant';
+import { RoutePath } from 'core/constants/route.constant';
 import { useAppDispatch } from 'core/redux/reduxHooks';
-import { setDeviceId } from 'core/config/configSlice';
+import { setDeviceId } from 'core/constants/configSlice';
 library.add(
   faCircleUser,
   faUsers,

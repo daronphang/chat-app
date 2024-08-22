@@ -6,8 +6,8 @@ import empty from 'google-protobuf/google/protobuf/empty_pb';
 import { RpcError } from 'grpc-web';
 
 import messagePb from 'proto/message/message_pb';
-import { setChatServerAddress, setChatServerWsUrl } from 'core/config/configSlice';
-import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
+import { setChatServerAddress, setChatServerWsUrl } from 'core/constants/configSlice';
+import { defaultSnackbarOptions } from 'core/constants/snackbar.constant';
 import { Channel, Message } from 'features/chat/redux/chat.interface';
 import { initChannels } from 'features/chat/redux/chatSlice';
 import { chunk } from 'core/utils/formatters';

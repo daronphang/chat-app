@@ -11,7 +11,7 @@ import { addOlderMessages, setLastReadMessageInChannel } from 'features/chat/red
 import { Channel, Message } from 'features/chat/redux/chat.interface';
 import Content from '../content/content';
 import styles from './dialogue.module.scss';
-import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
+import { defaultSnackbarOptions } from 'core/constants/snackbar.constant';
 import DialogueHeader from '../dialogueHeader/dialogueHeader';
 import DialogueFooter from '../dialogueFooter/dialogueFooter';
 import { isGroupChat } from 'core/utils/chat';

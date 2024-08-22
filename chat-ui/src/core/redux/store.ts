@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import chatReducer from 'features/chat/redux/chatSlice';
 import userReducer from 'features/user/redux/userSlice';
-import configReducer from 'core/config/configSlice';
+import configReducer from 'core/constants/configSlice';
 import { listenerMiddleware } from './listenerMiddleware';
 
 export const store = configureStore({

@@ -5,7 +5,7 @@ import { RpcError } from 'grpc-web';
 import userPb from 'proto/user/user_pb';
 import commonPb from 'proto/common/common_pb';
 import { useAppSelector } from 'core/redux/reduxHooks';
-import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
+import { defaultSnackbarOptions } from 'core/constants/snackbar.constant';
 import { Channel } from 'features/chat/redux/chat.interface';
 import Toolbar, { Display } from '../toolbar/toolbar';
 import ChannelPanel from '../channelPanel/channelPanel';

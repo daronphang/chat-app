@@ -4,7 +4,7 @@ import { getRandomColor } from './formatters';
 import { RpcError } from 'grpc-web';
 import userPb from 'proto/user/user_pb';
 import sessionPb from 'proto/session/session_pb';
-import { ConfigState } from 'core/config/configSlice';
+import { ConfigState } from 'core/constants/configSlice';
 
 export const isGroupChat = (channel: Channel): boolean => {
   if (channel.channelId.length <= 36) {

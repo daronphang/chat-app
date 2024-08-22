@@ -4,11 +4,11 @@ import { RpcError } from 'grpc-web';
 import { useNavigate } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from 'core/redux/reduxHooks';
-import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
+import { defaultSnackbarOptions } from 'core/constants/snackbar.constant';
 import userPb from 'proto/user/user_pb';
 import { Recipient, UserMetadata } from 'features/user/redux/user.interface';
 import { setUser } from 'features/user/redux/userSlice';
-import { RoutePath } from 'core/config/route.constant';
+import { RoutePath } from 'core/constants/route.constant';
 import styles from './signup.module.scss';
 import { KeyboardEvent } from 'react';
 

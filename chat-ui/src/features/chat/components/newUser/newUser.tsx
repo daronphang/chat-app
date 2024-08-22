@@ -8,7 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import userPb from 'proto/user/user_pb';
 import { Recipient } from 'features/user/redux/user.interface';
 import { addRecipient } from 'features/user/redux/userSlice';
-import { defaultSnackbarOptions } from 'core/config/snackbar.constant';
+import { defaultSnackbarOptions } from 'core/constants/snackbar.constant';
 import styles from './newUser.module.scss';
 import { getRandomColor } from 'core/utils/formatters';
 import { fetchOnlineRecipients } from 'core/utils/chat';
