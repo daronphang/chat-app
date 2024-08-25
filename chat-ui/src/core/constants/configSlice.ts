@@ -11,11 +11,18 @@ export interface ConfigState {
   deviceId: string;
 }
 
+declare global {
+  interface Window {
+    REACT_APP_ENVOY_PROXY_ADDRESS: string;
+    REACT_APP_CHAT_WEBSOCKET_API: string;
+  }
+}
+
 const initializeState = (): ConfigState => {
   const config: Config = {
     ENVIRONMENT: (process.env.REACT_APP_ENVIRONMENT as Environment) || 'DEVELOPMENT',
-    ENVOY_PROXY_ADDRESS: process.env.REACT_APP_ENVOY_PROXY_ADDRESS || '',
-    CHAT_WEBSOCKET_API: process.env.REACT_APP_CHAT_WEBSOCKET_API || '',
+    ENVOY_PROXY_ADDRESS: window.REACT_APP_ENVOY_PROXY_ADDRESS || process.env.REACT_APP_ENVOY_PROXY_ADDRESS || '',
+    CHAT_WEBSOCKET_API: window.REACT_APP_CHAT_WEBSOCKET_API || process.env.REACT_APP_CHAT_WEBSOCKET_API || '',
   };
 
   // API class will not undergo any mutation, does not require hydration,
