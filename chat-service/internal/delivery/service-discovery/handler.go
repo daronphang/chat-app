@@ -55,7 +55,6 @@ func getOutboundIP() (string, error) {
 
 func getServerMetadata(uuid string) (domain.ServerMetadata, error) {
 	ipAddr, err := getOutboundIP()
-	fmt.Println(ipAddr)
 	if err != nil {
 		return domain.ServerMetadata{}, err
 	}
