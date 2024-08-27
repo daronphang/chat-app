@@ -33,9 +33,9 @@ func getOutboundIP() (string, error) {
 	}
 
 	for _, iface := range interfaces {
-		if (iface.Flags & net.FlagLoopback) != 0 {
-			continue
-		}
+		// if (iface.Flags & net.FlagLoopback) != 0 {
+		// 	continue
+		// }
 
 		addrs, err := iface.Addrs()
 		if err != nil {
@@ -45,8 +45,9 @@ func getOutboundIP() (string, error) {
 		for _, addr := range addrs {
 			ipNet, ok := addr.(*net.IPNet)
 			if ok && !ipNet.IP.IsLoopback() && ipNet.IP.To4() != nil {
+				fmt.Println(ipNet.IP.String())
 				hostIPAddress = ipNet.IP.String()
-				break
+				// break
 			}
 		}
 	}
