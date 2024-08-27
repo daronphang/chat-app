@@ -28,7 +28,7 @@ func isDockerBridgeIP(ip net.IP) bool {
     }
     // Docker's default bridge network subnet
     subnet := net.IPNet{
-        IP:   net.ParseIP("172.17.0.0"),
+        IP:   net.ParseIP("172.18.0.0"),
         Mask: net.CIDRMask(16, 32),
     }
     return subnet.Contains(ip)
