@@ -41,8 +41,9 @@ func getOutboundIP() (string, error) {
 		for _, addr := range addrs {
 			ipNet, ok := addr.(*net.IPNet)
 			if ok && !ipNet.IP.IsLoopback() && ipNet.IP.To4() != nil {
+				fmt.Println(ipNet.IP.String(), ipNet.IP.IsGlobalUnicast(), ipNet.IP.IsLoopback(), ipNet.IP.IsLinkLocalUnicast(), ipNet.IP.IsPrivate())
 				hostIPAddress = ipNet.IP.String()
-				break
+				// break
 			}
 		}
 	}
