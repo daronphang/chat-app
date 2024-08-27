@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,30 +17,45 @@ import (
 
 
 var (
-	syncOnceConfig sync.Once
-	hostIPAddress net.IP
+	hostIPAddress string
 	logger, _ = internal.WireLogger()
 	prevStat *cgroup2.ContainerStat
 )
 
-func getOutboundIP() (net.IP, error) {
-	var e error
-	syncOnceConfig.Do(func() {
-		conn, err := net.Dial("udp", "8.8.8.8:80")
-		if err != nil {
-			e = err
-			return
+func getOutboundIP() (string, error) {
+	if hostIPAddress != "" {
+		return hostIPAddress, nil
+	}
+
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return "", err
+	}
+
+	for _, iface := range interfaces {
+		if (iface.Flags & net.FlagLoopback) != 0 {
+			continue
 		}
-		defer conn.Close()
-	
-		localAddr := conn.LocalAddr().(*net.UDPAddr)
-		hostIPAddress = localAddr.IP
-	})
-    return hostIPAddress, e 
+
+		addrs, err := iface.Addrs()
+		if err != nil {
+			return "", err
+		}
+
+		for _, addr := range addrs {
+			ipNet, ok := addr.(*net.IPNet)
+			if ok && !ipNet.IP.IsLoopback() && ipNet.IP.To4() != nil {
+				hostIPAddress = ipNet.IP.String()
+				break
+			}
+		}
+	}
+    return hostIPAddress, nil
 }
 
 func getServerMetadata(uuid string) (domain.ServerMetadata, error) {
-	ip, err := getOutboundIP()
+	ipAddr, err := getOutboundIP()
+	fmt.Println(ipAddr)
 	if err != nil {
 		return domain.ServerMetadata{}, err
 	}
@@ -67,7 +81,7 @@ func getServerMetadata(uuid string) (domain.ServerMetadata, error) {
 
 	sm := domain.ServerMetadata{
 		Name: fmt.Sprintf("chat-server-%v", uuid),
-		URL: ip.String(),
+		URL: ipAddr,
 		CPU: cpuUsage,
 		Memory: memUsage,
 	}
