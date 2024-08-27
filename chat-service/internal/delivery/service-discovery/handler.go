@@ -23,6 +23,9 @@ var (
 )
 
 func isDockerBridgeIP(ip net.IP) bool {
+	// For Docker, IP address starting with 172.17/18 is commonly associated with the
+	// default Docker bridge network, which is used for communication between containers
+	// on the same Docker host. 
     if ip.To4() == nil {
         return false // Not an IPv4 address
     }
@@ -35,9 +38,6 @@ func isDockerBridgeIP(ip net.IP) bool {
 }
 
 func getOutboundIP() (string, error) {
-	// For Docker, IP address starting with 172 is commonly associated with the
-	// default Docker bridge network, which is used for communication between containers
-	// on the same Docker host. 
 	if hostIPAddress != "" {
 		return hostIPAddress, nil
 	}
@@ -55,10 +55,9 @@ func getOutboundIP() (string, error) {
 
 		for _, addr := range addrs {
 			ipNet, ok := addr.(*net.IPNet)
-			if ok && !ipNet.IP.IsLoopback() && ipNet.IP.To4() != nil {
-				fmt.Println(ipNet.IP.String(), isDockerBridgeIP(ipNet.IP))
+			if ok && !ipNet.IP.IsLoopback() && ipNet.IP.To4() != nil && !isDockerBridgeIP(ipNet.IP) {
 				hostIPAddress = ipNet.IP.String()
-				// break
+				break
 			}
 		}
 	}
