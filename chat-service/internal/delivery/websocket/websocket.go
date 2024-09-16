@@ -29,7 +29,7 @@ func (ws WebSocketer) SendEventToClient(ctx context.Context, clientID string, ev
 	client, ok := hub.clients[clientID]
 	if !ok {
 		return MissingClientError{
-			Message: fmt.Sprintf("client %v is not connected to chat server, unable to send event: %v", clientID, event),
+			Message: fmt.Sprintf("client %v is not connected to chat server, unable to send event", clientID),
 		}
 	}
 
